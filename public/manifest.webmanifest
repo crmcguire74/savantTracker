@@ -1,0 +1,24 @@
+{
+  "id": "./",
+  "name": "WiseTrack · Strategic Initiatives",
+  "short_name": "WiseTrack",
+  "description": "Track strategic pillars, initiatives, projects, decisions and issues.",
+  "start_url": "./#/portfolio",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f4f2ee",
+  "theme_color": "#009490",
+  "categories": ["business", "productivity"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "My work", "url": "./#/work", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Leadership brief", "url": "./#/portfolio?layout=brief", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Board", "url": "./#/board", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}
