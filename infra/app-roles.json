@@ -1,0 +1,16 @@
+[
+  {
+    "allowedMemberTypes": ["User"],
+    "description": "Can view and edit every project, initiative and pillar in the tracker.",
+    "displayName": "Tracker Editor",
+    "isEnabled": true,
+    "value": "Tracker.Editor"
+  },
+  {
+    "allowedMemberTypes": ["User"],
+    "description": "Can view the tracker but cannot change anything.",
+    "displayName": "Tracker Viewer",
+    "isEnabled": true,
+    "value": "Tracker.Viewer"
+  }
+]
