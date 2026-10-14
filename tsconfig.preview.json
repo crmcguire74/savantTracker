@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "resolveJsonModule": true,
+    "strict": true,
+    "noImplicitAny": false,
+    "skipLibCheck": true,
+    "noEmit": false,
+    "outDir": "verify/ui-out",
+    "rootDir": "src"
+  },
+  "include": ["src", "verify/react-shim.d.ts"],
+  "exclude": ["src/main.tsx", "src/**/*.test.ts", "src/test-setup.ts"]
+}
