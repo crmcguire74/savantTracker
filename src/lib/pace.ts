@@ -23,6 +23,8 @@ export const SLIP_TOLERANCE_DAYS = 14
 export const STALE_SHARE = 0.5
 
 export type Pace = 'behind' | 'stale' | 'on-pace' | 'ahead' | 'unscheduled'
+/** Where the work sits against its plan, before freshness is considered. */
+export type SchedulePace = Exclude<Pace, 'stale'>
 
 export const PACE_LABEL: Record<Pace, string> = {
   behind: 'Behind schedule',
@@ -34,6 +36,7 @@ export const PACE_LABEL: Record<Pace, string> = {
 
 /** Worst first: the order rows and legends use. */
 export const PACE_ORDER: Pace[] = ['behind', 'stale', 'on-pace', 'ahead', 'unscheduled']
+export const SCHEDULE_ORDER: SchedulePace[] = ['behind', 'on-pace', 'ahead', 'unscheduled']
 
 const parseDay = (value: string): number | null => {
   const trimmed = value?.trim?.() ?? ''
@@ -63,6 +66,8 @@ export interface ProjectPace {
   delta: number | null
   slip: number | null
   stale: boolean
+  /** The schedule reading alone; `pace` lets staleness override it. */
+  schedule: SchedulePace
   pace: Pace
 }
 
@@ -72,30 +77,34 @@ export function projectPace(project: Project, staleDays: number, now = Date.now(
   const slip = slipDays(project)
   const stale = project.phase !== 'closed' && isStale(project, staleDays, now)
   const behind = (delta !== null && delta < -PACE_TOLERANCE) || (slip !== null && slip > SLIP_TOLERANCE_DAYS)
-  const pace: Pace = behind
-    ? 'behind'
-    : stale
-      ? 'stale'
-      : delta === null
-        ? 'unscheduled'
-        : delta > PACE_TOLERANCE
-          ? 'ahead'
-          : 'on-pace'
-  return { project, expected, delta, slip, stale, pace }
+  const schedule: SchedulePace = behind ? 'behind' : delta === null ? 'unscheduled' : delta > PACE_TOLERANCE ? 'ahead' : 'on-pace'
+  const pace: Pace = stale && schedule !== 'behind' ? 'stale' : schedule
+  return { project, expected, delta, slip, stale, schedule, pace }
 }
 
 export interface GroupPace {
   projects: ProjectPace[]
   /** Average progress across every project in the group. */
   progress: number
+  /**
+   * Average progress across the scheduled projects only, the like-for-like
+   * partner of `expected`. Null when none are scheduled.
+   */
+  scheduledProgress: number | null
+  /** Projects with a usable start-to-end window. */
+  scheduledCount: number
   /** Average expected progress across the scheduled projects, or null when none are. */
   expected: number | null
   /** Average progress − expected across the scheduled projects. */
   delta: number | null
   staleCount: number
   counts: Record<Pace, number>
+  /** Projects by schedule reading alone, ignoring staleness. */
+  scheduleCounts: Record<SchedulePace, number>
   /** Most recent update across the group, ISO; empty when none. */
   lastUpdate: string
+  /** The group's schedule reading alone, so a quiet group still shows which way it leans. */
+  schedule: SchedulePace
   pace: Pace
 }
 
@@ -109,29 +118,45 @@ export function groupPace(projects: Project[], staleDays: number, now = Date.now
   const scheduled = paces.filter((entry) => entry.expected !== null)
   const average = (values: number[]) => (values.length ? Math.round(values.reduce((a, b) => a + b, 0) / values.length) : 0)
   const counts = Object.fromEntries(PACE_ORDER.map((pace) => [pace, 0])) as Record<Pace, number>
-  for (const entry of paces) counts[entry.pace] += 1
+  const scheduleCounts = Object.fromEntries(SCHEDULE_ORDER.map((pace) => [pace, 0])) as Record<SchedulePace, number>
+  for (const entry of paces) {
+    counts[entry.pace] += 1
+    scheduleCounts[entry.schedule] += 1
+  }
 
   const expected = scheduled.length ? average(scheduled.map((entry) => entry.expected!)) : null
   const delta = scheduled.length ? average(scheduled.map((entry) => entry.delta!)) : null
   const staleCount = paces.filter((entry) => entry.stale).length
   const lastUpdate = projects.reduce((latest, project) => (project.updatedAt > latest ? project.updatedAt : latest), '')
   // Behind if the average is behind, or if behind projects outnumber the rest.
-  const mostlyBehind = counts.behind > paces.length / 2
+  const mostlyBehind = scheduleCounts.behind > paces.length / 2
 
-  const pace: Pace =
+  const schedule: SchedulePace =
     paces.length === 0
       ? 'unscheduled'
-      : staleCount / paces.length >= STALE_SHARE
-        ? 'stale'
-        : (delta !== null && delta < -PACE_TOLERANCE) || mostlyBehind
-          ? 'behind'
-          : delta === null
-            ? 'unscheduled'
-            : delta > PACE_TOLERANCE
-              ? 'ahead'
-              : 'on-pace'
+      : (delta !== null && delta < -PACE_TOLERANCE) || mostlyBehind
+        ? 'behind'
+        : delta === null
+          ? 'unscheduled'
+          : delta > PACE_TOLERANCE
+            ? 'ahead'
+            : 'on-pace'
+  const pace: Pace = paces.length > 0 && staleCount / paces.length >= STALE_SHARE ? 'stale' : schedule
 
-  return { projects: paces, progress: average(projects.map((p) => p.progress)), expected, delta, staleCount, counts, lastUpdate, pace }
+  return {
+    projects: paces,
+    progress: average(projects.map((p) => p.progress)),
+    scheduledProgress: scheduled.length ? average(scheduled.map((entry) => entry.project.progress)) : null,
+    scheduledCount: scheduled.length,
+    expected,
+    delta,
+    staleCount,
+    counts,
+    scheduleCounts,
+    lastUpdate,
+    schedule,
+    pace,
+  }
 }
 
 // ── attention ─────────────────────────────────────────────────────────────

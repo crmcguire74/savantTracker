@@ -1,32 +1,10 @@
-// ⏱️ Pace primitives. The track reads left to right as 0–100% complete:
-// the bar is where the work is, the needle is where the schedule says it
-// should be today, and the space between them is shaded by which way it
-// leans. Child ticks under the track place each project on the same scale.
+// ⏱️ Pace primitives. Schedule is the main reading (behind, on pace, ahead,
+// no schedule) and each state has a shape as well as a color: ▼ behind,
+// ● on pace, ▲ ahead, a dash for no schedule. Staleness is a separate
+// signal, drawn as a hollow or dashed mark, so a quiet pillar still shows
+// which way it leans.
 
-import { useMemo } from 'react'
-import { PACE_LABEL, PACE_ORDER, type Pace, type ProjectPace } from '../lib/pace'
-
-const TICK_LANE_PX = 13
-/** Ticks closer than this many points share a column, so they stack instead of hiding each other. */
-const TICK_GAP = 2.5
-const MAX_LANES = 6
-
-/**
- * Stacks ticks that would overlap into lanes below each other, worst pace on
- * top, so twelve projects at 0% read as twelve marks rather than one.
- */
-function stackTicks(entries: ProjectPace[]) {
-  const sorted = entries.slice().sort((a, b) => a.project.progress - b.project.progress || PACE_ORDER.indexOf(a.pace) - PACE_ORDER.indexOf(b.pace))
-  const laneEnds: number[] = []
-  const placed = sorted.map((entry) => {
-    const x = entry.project.progress
-    let lane = laneEnds.findIndex((end) => x - end >= TICK_GAP)
-    if (lane === -1) lane = laneEnds.length < MAX_LANES ? laneEnds.length : laneEnds.indexOf(Math.min(...laneEnds))
-    laneEnds[lane] = x
-    return { entry, lane }
-  })
-  return { placed, count: Math.max(1, laneEnds.length) }
-}
+import { PACE_LABEL, type Pace, type SchedulePace } from '../lib/pace'
 
 export const PACE_TONE: Record<Pace, 'red' | 'amber' | 'accent' | 'green' | 'neutral'> = {
   behind: 'red',
@@ -36,25 +14,50 @@ export const PACE_TONE: Record<Pace, 'red' | 'amber' | 'accent' | 'green' | 'neu
   unscheduled: 'neutral',
 }
 
+export const SCHEDULE_COLOR: Record<SchedulePace, string> = {
+  behind: 'var(--red)',
+  'on-pace': 'var(--accent)',
+  ahead: 'var(--blue)',
+  unscheduled: 'var(--text-dim)',
+}
+
+export const SCHEDULE_LABEL: Record<SchedulePace, string> = {
+  behind: 'Behind plan',
+  'on-pace': 'On pace',
+  ahead: 'Ahead of plan',
+  unscheduled: 'No schedule',
+}
+
 export function PaceTag({ pace }: { pace: Pace }) {
   return <span className={`pace-tag pace-${pace}`}>{PACE_LABEL[pace]}</span>
 }
 
-export function PaceTrack(props: {
-  progress: number
-  expected: number | null
-  pace: Pace
-  /** Projects to place as ticks under the track. */
-  children?: ProjectPace[]
-  onTick?: (projectId: string) => void
-  compact?: boolean
-  label?: string
-}) {
+/** The shape that stands for a schedule state, for use beside text. */
+export function ScheduleGlyph({ schedule, size = 10, hollow }: { schedule: SchedulePace; size?: number; hollow?: boolean }) {
+  const color = SCHEDULE_COLOR[schedule]
+  const paint = hollow ? { fill: 'none', stroke: color, strokeWidth: 1.6 } : { fill: color }
+  return (
+    <svg className="schedule-glyph" width={size} height={size} viewBox="0 0 10 10" aria-hidden>
+      {schedule === 'behind' && <path d="M1 1.5h8L5 9z" {...paint} strokeLinejoin="round" />}
+      {schedule === 'ahead' && <path d="M5 1l4 7.5H1z" {...paint} strokeLinejoin="round" />}
+      {schedule === 'on-pace' && <circle cx="5" cy="5" r={hollow ? 3.4 : 4} {...paint} />}
+      {schedule === 'unscheduled' && <rect x="1" y="4" width="8" height="2" rx="1" fill={color} />}
+    </svg>
+  )
+}
+
+/** Signed points, with a true minus sign. */
+export const formatDelta = (delta: number | null) => (delta === null ? '—' : delta === 0 ? '0' : `${delta > 0 ? '+' : '−'}${Math.abs(delta)}`)
+
+/**
+ * Bar is work complete, needle is where the schedule says it should be today,
+ * and the space between them is shaded by which way it leans.
+ */
+export function PaceTrack(props: { progress: number; expected: number | null; pace: Pace; compact?: boolean; label?: string }) {
   const progress = Math.max(0, Math.min(100, props.progress))
   const expected = props.expected === null ? null : Math.max(0, Math.min(100, props.expected))
   const gapFrom = expected === null ? 0 : Math.min(progress, expected)
   const gapTo = expected === null ? 0 : Math.max(progress, expected)
-  const lanes = useMemo(() => (props.children?.length ? stackTicks(props.children) : null), [props.children])
   const summary =
     expected === null
       ? `${progress}% complete; no schedule to compare against`
@@ -65,53 +68,10 @@ export function PaceTrack(props: {
       <div className={`pace-track pace-${props.pace}`} role="img" aria-label={props.label ? `${props.label}: ${summary}` : summary}>
         <span className="pace-fill" style={{ width: `${progress}%` }} />
         {expected !== null && gapTo > gapFrom && (
-          <span
-            className={`pace-gap ${progress < expected ? 'short' : 'over'}`}
-            style={{ left: `${gapFrom}%`, width: `${gapTo - gapFrom}%` }}
-          />
+          <span className={`pace-gap ${progress < expected ? 'short' : 'over'}`} style={{ left: `${gapFrom}%`, width: `${gapTo - gapFrom}%` }} />
         )}
         {expected !== null && <span className="pace-needle" style={{ left: `${expected}%` }} title={`Expected by today: ${expected}%`} />}
       </div>
-      {lanes && (
-        <div className="pace-ticks" aria-hidden={!props.onTick} style={{ height: `${lanes.count * TICK_LANE_PX + 4}px` }}>
-          {lanes.placed.map(({ entry, lane }) => {
-            const title = `${entry.project.title}: ${entry.project.progress}%${entry.expected === null ? '' : ` of ${entry.expected}% expected`} · ${PACE_LABEL[entry.pace]}`
-            const style = { left: `${Math.max(0, Math.min(100, entry.project.progress))}%`, top: `${lane * TICK_LANE_PX + 2}px` }
-            return props.onTick ? (
-              <button
-                key={entry.project.id}
-                type="button"
-                className={`pace-tick pace-${entry.pace}`}
-                style={style}
-                title={title}
-                aria-label={title}
-                onClick={() => props.onTick!(entry.project.id)}
-              />
-            ) : (
-              <span key={entry.project.id} className={`pace-tick pace-${entry.pace}`} style={style} title={title} />
-            )
-          })}
-        </div>
-      )}
-    </div>
-  )
-}
-
-/** How to read the track, shown once per page. */
-export function PaceLegend() {
-  return (
-    <div className="pace-legend" aria-label="How to read pace">
-      <span className="pace-legend-item">
-        <span className="pace-legend-fill" /> Work complete
-      </span>
-      <span className="pace-legend-item">
-        <span className="pace-legend-needle" /> Where the schedule says it should be today
-      </span>
-      {(['behind', 'stale', 'on-pace', 'ahead', 'unscheduled'] as Pace[]).map((pace) => (
-        <span key={pace} className="pace-legend-item">
-          <span className={`pace-tick static pace-${pace}`} /> {PACE_LABEL[pace]}
-        </span>
-      ))}
     </div>
   )
 }

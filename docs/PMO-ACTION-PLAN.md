@@ -103,15 +103,24 @@ CSV files open in Excel with accents intact. Text that Excel would treat as a fo
 
 ### Pillar pace: Portfolio → Pillar pace
 
-For each pillar, the chart answers: is it as far along as its schedule says it should be today?
+For each pillar, the view answers: is it as far along as its schedule says it should be today?
 
-- **Bar:** average progress of the pillar's projects.
-- **Needle:** expected progress today. For each project, this is the share of its planned window (start to original end date) that has passed.
-- **Shaded gap:** red hatching means behind; blue means ahead.
-- **Ticks:** each project sits on the same 0–100% scale, so one lagging project shows up inside a healthy average. Click a tick to open the project.
-- **States:** Behind, Stale, On pace, Ahead, No schedule. Each has its own shape as well as a color and a label, so it reads in grayscale and for color-blind viewers.
+- **Headline:** one plain sentence naming which pillars are behind or ahead, the portfolio-wide gap in points, and a warning when the data is stale.
+- **Ranked chart (default):** one row per pillar, furthest behind first.
+  - The hollow ring marks where the schedule says the work should be today, and the solid dot marks where it is.
+  - The bar between them is the gap: red means behind, teal on pace, blue ahead. The gap in points is printed large on the right.
+  - Click a pillar to focus it.
+- **One grammar at every level:** initiatives and projects use the same row on the same 0–100% axis, so you can read straight down from pillar to initiative to project.
+- **Map (optional view):** across is the share of the schedule elapsed, and up is work done. The diagonal means "on plan". Pillars are bubbles and projects are dots.
+- **Schedule coverage:** one mark per project, filled if it has a start and an original end date. Pace can only be measured for those, so this shows how far to trust the chart. It links to the ledger to add the missing dates.
+- **Focus panel:** for the selected pillar:
+  - "Biggest gaps" cards for the projects furthest behind, with their PM and the age of their last update.
+  - Its initiatives as ranked rows, each expandable to its projects.
+- **Schedule and freshness are separate readings.** A stale pillar still shows whether it leans behind or ahead. Stale marks are hollow or dashed, so the reading is visibly soft rather than hidden.
+- **Like-for-like numbers:** pace compares the progress of *dated* projects with their expected progress. Undated projects count toward overall progress but not toward the gap.
+- **Encoding:** each state has a shape as well as a color (▼ behind, ● on pace, ▲ ahead, dash for no schedule). On the map, position alone tells behind from ahead, so it reads for color-blind viewers and in print.
 - **Rules:** within ±10 points counts as on pace. More than 14 days of forecast slip counts as behind. A pillar is stale when half or more of its projects are past the stale threshold.
-- Expanding a pillar shows the same reading for each initiative. The filter chips apply, so "pace for Nicole's projects" is one click.
+- The filter chips apply, so "pace for Nicole's projects" is one click, and the bubbles glide to their new positions.
 
 ### PM heat map: Workload → PM heat map
 

@@ -25,6 +25,8 @@ export interface KeyResult {
   title: string
   target: string
   progress: number
+  /** Progress of the scheduled projects only, to set against `expected`. */
+  paceProgress: number
   expected: number | null
   pace: Pace
   paceLabel: string
@@ -125,6 +127,7 @@ export function buildOnePager(state: TrackerState, log: LogEntry[], pillar: Pill
       title: initiative.title,
       target: targetFor(initiative.endQuarter, children),
       progress: pace.progress,
+      paceProgress: pace.scheduledProgress ?? pace.progress,
       expected: pace.expected,
       pace: pace.pace,
       paceLabel: PACE_LABEL[pace.pace],

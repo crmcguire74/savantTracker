@@ -140,7 +140,7 @@ function OnePagerSheet({ page }: { page: OnePager }) {
                       <span className="sheet-kr">
                         <strong>{result.progress}%</strong> · {result.paceLabel}
                       </span>
-                      <PaceTrack progress={result.progress} expected={result.expected} pace={result.pace} label={result.title} compact />
+                      <PaceTrack progress={result.paceProgress} expected={result.expected} pace={result.pace} label={result.title} compact />
                     </td>
                   </tr>
                 ))}

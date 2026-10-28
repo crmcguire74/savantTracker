@@ -50,10 +50,21 @@ describe('groupPace', () => {
     expect(group).toMatchObject({ progress: 35, expected: 50, delta: -15, pace: 'behind' })
   })
 
+  it('compares like with like: scheduled progress leaves out projects with no window', () => {
+    const group = groupPace([scheduled({ progress: 30 }), makeProject({ progress: 90, updatedAt: FRESH })], 30, NOW)
+    expect(group).toMatchObject({ progress: 60, scheduledProgress: 30, scheduledCount: 1, expected: 50, delta: -20 })
+  })
+
   it('reads stale when half or more of the children have gone quiet', () => {
     const group = groupPace([scheduled({ progress: 50 }), scheduled({ progress: 50, updatedAt: OLD })], 30, NOW)
     expect(group.pace).toBe('stale')
     expect(group.staleCount).toBe(1)
+  })
+
+  it('keeps the schedule reading underneath a stale group', () => {
+    const group = groupPace([scheduled({ progress: 10, updatedAt: OLD }), scheduled({ progress: 15, updatedAt: OLD })], 30, NOW)
+    expect(group).toMatchObject({ pace: 'stale', schedule: 'behind', scheduleCounts: { behind: 2, 'on-pace': 0, ahead: 0, unscheduled: 0 } })
+    expect(projectPace(scheduled({ progress: 80, updatedAt: OLD }), 30, NOW)).toMatchObject({ pace: 'stale', schedule: 'ahead' })
   })
 
   it('treats an empty group as unscheduled rather than on pace', () => {
