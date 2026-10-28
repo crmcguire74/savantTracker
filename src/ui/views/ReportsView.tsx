@@ -4,12 +4,61 @@
 
 import { useMemo } from 'react'
 import { PHASE } from '../../constants'
-import { byStatusThenTitle, pillarLabel, portfolioStats, summarizePillar } from '../../lib/insights'
+import { byStatusThenTitle, noFilters, pillarLabel, portfolioStats, summarizePillar } from '../../lib/insights'
 import { isStale, needsDecision } from '../../lib/rollups'
 import type { Phase } from '../../types'
-import { ageLabel, Dot, PageHeader, ProjectList, RAG_KEYS, StackedBar, StatTile } from '../common'
+import { downloadText } from '../../lib/file-io'
+import { buildCsvReport } from '../../reports/builders'
+import { REPORT_CATALOG, type ReportId } from '../../reports/catalog'
+import { ageLabel, Dot, PageHeader, ProjectList, RAG_KEYS, StackedBar, StatTile, Tag } from '../common'
 import { useApp } from '../context'
 import { Icon } from '../icons'
+
+/** The exportable reports this role may run, as cards with their download actions. */
+function ReportLibrary() {
+  const { tracker, people, canReport, navigate } = useApp()
+  const reports = REPORT_CATALOG.filter((report) => canReport(report.id))
+  if (reports.length === 0) return null
+
+  const download = (id: ReportId) => {
+    const file = buildCsvReport(id, { state: tracker.state, log: tracker.log, settings: tracker.settings, people })
+    if (file) downloadText(file.filename, file.text, file.type)
+  }
+
+  return (
+    <section className="report-library no-print" aria-labelledby="report-library-title">
+      <div className="section-head">
+        <h2 className="card-title" id="report-library-title">
+          Export a report
+        </h2>
+        <span className="muted small">Spreadsheets open in Excel. Printable reports save as PDF from the print dialog.</span>
+      </div>
+      <div className="report-cards">
+        {reports.map((report) => (
+          <article key={report.id} className="card report-card">
+            <div className="report-card-head">
+              <h3>{report.title}</h3>
+              <Tag tone="outline">{report.audience}</Tag>
+            </div>
+            <p className="muted small">{report.description}</p>
+            <div className="row-actions">
+              {report.formats.includes('print') && (
+                <button type="button" className="btn btn-primary sm" onClick={() => navigate({ view: 'reports', report: report.id })}>
+                  <Icon.Print size={15} /> Open printable
+                </button>
+              )}
+              {report.formats.includes('csv') && (
+                <button type="button" className="btn btn-ghost sm" onClick={() => download(report.id)}>
+                  <Icon.Download size={15} /> Download CSV
+                </button>
+              )}
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  )
+}
 
 export function ReportsView() {
   const { tracker, openProject, navigate, setFilters, openChangeLog } = useApp()
@@ -31,7 +80,7 @@ export function ReportsView() {
   const recent = log.slice(0, 8)
 
   const drill = (patch: Parameters<typeof setFilters>[0]) => {
-    setFilters(() => ({ query: '', rag: [], stale: false, decisions: false }))
+    setFilters(noFilters)
     setFilters(patch)
     navigate({ view: 'portfolio', layout: 'ledger' })
   }
@@ -56,6 +105,8 @@ export function ReportsView() {
         <StatTile label="Decisions waiting" tone="blue" value={stats.decisions} sub="need an outcome" onClick={() => drill({ decisions: true })} />
         <StatTile label="Stale" tone="amber" value={stats.stale} sub={`no update in ${settings.staleThresholdDays}+ days`} onClick={() => drill({ stale: true })} />
       </div>
+
+      <ReportLibrary />
 
       <div className="report-grid">
         <div className="stack">

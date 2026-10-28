@@ -11,9 +11,13 @@ describe('hash routes', () => {
     { view: 'timeline' },
     { view: 'work' },
     { view: 'work', person: 'padman perumal' },
-    { view: 'workload' },
+    { view: 'portfolio', layout: 'pace' },
+    { view: 'workload', layout: 'people' },
+    { view: 'workload', layout: 'pm-heatmap' },
     { view: 'reports' },
+    { view: 'reports', report: 'pillar-one-pager', pillar: 'obj-2' },
     { view: 'settings' },
+    { view: 'admin' },
     { view: 'project', id: 'proj-1789-42' },
   ])('round-trips %o', (route) => {
     expect(parseRoute(formatRoute(route))).toEqual({ ...route })

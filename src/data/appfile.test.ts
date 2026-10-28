@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { AppFileError, createAppFile, parseAppFile, serializeAppFile } from './appfile'
+import { AppFileError, createAppFile, migratePhase, parseAppFile, serializeAppFile, upgradeState } from './appfile'
 import { bundledSnapshot } from './repository'
 import { countByRag, initiativeRollup, isStale, searchProjects } from '../lib/rollups'
+import { makeProject, makeState } from '../test-fixtures'
 
 describe('bundled migration snapshot', () => {
   it('carries the full tracker that was live in the Claude artifact', () => {
@@ -116,6 +117,13 @@ describe('derived numbers', () => {
     expect(hits.length).toBeGreaterThan(0)
   })
 
+  it('finds a project by its project manager', () => {
+    const state = makeState({ projects: [makeProject({ id: 'a', projectManager: 'Nicole Ruiz' }), makeProject({ id: 'b' })] })
+    const hits = searchProjects(state, { query: 'nicole', rag: null, staleOnly: false, decisionsOnly: false }, 30)
+    expect(hits.map((hit) => hit.project.id)).toEqual(['a'])
+    expect(hits[0].ownerMatch).toBe('Project manager')
+  })
+
   it('averages progress across an initiative', () => {
     const state = bundledSnapshot().state
     const initiative = state.initiatives.find(
@@ -132,5 +140,36 @@ describe('derived numbers', () => {
     expect(isStale({ ...project, updatedAt: '2020-01-01T00:00:00.000Z' }, 30)).toBe(true)
     expect(isStale({ ...project, updatedAt: new Date().toISOString() }, 30)).toBe(false)
     expect(isStale({ ...project, updatedAt: '' }, 30)).toBe(false)
+  })
+})
+
+describe('phase migration', () => {
+  it('maps every retired phase onto the PMO list', () => {
+    expect(migratePhase('design')).toBe('planning')
+    expect(migratePhase('build')).toBe('execution')
+    expect(migratePhase('uat')).toBe('review')
+    expect(migratePhase('continuous_improvement')).toBe('stabilize')
+    expect(migratePhase('close')).toBe('closed')
+    expect(migratePhase('multi_phase')).toBe('multi_phase')
+    expect(migratePhase('nonsense')).toBe('')
+  })
+
+  it('upgrades a stored state written before validation and dependencies existed', () => {
+    const legacy = makeProject({ phase: 'review' }) as unknown as Record<string, unknown>
+    delete legacy.validation
+    delete legacy.dependencies
+    legacy.phase = 'uat'
+    const upgraded = upgradeState(makeState({ projects: [legacy as never] }))
+    expect(upgraded.projects[0]).toMatchObject({ phase: 'review', validation: '', dependencies: '' })
+  })
+
+  it('returns the same object when nothing needs upgrading', () => {
+    const state = makeState({ projects: [makeProject({ phase: 'launch', validation: 'pending' })] })
+    expect(upgradeState(state)).toBe(state)
+  })
+
+  it('upgrades the bundled snapshot so no retired phase survives', () => {
+    const phases = new Set(bundledSnapshot().state.projects.map((project) => project.phase))
+    for (const retired of ['design', 'build', 'uat', 'continuous_improvement', 'close']) expect(phases.has(retired as never)).toBe(false)
   })
 })

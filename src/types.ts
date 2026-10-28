@@ -9,13 +9,19 @@ export type IssueStatus = 'open' | 'resolved'
 export type Phase =
   | ''
   | 'discovery'
-  | 'design'
+  | 'planning'
   | 'execution'
-  | 'build'
-  | 'uat'
+  | 'review'
   | 'launch'
-  | 'continuous_improvement'
-  | 'close'
+  | 'stabilize'
+  | 'closed'
+  /** Release-based delivery: several phases run at once, so it sits off the sequence. */
+  | 'multi_phase'
+
+/** Phase values written before the PMO phase list (Oct 2026). Migrated on load. */
+export type LegacyPhase = 'design' | 'build' | 'uat' | 'continuous_improvement' | 'close'
+
+export type Validation = '' | 'not_started' | 'pending' | 'in_progress' | 'completed' | 'na'
 
 export interface Issue {
   id: string
@@ -34,12 +40,15 @@ export interface Project {
   scope: string
   trending: Trend
   phase: Phase
+  validation: Validation
   planLink: string
   startDate: string
   originalEndDate: string
   forecastEndDate: string
   nextMilestone: string
   nextMilestoneDate: string
+  /** Free text: the teams, vendors or projects this one is waiting on. */
+  dependencies: string
   keyRisk: string
   decisionNeeded: string
   decisionOutcome: string
@@ -108,12 +117,14 @@ export type ProjectFieldKey = Extract<
   | 'forecastEndDate'
   | 'nextMilestone'
   | 'nextMilestoneDate'
+  | 'dependencies'
   | 'keyRisk'
   | 'decisionNeeded'
   | 'decisionOutcome'
   | 'rag'
   | 'trending'
   | 'phase'
+  | 'validation'
   | 'progress'
 >
 

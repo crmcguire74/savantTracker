@@ -7,6 +7,7 @@
 //   3. IndexedDB, with an automatic fall back to memory when the browser
 //      refuses to open a database (private window, blocked site data)
 
+import { authMode, DEV_ROLE_HEADER, readDevRole } from '../auth/session'
 import { StorageUnavailableError, type StorageAdapter } from './contract'
 import { IndexedDbAdapter } from './indexeddb'
 import { MemoryAdapter } from './memory'
@@ -43,7 +44,11 @@ export function createAdapter(driver: DriverName = resolveDriver()): StorageAdap
         baseUrl: readEnv('VITE_API_BASE_URL') ?? '/api',
         authHeaders: (): Record<string, string> => {
           const token = readEnv('VITE_API_TOKEN')
-          return token ? { Authorization: `Bearer ${token}` } : {}
+          // The local server acts as the tester's picked role; a server with
+          // real sign-in ignores this header and reads the Entra claims.
+          const headers: Record<string, string> = authMode() === 'local' ? { [DEV_ROLE_HEADER]: readDevRole() } : {}
+          if (token) headers.Authorization = `Bearer ${token}`
+          return headers
         },
       })
     case 'indexeddb':

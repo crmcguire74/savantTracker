@@ -7,6 +7,7 @@
 // ("restore previous value") possible.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { defaultPolicy, normalizePolicy, type AccessPolicy } from '../auth/access'
 import { FIELD_LABELS } from '../constants'
 import { TrackerRepository, bundledSnapshot } from '../data/repository'
 import type { AppFile } from '../data/appfile'
@@ -53,12 +54,13 @@ export interface NewInitiativeInput {
   endQuarter: string
 }
 
-export function useTracker(identity: Identity, canWrite = true) {
+export function useTracker(identity: Identity, canWrite = true, canAdmin = false) {
   const repository = useMemo(() => new TrackerRepository(storage), [])
 
   const [state, setState] = useState<TrackerState>(EMPTY_STATE)
   const [log, setLog] = useState<LogEntry[]>([])
   const [settings, setSettings] = useState<Settings>({ staleThresholdDays: 30 })
+  const [access, setAccess] = useState<AccessPolicy>(defaultPolicy)
   const [loading, setLoading] = useState(true)
   const [notice, setNotice] = useState<Notice | null>(null)
   const [conflict, setConflict] = useState<Conflict | null>(null)
@@ -82,6 +84,11 @@ export function useTracker(identity: Identity, canWrite = true) {
     canWriteRef.current = canWrite
   }, [canWrite])
 
+  const canAdminRef = useRef(canAdmin)
+  useEffect(() => {
+    canAdminRef.current = canAdmin
+  }, [canAdmin])
+
   const flash = useCallback((next: Notice, ms = 4500) => {
     setNotice(next)
     window.setTimeout(() => setNotice((current) => (current === next ? null : current)), ms)
@@ -101,6 +108,8 @@ export function useTracker(identity: Identity, canWrite = true) {
         setState(boot.state)
         setLog(boot.log)
         setSettings(boot.settings)
+        setAccess(await repository.readAccess())
+        if (cancelled) return
         setLoading(false)
 
         if (opened.degraded) {
@@ -119,6 +128,7 @@ export function useTracker(identity: Identity, canWrite = true) {
         unsubscribers.push(repository.subscribeState((next) => next && setState(next)))
         unsubscribers.push(repository.subscribeLog(setLog))
         unsubscribers.push(repository.subscribeSettings(setSettings))
+        unsubscribers.push(repository.subscribeAccess(setAccess))
         unsubscribers.push(storage.onStatusChange(setStorageStatus))
       } catch (error) {
         if (cancelled) return
@@ -398,12 +408,14 @@ export function useTracker(identity: Identity, canWrite = true) {
         scope: '',
         trending: 'stable',
         phase: '',
+        validation: '',
         planLink: '',
         startDate: '',
         originalEndDate: '',
         forecastEndDate: '',
         nextMilestone: '',
         nextMilestoneDate: '',
+        dependencies: '',
         keyRisk: '',
         decisionNeeded: '',
         decisionOutcome: '',
@@ -553,6 +565,29 @@ export function useTracker(identity: Identity, canWrite = true) {
     [repository],
   )
 
+  // ── access policy (admins only) ───────────────────────────────────────
+  const saveAccess = useCallback(
+    async (policy: AccessPolicy): Promise<boolean> => {
+      if (!canAdminRef.current) {
+        flash({ tone: 'error', message: 'Only a tracker admin can change access settings.' })
+        return false
+      }
+      const next = normalizePolicy({ ...policy, updatedAt: nowISO(), updatedByName: identityRef.current.name })
+      const previous = access
+      setAccess(next)
+      try {
+        await repository.saveAccess(next)
+        flash({ tone: 'success', message: 'Access settings saved.' })
+        return true
+      } catch (error) {
+        setAccess(previous)
+        flash({ tone: 'error', message: error instanceof Error ? error.message : 'Access settings could not be saved.' })
+        return false
+      }
+    },
+    [repository, flash, access],
+  )
+
   // ── file in / file out ────────────────────────────────────────────────
   const exportData = useCallback(
     async (tag?: string) => {
@@ -613,6 +648,7 @@ export function useTracker(identity: Identity, canWrite = true) {
     state,
     log,
     settings,
+    access,
     loading,
     notice,
     conflict,
@@ -639,6 +675,7 @@ export function useTracker(identity: Identity, canWrite = true) {
       setIssueSeverity,
       deleteIssue,
       setStaleThreshold,
+      saveAccess,
       exportData,
       importData,
       resetToSnapshot,

@@ -14,12 +14,14 @@ export interface ViewFilters {
   rag: RagStatus[]
   stale: boolean
   decisions: boolean
+  /** Person key from the people directory; only projects they manage. Empty for any. */
+  pm: string
 }
 
-export const noFilters = (): ViewFilters => ({ query: '', rag: [], stale: false, decisions: false })
+export const noFilters = (): ViewFilters => ({ query: '', rag: [], stale: false, decisions: false, pm: '' })
 
 export const hasFilters = (filters: ViewFilters): boolean =>
-  filters.query.trim() !== '' || filters.rag.length > 0 || filters.stale || filters.decisions
+  filters.query.trim() !== '' || filters.rag.length > 0 || filters.stale || filters.decisions || filters.pm !== ''
 
 export function projectMatchesQuery(project: Project, query: string, initiative?: Initiative): boolean {
   const needle = query.trim().toLowerCase()
@@ -35,10 +37,13 @@ export function projectMatchesQuery(project: Project, query: string, initiative?
 }
 
 /** One predicate every layout shares, so a chip means the same thing everywhere. */
-export function makeProjectFilter(state: TrackerState, filters: ViewFilters, staleDays: number) {
+export function makeProjectFilter(state: TrackerState, filters: ViewFilters, staleDays: number, people: Person[] = []) {
   const initiatives = new Map(state.initiatives.map((initiative) => [initiative.id, initiative]))
   const now = Date.now()
+  // Through the directory, so "Padman" and "Padman Perumal" are one PM.
+  const managed = filters.pm ? new Set(people.find((person) => person.key === filters.pm)?.pm ?? []) : null
   return (project: Project): boolean =>
+    (!managed || managed.has(project.id)) &&
     (filters.rag.length === 0 || filters.rag.includes(project.rag)) &&
     (!filters.stale || isStale(project, staleDays, now)) &&
     (!filters.decisions || needsDecision(project)) &&

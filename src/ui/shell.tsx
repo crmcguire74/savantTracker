@@ -2,6 +2,8 @@
 // theme toggle, account menu) and the left navigation rail.
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import type { FeatureKey } from '../auth/access'
+import { primaryRole, ROLE_ORDER, ROLES } from '../auth/roles'
 import { RAG } from '../constants'
 import { applyUpdate, promptInstall, usePwa } from '../hooks/usePwa'
 import type { View } from '../hooks/useRoute'
@@ -13,25 +15,28 @@ import { useApp } from './context'
 import { Icon } from './icons'
 import { forgetUnlock, lockApp } from './LoginGate'
 
-const NAV: Array<{ view: View; label: string; icon: (p: { size?: number }) => JSX.Element }> = [
-  { view: 'portfolio', label: 'Portfolio', icon: Icon.Portfolio },
-  { view: 'board', label: 'Board', icon: Icon.Board },
-  { view: 'timeline', label: 'Timeline', icon: Icon.Timeline },
-  { view: 'work', label: 'My work', icon: Icon.Person },
-  { view: 'workload', label: 'Workload', icon: Icon.People },
-  { view: 'reports', label: 'Reports', icon: Icon.Reports },
+// `feature` is the access-policy key that shows the item; none means every role.
+const NAV: Array<{ view: View; label: string; icon: (p: { size?: number }) => JSX.Element; feature?: FeatureKey }> = [
+  { view: 'portfolio', label: 'Portfolio', icon: Icon.Portfolio, feature: 'portfolio' },
+  { view: 'board', label: 'Board', icon: Icon.Board, feature: 'board' },
+  { view: 'timeline', label: 'Timeline', icon: Icon.Timeline, feature: 'timeline' },
+  { view: 'work', label: 'My work', icon: Icon.Person, feature: 'work' },
+  { view: 'workload', label: 'Workload', icon: Icon.People, feature: 'workload' },
+  { view: 'reports', label: 'Reports', icon: Icon.Reports, feature: 'reports' },
+  { view: 'admin', label: 'Admin', icon: Icon.Shield },
   { view: 'settings', label: 'Settings', icon: Icon.Settings },
 ]
 
 export function NavRail() {
-  const { route, navigate, me } = useApp()
+  const { route, navigate, me, can, isAdmin } = useApp()
   // A project page belongs to the portfolio; someone else's work belongs to Workload.
   const active: View =
     route.view === 'project' ? 'portfolio' : route.view === 'work' && route.person && route.person !== me?.key ? 'workload' : route.view
+  const items = NAV.filter((item) => (item.view === 'admin' ? isAdmin : !item.feature || can(item.feature)))
 
   return (
     <nav className="rail" aria-label="Main">
-      {NAV.map((item) => {
+      {items.map((item) => {
         const ItemIcon = item.icon
         const isActive = item.view === active
         return (
@@ -46,6 +51,8 @@ export function NavRail() {
                   return navigate({ view: 'portfolio', layout: 'ledger' })
                 case 'board':
                   return navigate({ view: 'board', layout: 'phase' })
+                case 'workload':
+                  return navigate({ view: 'workload', layout: 'people' })
                 default:
                   return navigate({ view: item.view } as Parameters<typeof navigate>[0])
               }
@@ -128,6 +135,7 @@ type Result =
   | { kind: 'project'; id: string; title: string; sub: string; status: 'green' | 'amber' | 'red' }
   | { kind: 'initiative'; id: string; pillarId: string; title: string; sub: string }
   | { kind: 'person'; key: string; title: string; sub: string; initials: string }
+  | { kind: 'pm'; key: string; title: string; sub: string; initials: string }
   | { kind: 'filter'; title: string }
 
 function Omnibox() {
@@ -184,17 +192,26 @@ function Omnibox() {
         title: initiative.title,
         sub: pillarTitle(pillars.get(initiative.pillarId)?.title ?? ''),
       }))
-    const folks = people
-      .filter((person) => person.name.toLowerCase().includes(needle))
+    const named = people.filter((person) => person.name.toLowerCase().includes(needle))
+    const plural = (count: number) => `${count} project${count === 1 ? '' : 's'}`
+    const managers = named
+      .filter((person) => person.pm.length > 0)
       .slice(0, 3)
       .map<Result>((person) => ({
-        kind: 'person',
+        kind: 'pm',
         key: person.key,
         title: person.name,
-        sub: `${person.projectIds.length} project${person.projectIds.length === 1 ? '' : 's'}`,
+        sub: `Show the ${plural(person.pm.length)} they manage`,
         initials: person.initials,
       }))
-    return [...projects, ...inits, ...folks, { kind: 'filter', title: query.trim() }]
+    const folks = named.slice(0, 3).map<Result>((person) => ({
+      kind: 'person',
+      key: person.key,
+      title: person.name,
+      sub: plural(person.projectIds.length),
+      initials: person.initials,
+    }))
+    return [...projects, ...inits, ...managers, ...folks, { kind: 'filter', title: query.trim() }]
   }, [query, tracker, people])
 
   useEffect(() => setCursor(0), [query])
@@ -211,6 +228,12 @@ function Omnibox() {
       case 'person':
         navigate({ view: 'work', person: result.key })
         break
+      case 'pm':
+        setFilters({ pm: result.key })
+        if (route.view !== 'portfolio' && route.view !== 'board' && route.view !== 'timeline') {
+          navigate({ view: 'portfolio', layout: 'ledger' })
+        }
+        break
       case 'filter':
         setFilters({ query: result.title })
         if (route.view !== 'portfolio' && route.view !== 'board' && route.view !== 'timeline') {
@@ -225,6 +248,7 @@ function Omnibox() {
   const groups: Array<{ label: string; kind: Result['kind'] }> = [
     { label: 'Projects', kind: 'project' },
     { label: 'Initiatives', kind: 'initiative' },
+    { label: 'Managed by', kind: 'pm' },
     { label: 'People', kind: 'person' },
   ]
 
@@ -235,8 +259,8 @@ function Omnibox() {
         ref={inputRef}
         className="omnibox-input"
         value={query}
-        placeholder="Search projects, owners, scope"
-        aria-label="Search projects, owners, scope"
+        placeholder="Search projects, owners, PMs, scope"
+        aria-label="Search projects, owners, project managers, scope"
         role="combobox"
         aria-expanded={open && results.length > 0}
         aria-controls="omnibox-results"
@@ -276,7 +300,7 @@ function Omnibox() {
                   return (
                     <OmniItem key={index} active={index === cursor} onHover={() => setCursor(index)} onChoose={() => choose(result)}>
                       {result.kind === 'project' && <Dot status={result.status} size={9} />}
-                      {result.kind === 'person' && <Avatar initials={result.initials} size={22} />}
+                      {(result.kind === 'person' || result.kind === 'pm') && <Avatar initials={result.initials} size={22} />}
                       {result.kind === 'initiative' && <Icon.Portfolio size={15} />}
                       <span className="omni-text">
                         <span className="omni-title">{result.title}</span>
@@ -323,7 +347,8 @@ function OmniItem(props: { active: boolean; onHover: () => void; onChoose: () =>
 }
 
 function AccountMenu() {
-  const { identity, identitySource, canWrite, navigate, me, openIdentity, openStorage, openChangeLog, themePreference, setThemePreference, tracker } = useApp()
+  const { identity, identitySource, roles, setTestRole, navigate, me, openIdentity, openStorage, openChangeLog, themePreference, setThemePreference, tracker } = useApp()
+  const role = primaryRole(roles)
   const pwa = usePwa()
   const [open, setOpen] = useState(false)
   const wrapRef = useRef<HTMLDivElement | null>(null)
@@ -365,7 +390,7 @@ function AccountMenu() {
           <div className="menu-head">
             <div className="menu-name">{identity.name || 'Name not set'}</div>
             <div className="menu-meta">
-              {canWrite ? 'Editor' : 'Viewer'} · {identitySource === 'entra' ? 'Signed in with Microsoft' : 'Local mode'}
+              {role ? ROLES[role].label : 'No role'} · {identitySource === 'entra' ? 'Signed in with Microsoft' : 'Local mode'}
             </div>
             {me && <div className="menu-meta">Tracked as {me.name}</div>}
           </div>
@@ -397,6 +422,27 @@ function AccountMenu() {
             <button type="button" role="menuitem" className="menu-item" onClick={act(applyUpdate)}>
               <Icon.Download size={16} /> Reload to update
             </button>
+          )}
+          {setTestRole && (
+            <>
+              <div className="menu-sep" />
+              <div className="menu-label">Test as role</div>
+              <div className="menu-theme menu-roles">
+                {ROLE_ORDER.map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    role="menuitemradio"
+                    aria-checked={role === value}
+                    className={role === value ? 'active' : ''}
+                    title={ROLES[value].description}
+                    onClick={() => setTestRole(value)}
+                  >
+                    {ROLES[value].label}
+                  </button>
+                ))}
+              </div>
+            </>
           )}
           <div className="menu-sep" />
           <div className="menu-label">Theme</div>

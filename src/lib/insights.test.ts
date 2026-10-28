@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { bundledSnapshot } from '../data/repository'
-import type { Project, TrackerState } from '../types'
+import { makeProject } from '../test-fixtures'
+import type { TrackerState } from '../types'
 import {
   makeProjectFilter,
   needsAttention,
@@ -14,33 +15,7 @@ import {
 } from './insights'
 import { buildPeople, extractNames, matchPerson } from './people'
 
-const project = (patch: Partial<Project>): Project => ({
-  id: 'p',
-  initiativeId: 'i',
-  title: 'Project',
-  businessOwner: '',
-  executionOwner: '',
-  projectManager: '',
-  scope: '',
-  trending: 'stable',
-  phase: '',
-  planLink: '',
-  startDate: '',
-  originalEndDate: '',
-  forecastEndDate: '',
-  nextMilestone: '',
-  nextMilestoneDate: '',
-  keyRisk: '',
-  decisionNeeded: '',
-  decisionOutcome: '',
-  rag: 'green',
-  progress: 0,
-  updatedAt: new Date().toISOString(),
-  updatedById: '',
-  updatedByName: '',
-  issues: [],
-  ...patch,
-})
+const project = makeProject
 
 describe('extractNames', () => {
   it.each([

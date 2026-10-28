@@ -14,7 +14,13 @@ export function appFileName(tag?: string): string {
 /** Hands the browser a JSON file to save. Returns the name it was offered as. */
 export function downloadAppFile(file: AppFile, tag?: string): string {
   const name = appFileName(tag)
-  const blob = new Blob([serializeAppFile(file)], { type: 'application/json' })
+  downloadText(name, serializeAppFile(file), 'application/json')
+  return name
+}
+
+/** Hands the browser any text file to save, under the given name. */
+export function downloadText(name: string, text: string, type: string): void {
+  const blob = new Blob([text], { type })
   const url = URL.createObjectURL(blob)
   const anchor = document.createElement('a')
   anchor.href = url
@@ -25,7 +31,6 @@ export function downloadAppFile(file: AppFile, tag?: string): string {
   anchor.remove()
   // Revoking immediately can cancel the download in some browsers.
   setTimeout(() => URL.revokeObjectURL(url), 10000)
-  return name
 }
 
 export function readFileAsText(file: File): Promise<string> {

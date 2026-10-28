@@ -1,12 +1,16 @@
-// 🗂️ Portfolio: the landing page. Three layouts over the same data:
+// 🗂️ Portfolio: the landing page. Four layouts over the same data, each one
+// shown only to the roles the access policy allows:
 //   Ledger           pillars on the left, initiatives as an accordion
 //   Heatmap          every initiative as a tile, colored by its worst project
 //   Leadership brief headline numbers, pillar cards, what needs attention
+//   Pillar pace      progress against schedule per pillar (PaceView.tsx)
 // Filter chips apply in every layout. In the ledger, an active filter swaps
 // the accordion for a flat list of matches across all pillars.
 
 import { useEffect, useMemo, useState } from 'react'
+import type { FeatureKey } from '../../auth/access'
 import type { PortfolioLayout } from '../../hooks/useRoute'
+import { PillarPace } from './PaceView'
 import {
   byStatusThenTitle,
   initiativeHeat,
@@ -34,14 +38,16 @@ import { useApp } from '../context'
 import { EditPillarForm, InitiativeForm, NewPillarForm, NewProjectForm } from '../forms'
 import { Icon } from '../icons'
 
-const LAYOUTS: Array<{ value: PortfolioLayout; label: string }> = [
-  { value: 'ledger', label: 'Ledger' },
-  { value: 'heatmap', label: 'Heatmap' },
-  { value: 'brief', label: 'Leadership brief' },
+const LAYOUTS: Array<{ value: PortfolioLayout; label: string; feature: FeatureKey }> = [
+  { value: 'ledger', label: 'Ledger', feature: 'portfolio' },
+  { value: 'heatmap', label: 'Heatmap', feature: 'portfolio.heatmap' },
+  { value: 'brief', label: 'Leadership brief', feature: 'portfolio.brief' },
+  { value: 'pace', label: 'Pillar pace', feature: 'portfolio.pace' },
 ]
 
 export function PortfolioView(props: { layout: PortfolioLayout; pillar?: string; initiative?: string }) {
-  const { navigate, tracker, matches, filtering } = useApp()
+  const { navigate, tracker, matches, filtering, can } = useApp()
+  const layouts = LAYOUTS.filter((layout) => can(layout.feature))
   const matchCount = useMemo(
     () => tracker.state.projects.filter(matches).length,
     [tracker.state.projects, matches],
@@ -56,7 +62,7 @@ export function PortfolioView(props: { layout: PortfolioLayout; pillar?: string;
           <Segmented
             label="Layout"
             value={props.layout}
-            options={LAYOUTS}
+            options={layouts}
             onChange={(layout) => navigate({ view: 'portfolio', layout, pillar: props.pillar }, { replace: true })}
           />
         }
@@ -66,6 +72,7 @@ export function PortfolioView(props: { layout: PortfolioLayout; pillar?: string;
       {props.layout === 'ledger' && <Ledger pillarId={props.pillar} initiativeId={props.initiative} />}
       {props.layout === 'heatmap' && <Heatmap />}
       {props.layout === 'brief' && <Brief />}
+      {props.layout === 'pace' && <PillarPace />}
     </div>
   )
 }

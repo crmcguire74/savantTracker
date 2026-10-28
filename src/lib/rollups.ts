@@ -111,20 +111,15 @@ export function searchProjects(
     .filter((project) => (filters.decisionsOnly ? hasDecisionRecord(project) : true))
     .map((project): SearchHit | null => {
       if (!query) return { project, ownerMatch: null }
-      const business = project.businessOwner.toLowerCase().includes(query)
-      const delivery = project.executionOwner.toLowerCase().includes(query)
+      const roles = [
+        project.businessOwner.toLowerCase().includes(query) && 'Business owner',
+        project.executionOwner.toLowerCase().includes(query) && 'Delivery owner',
+        project.projectManager.toLowerCase().includes(query) && 'Project manager',
+      ].filter((role): role is string => Boolean(role))
       const title = project.title.toLowerCase().includes(query)
       const scope = project.scope.toLowerCase().includes(query)
-      if (!business && !delivery && !title && !scope) return null
-      const ownerMatch =
-        business && delivery
-          ? 'Business & Delivery owner'
-          : business
-            ? 'Business owner'
-            : delivery
-              ? 'Delivery owner'
-              : null
-      return { project, ownerMatch }
+      if (roles.length === 0 && !title && !scope) return null
+      return { project, ownerMatch: roles.length ? roles.join(' & ') : null }
     })
     .filter((hit): hit is SearchHit => hit !== null)
     .sort((a, b) => byRag(a.project, b.project))

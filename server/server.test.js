@@ -23,6 +23,8 @@ const principal = (roles, name = 'Test Person', oid = 'oid-1234') =>
 const EDITOR = { 'x-ms-client-principal': principal(['Tracker.Editor']) }
 const VIEWER = { 'x-ms-client-principal': principal(['Tracker.Viewer'], 'Dana Viewer', 'oid-viewer') }
 const NO_ROLE = { 'x-ms-client-principal': principal([]) }
+const ADMIN = { 'x-ms-client-principal': principal(['Tracker.Admin'], 'Ada Admin', 'oid-admin') }
+const EXECUTIVE = { 'x-ms-client-principal': principal(['Tracker.Executive'], 'Eve Exec', 'oid-exec') }
 
 let server
 let base
@@ -100,6 +102,52 @@ describe('authorization', () => {
   it('refuses a viewer delete with 403', async () => {
     const response = await call('/api/documents/tracker%2Fstate', { method: 'DELETE', headers: VIEWER })
     expect(response.status).toBe(403)
+  })
+
+  it('lets an executive read but not write', async () => {
+    expect((await call('/api/documents/tracker%2Fstate', { headers: EXECUTIVE })).status).toBe(200)
+    const write = await call('/api/documents/tracker%2Fstate', {
+      method: 'PUT',
+      headers: EXECUTIVE,
+      body: JSON.stringify({ value: { quarter: 'exec' } }),
+    })
+    expect(write.status).toBe(403)
+  })
+
+  it('lets an admin write project data', async () => {
+    const response = await call('/api/documents/tracker.admin-probe', {
+      method: 'PUT',
+      headers: ADMIN,
+      body: JSON.stringify({ value: { ok: true } }),
+    })
+    expect(response.status).toBe(200)
+  })
+
+  it('keeps the access policy admin-only, even for editors', async () => {
+    const policy = JSON.stringify({ value: { features: {}, reports: {} } })
+    const asEditor = await call('/api/documents/tracker.access', { method: 'PUT', headers: EDITOR, body: policy })
+    expect(asEditor.status).toBe(403)
+    const asAdmin = await call('/api/documents/tracker.access', { method: 'PUT', headers: ADMIN, body: policy })
+    expect(asAdmin.status).toBe(200)
+    // Everyone with a role can still read it; the browser needs it to draw the nav.
+    expect((await call('/api/documents/tracker.access', { headers: VIEWER })).status).toBe(200)
+  })
+
+  it('acts as the tester’s picked role only when sign-in is off', async () => {
+    const asViewer = { 'x-tracker-dev-role': 'viewer' }
+    expect((await call('/api/me', { headers: asViewer })).status).toBe(401)
+    process.env.REQUIRE_AUTH = 'false'
+    try {
+      expect(await (await call('/api/me', { headers: asViewer })).json()).toMatchObject({ local: true, canWrite: false })
+      expect(await (await call('/api/me')).json()).toMatchObject({ local: true, canWrite: true, isAdmin: false })
+    } finally {
+      process.env.REQUIRE_AUTH = 'true'
+    }
+  })
+
+  it('reports admin standing at /api/me', async () => {
+    expect(await (await call('/api/me', { headers: ADMIN })).json()).toMatchObject({ canWrite: true, isAdmin: true })
+    expect(await (await call('/api/me', { headers: EDITOR })).json()).toMatchObject({ canWrite: true, isAdmin: false })
   })
 })
 

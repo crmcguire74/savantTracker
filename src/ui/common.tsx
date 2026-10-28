@@ -3,11 +3,13 @@
 // view falls back to. Colors come from CSS tokens so both themes just work.
 
 import { useEffect, useRef, type ReactNode } from 'react'
-import { RAG, TREND } from '../constants'
+import { primaryRole, ROLES } from '../auth/roles'
+import { firstAllowedRoute } from './access'
+import { RAG, TREND, VALIDATION } from '../constants'
 import { daysSince } from '../lib/id'
-import { phaseLabel, type ViewFilters } from '../lib/insights'
+import { noFilters, phaseLabel, type ViewFilters } from '../lib/insights'
 import { isStale, type RagCounts } from '../lib/rollups'
-import type { Project, RagStatus, Trend } from '../types'
+import type { Project, RagStatus, Trend, Validation } from '../types'
 import { useApp } from './context'
 import { Icon } from './icons'
 
@@ -72,7 +74,8 @@ export function Segmented<T extends string>(props: {
 
 /** The status / stale / decisions chip row. Shared by every filterable view. */
 export function FilterChips(props: { count?: number; noun?: string }) {
-  const { filters, setFilters, filtering, tracker } = useApp()
+  const { filters, setFilters, filtering, tracker, people } = useApp()
+  const managers = people.filter((person) => person.pm.length > 0).sort((a, b) => a.name.localeCompare(b.name))
   const toggleRag = (key: RagStatus) =>
     setFilters((current: ViewFilters) => ({
       ...current,
@@ -113,6 +116,20 @@ export function FilterChips(props: { count?: number; noun?: string }) {
         <Dot status="blue" />
         Decisions
       </button>
+      {managers.length > 0 && (
+        <label className={`chip chip-select${filters.pm ? ' active' : ''}`}>
+          <Icon.Person size={14} />
+          <span className="sr-only">Project manager</span>
+          <select value={filters.pm} onChange={(event) => setFilters({ pm: event.target.value })}>
+            <option value="">Any PM</option>
+            {managers.map((person) => (
+              <option key={person.key} value={person.key}>
+                PM: {person.name} ({person.pm.length})
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
       {filters.query.trim() && (
         <span className="chip active query-chip">
           “{filters.query.trim()}”
@@ -123,7 +140,7 @@ export function FilterChips(props: { count?: number; noun?: string }) {
       )}
       {filtering && (
         <>
-          <button type="button" className="link-btn" onClick={() => setFilters(() => ({ query: '', rag: [], stale: false, decisions: false }))}>
+          <button type="button" className="link-btn" onClick={() => setFilters(noFilters)}>
             Clear
           </button>
           {props.count !== undefined && (
@@ -210,6 +227,25 @@ export function EmptyState(props: { title: string; children?: ReactNode }) {
     <div className="empty-state">
       <div className="empty-title">{props.title}</div>
       {props.children && <div className="empty-body">{props.children}</div>}
+    </div>
+  )
+}
+
+/** Shown in place of a page the current role may not open. */
+export function NoAccess() {
+  const { navigate, can, roles, setTestRole } = useApp()
+  const role = primaryRole(roles)
+  return (
+    <div className="page">
+      <EmptyState title="This page isn’t available to your role">
+        <p>
+          {role ? `Your ${ROLES[role].label.toLowerCase()} role` : 'Your account'} doesn’t include this view. Ask a tracker
+          admin to grant it in the admin console{setTestRole ? ', or sign in as a different role to test it' : ''}.
+        </p>
+        <button type="button" className="btn btn-primary" onClick={() => navigate(firstAllowedRoute(can), { replace: true })}>
+          Go to a page you can open
+        </button>
+      </EmptyState>
     </div>
   )
 }
@@ -318,6 +354,8 @@ export function formatLogValue(fieldKey: string, value: string): string {
       return RAG[value as RagStatus]?.label ?? value
     case 'phase':
       return phaseLabel(value as Project['phase'])
+    case 'validation':
+      return VALIDATION[value as Exclude<Validation, ''>]?.label ?? value
     case 'trending':
       return TREND[value as Trend]?.label ?? value
     case 'progress':

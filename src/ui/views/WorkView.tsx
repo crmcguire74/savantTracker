@@ -63,7 +63,7 @@ export function WorkView(props: { person?: string }) {
       <div className="page">
         <PageHeader eyebrow="Team member" title="Person not found" />
         <EmptyState title="Nobody by that name owns a project">
-          <button type="button" className="btn btn-ghost" onClick={() => navigate({ view: 'workload' })}>
+          <button type="button" className="btn btn-ghost" onClick={() => navigate({ view: 'workload', layout: 'people' })}>
             Back to workload
           </button>
         </EmptyState>
@@ -251,7 +251,7 @@ function ClaimIdentity(props: { name: string; canRename: boolean; onRename: () =
         <p className="muted">No project has an owner yet.</p>
       )}
       <p className="hint">
-        Just looking? <button type="button" className="link-btn" onClick={() => navigate({ view: 'workload' })}>Browse everyone's work in Workload</button>.
+        Just looking? <button type="button" className="link-btn" onClick={() => navigate({ view: 'workload', layout: 'people' })}>Browse everyone's work in Workload</button>.
       </p>
     </div>
   )

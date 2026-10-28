@@ -2,7 +2,8 @@
 // only) identity and storage driver. Local and Azure deployments share this
 // page; the cards that only make sense locally are hidden under Entra.
 
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
+import { primaryRole, ROLE_ORDER, ROLES } from '../../auth/roles'
 import { STALE_PRESETS } from '../../constants'
 import { applyUpdate, checkForUpdate, promptInstall, usePwa } from '../../hooks/usePwa'
 import { isStale } from '../../lib/rollups'
@@ -25,7 +26,8 @@ export const storageLabel = (driver: string, source: 'entra' | 'local'): string 
 
 export function SettingsView() {
   const app = useApp()
-  const { tracker, canWrite, identity, identitySource, themePreference, setThemePreference, startImport, openStorage, openIdentity, ask, me, openChangeLog } = app
+  const { tracker, canWrite, identity, identitySource, roles, themePreference, setThemePreference, startImport, openStorage, openIdentity, ask, me, openChangeLog } = app
+  const role = primaryRole(roles)
   const { settings, actions, state, storageStatus, snapshotInfo } = tracker
   const [custom, setCustom] = useState(String(settings.staleThresholdDays))
   useEffect(() => setCustom(String(settings.staleThresholdDays)), [settings.staleThresholdDays])
@@ -110,23 +112,26 @@ export function SettingsView() {
 
           <section className="card pad">
             <h2 className="card-title">Access</h2>
+            <dl className="facts compact">
+              {ROLE_ORDER.map((value) => (
+                <Fragment key={value}>
+                  <dt>{ROLES[value].label}</dt>
+                  <dd>
+                    {ROLES[value].description} {ROLES[value].appRole} app role.
+                  </dd>
+                </Fragment>
+              ))}
+            </dl>
             {identitySource === 'entra' ? (
-              <>
-                <dl className="facts compact">
-                  <dt>Viewer</dt>
-                  <dd>Reads everything. Tracker.Viewer app role.</dd>
-                  <dt>Editor</dt>
-                  <dd>Creates, updates and deletes. Tracker.Editor app role.</dd>
-                </dl>
-                <div className="callout accent">
-                  You are signed in as <strong>{identity.name || 'an unnamed account'}</strong> with <strong>{canWrite ? 'Editor' : 'Viewer'}</strong> access.
-                  {!canWrite && ' Ask an administrator for Tracker.Editor to make changes.'}
-                </div>
-              </>
+              <div className="callout accent">
+                You are signed in as <strong>{identity.name || 'an unnamed account'}</strong> with <strong>{role ? ROLES[role].label : 'no'}</strong> access.
+                {!canWrite && ' Ask an administrator for Tracker.Editor to make changes.'}
+              </div>
             ) : (
               <>
                 <div className="callout amber">
-                  <strong>Local mode.</strong> There is no sign-in, so everyone using this copy is an editor. Use the Azure deployment for shared, role-controlled access.
+                  <strong>Local mode.</strong> There is no real sign-in: you are testing as <strong>{role ? ROLES[role].label : 'no role'}</strong>,
+                  picked at sign-in. Switch roles from the account menu. Use the Azure deployment for role-controlled access.
                 </div>
                 <div className="setting-line">
                   <span>

@@ -4,17 +4,20 @@
 
 import { useCallback, useEffect, useState } from 'react'
 
-export type PortfolioLayout = 'ledger' | 'heatmap' | 'brief'
+export type PortfolioLayout = 'ledger' | 'heatmap' | 'brief' | 'pace'
 export type BoardLayout = 'phase' | 'status'
+export type WorkloadLayout = 'people' | 'pm-heatmap'
 
 export type Route =
   | { view: 'portfolio'; layout: PortfolioLayout; pillar?: string; initiative?: string }
   | { view: 'board'; layout: BoardLayout }
   | { view: 'timeline' }
   | { view: 'work'; person?: string }
-  | { view: 'workload' }
-  | { view: 'reports' }
+  | { view: 'workload'; layout: WorkloadLayout }
+  /** `report` opens a printable report in place of the reports page. */
+  | { view: 'reports'; report?: string; pillar?: string }
   | { view: 'settings' }
+  | { view: 'admin' }
   | { view: 'project'; id: string }
 
 export type View = Route['view']
@@ -33,11 +36,13 @@ export function parseRoute(hash: string): Route {
     case 'work':
       return { view: 'work', person: get('person') }
     case 'workload':
-      return { view: 'workload' }
+      return { view: 'workload', layout: get('layout') === 'pm-heatmap' ? 'pm-heatmap' : 'people' }
     case 'reports':
-      return { view: 'reports' }
+      return { view: 'reports', report: get('report'), pillar: get('pillar') }
     case 'settings':
       return { view: 'settings' }
+    case 'admin':
+      return { view: 'admin' }
     case 'project':
       if (id) return { view: 'project', id: decodeURIComponent(id) }
       break
@@ -45,7 +50,7 @@ export function parseRoute(hash: string): Route {
   const layout = get('layout')
   return {
     view: 'portfolio',
-    layout: layout === 'heatmap' || layout === 'brief' ? layout : 'ledger',
+    layout: layout === 'heatmap' || layout === 'brief' || layout === 'pace' ? layout : 'ledger',
     pillar: get('pillar'),
     initiative: get('initiative'),
   }
@@ -69,6 +74,10 @@ export function formatRoute(route: Route): string {
       return `#/board${query({ layout: route.layout === 'phase' ? undefined : route.layout })}`
     case 'work':
       return `#/work${query({ person: route.person })}`
+    case 'workload':
+      return `#/workload${query({ layout: route.layout === 'people' ? undefined : route.layout })}`
+    case 'reports':
+      return `#/reports${query({ report: route.report, pillar: route.pillar })}`
     case 'project':
       return `#/project/${encodeURIComponent(route.id)}`
     default:

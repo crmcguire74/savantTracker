@@ -1,4 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { canRunReport, canUseFeature, type FeatureKey } from './auth/access'
+import { isAdmin } from './auth/roles'
+import type { ReportId } from './reports/catalog'
+import { featureForRoute } from './ui/access'
+import { NoAccess } from './ui/common'
+import { AdminView } from './ui/views/AdminView'
+import { ReportPreview } from './ui/views/ReportPreview'
 import { useIdentity } from './hooks/useIdentity'
 import { useMe } from './hooks/useMe'
 import { useRoute } from './hooks/useRoute'
@@ -21,8 +28,9 @@ import { WorkloadView } from './ui/views/WorkloadView'
 import { WorkView } from './ui/views/WorkView'
 
 export default function App() {
-  const { identity, canWrite, source: identitySource, resolving: identityResolving, setName } = useIdentity()
-  const tracker = useTracker(identity, canWrite)
+  const { identity, roles, canWrite, source: identitySource, resolving: identityResolving, setName, setTestRole } = useIdentity()
+  const admin = isAdmin(roles)
+  const tracker = useTracker(identity, canWrite, admin)
   const { state, settings, loading, notice, conflict, storageStatus, actions } = tracker
   const { route, navigate } = useRoute()
   const { theme, preference, setPreference, toggle } = useTheme()
@@ -37,7 +45,10 @@ export default function App() {
 
   const people = useMemo(() => buildPeople(state), [state])
   const { me, claimed, claim } = useMe(identity, people)
-  const matches = useMemo(() => makeProjectFilter(state, filters, settings.staleThresholdDays), [state, filters, settings.staleThresholdDays])
+  const matches = useMemo(
+    () => makeProjectFilter(state, filters, settings.staleThresholdDays, people),
+    [state, filters, settings.staleThresholdDays, people],
+  )
   const contextOf = useMemo(() => contextIndex(state), [state])
 
   // A new page starts at the top; a layout or selection change keeps scroll.
@@ -75,12 +86,20 @@ export default function App() {
     [actions],
   )
 
+  const can = useCallback((feature: FeatureKey) => canUseFeature(tracker.access, roles, feature), [tracker.access, roles])
+  const canReport = useCallback((id: ReportId) => canRunReport(tracker.access, roles, id), [tracker.access, roles])
+
   const value: AppContextValue = {
     tracker,
     identity,
     identitySource,
     canWrite,
     setName,
+    roles,
+    isAdmin: admin,
+    can,
+    canReport,
+    setTestRole,
     route,
     navigate,
     openProject,
@@ -175,6 +194,9 @@ export default function App() {
   )
 
   function renderView() {
+    const feature = featureForRoute(route)
+    if ((feature && !can(feature)) || (route.view === 'admin' && !admin)) return <NoAccess />
+
     switch (route.view) {
       case 'portfolio':
         return <PortfolioView layout={route.layout} pillar={route.pillar} initiative={route.initiative} />
@@ -185,11 +207,13 @@ export default function App() {
       case 'work':
         return <WorkView person={route.person} />
       case 'workload':
-        return <WorkloadView />
+        return <WorkloadView layout={route.layout} />
       case 'reports':
-        return <ReportsView />
+        return route.report ? <ReportPreview report={route.report} pillar={route.pillar} /> : <ReportsView />
       case 'settings':
         return <SettingsView />
+      case 'admin':
+        return <AdminView />
       case 'project':
         return <ProjectView id={route.id} />
     }

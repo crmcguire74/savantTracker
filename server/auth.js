@@ -10,8 +10,20 @@
 // REQUIRE_AUTH=false is for local development only. The startup check in
 // index.js refuses to run with it disabled outside development.
 
+const ADMIN_ROLE = 'Tracker.Admin'
 const EDITOR_ROLE = 'Tracker.Editor'
+const EXECUTIVE_ROLE = 'Tracker.Executive'
 const VIEWER_ROLE = 'Tracker.Viewer'
+
+// Every role that may open the tracker, and the ones that may change it.
+// Keep in step with src/auth/roles.ts and infra/app-roles.json.
+const KNOWN_ROLES = [ADMIN_ROLE, EDITOR_ROLE, EXECUTIVE_ROLE, VIEWER_ROLE]
+const WRITE_ROLES = [ADMIN_ROLE, EDITOR_ROLE]
+
+// Local testing: the browser names the role picked at its sign-in screen.
+// Only read when sign-in is off, where nothing is a security boundary anyway.
+const DEV_ROLE_HEADER = 'x-tracker-dev-role'
+const DEV_ROLES = { admin: ADMIN_ROLE, editor: EDITOR_ROLE, executive: EXECUTIVE_ROLE, viewer: VIEWER_ROLE }
 
 const ROLE_CLAIM_TYPES = new Set([
   'roles',
@@ -57,11 +69,14 @@ export function readIdentity(request) {
 
   if (!principal) {
     if (process.env.REQUIRE_AUTH === 'false') {
+      const picked = DEV_ROLES[String(request.headers[DEV_ROLE_HEADER] || '').toLowerCase()]
+      const roles = [picked || EDITOR_ROLE]
       return {
         id: 'local-dev',
         name: process.env.LOCAL_DEV_NAME || 'Local developer',
-        roles: [EDITOR_ROLE],
-        canWrite: true,
+        roles,
+        canWrite: roles.some((role) => WRITE_ROLES.includes(role)),
+        isAdmin: roles.includes(ADMIN_ROLE),
         source: 'local-dev',
       }
     }
@@ -80,7 +95,8 @@ export function readIdentity(request) {
     id,
     name,
     roles,
-    canWrite: roles.includes(EDITOR_ROLE),
+    canWrite: roles.some((role) => WRITE_ROLES.includes(role)),
+    isAdmin: roles.includes(ADMIN_ROLE),
     source: principal.auth_typ || 'aad',
   }
 }
@@ -94,7 +110,7 @@ export function requireReader(request, response, next) {
   }
   // A caller in the tenant with neither role assigned gets nothing. This is
   // the difference between "works at Savant" and "was given the tracker".
-  if (!identity.roles.includes(EDITOR_ROLE) && !identity.roles.includes(VIEWER_ROLE)) {
+  if (!identity.roles.some((role) => KNOWN_ROLES.includes(role))) {
     response.status(403).json({
       error: 'Your account has no role on this application. Ask an administrator to add you.',
     })
@@ -113,4 +129,13 @@ export function requireEditor(request, response, next) {
   next()
 }
 
-export { EDITOR_ROLE, VIEWER_ROLE }
+/** Only admins may change who sees what. */
+export function requireAdmin(request, response, next) {
+  if (!request.identity?.isAdmin) {
+    response.status(403).json({ error: 'Only a tracker admin can change access settings.' })
+    return
+  }
+  next()
+}
+
+export { ADMIN_ROLE, EDITOR_ROLE, EXECUTIVE_ROLE, VIEWER_ROLE, DEV_ROLE_HEADER }

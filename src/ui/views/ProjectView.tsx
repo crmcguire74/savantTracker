@@ -5,11 +5,11 @@
 // which is what lets the tracker detect a concurrent edit.
 
 import { useMemo, useState } from 'react'
-import { FIELD_LABELS, PHASE, RAG, SEVERITY, TREND } from '../../constants'
+import { FIELD_LABELS, PHASE, PHASE_SEQUENCE, RAG, SEVERITY, TREND, VALIDATION } from '../../constants'
 import { dateOnly, daysSince } from '../../lib/id'
 import { pillarLabel, slipDays } from '../../lib/insights'
 import { isStale, needsDecision } from '../../lib/rollups'
-import type { Phase, Project, ProjectFieldKey, ProjectFieldValue, RagStatus, Severity, Trend } from '../../types'
+import type { Phase, Project, ProjectFieldKey, ProjectFieldValue, RagStatus, Severity, Trend, Validation } from '../../types'
 import { EditableDate, EditableText, EditableTextArea, ProgressControl } from '../atoms'
 import { ageLabel, Drawer, EmptyState, formatLogValue, RAG_KEYS, Tag } from '../common'
 import { useApp } from '../context'
@@ -17,6 +17,7 @@ import { Icon } from '../icons'
 import { formatDay } from './WorkView'
 
 const PHASES = Object.keys(PHASE) as Exclude<Phase, ''>[]
+const VALIDATIONS = Object.keys(VALIDATION) as Exclude<Validation, ''>[]
 
 export function ProjectView(props: { id: string }) {
   const { tracker, navigate, canWrite, contextOf, openChangeLog } = useApp()
@@ -76,6 +77,11 @@ export function ProjectView(props: { id: string }) {
               {TREND[project.trending].symbol} {TREND[project.trending].label}
             </Tag>
             <Tag tone="outline">{project.phase ? PHASE[project.phase]?.label : 'No phase'}</Tag>
+            {project.validation && (
+              <Tag tone={VALIDATION[project.validation].tone} title={FIELD_LABELS.validation}>
+                Validation · {VALIDATION[project.validation].label}
+              </Tag>
+            )}
             {stale && age !== null && <Tag tone="amber">Stale · {age} days</Tag>}
             {needsDecision(project) && <Tag tone="blue">Decision waiting</Tag>}
             {project.planLink && (
@@ -104,7 +110,7 @@ export function ProjectView(props: { id: string }) {
           <section className="card pad">
             <div className="label-caps">Scope</div>
             <p className="prose">{project.scope.trim() || <span className="muted">No scope written yet.</span>}</p>
-            <div className="split">
+            <div className="split three">
               <div>
                 <div className="label-caps">Next milestone</div>
                 <p className="prose">
@@ -113,6 +119,10 @@ export function ProjectView(props: { id: string }) {
                   )}
                   {project.nextMilestoneDate && <span className="muted"> · {formatDay(project.nextMilestoneDate)}</span>}
                 </p>
+              </div>
+              <div>
+                <div className="label-caps">{FIELD_LABELS.dependencies}</div>
+                <p className="prose">{project.dependencies.trim() || <span className="muted">None recorded.</span>}</p>
               </div>
               <div>
                 <div className="label-caps tone-red">Key risk / blocker</div>
@@ -159,13 +169,15 @@ function useFieldUpdater(project: Project) {
 function PhaseStepper({ project }: { project: Project }) {
   const { canWrite } = useApp()
   const update = useFieldUpdater(project)
-  const current = project.phase ? PHASES.indexOf(project.phase) : -1
+  const multi = project.phase === 'multi_phase'
+  const current = PHASE_SEQUENCE.findIndex((phase) => phase === project.phase)
+  const multiLabel = PHASE.multi_phase.label
 
   return (
-    <section className="card stepper" aria-label="Phase">
+    <section className={`card stepper${multi ? ' release' : ''}`} aria-label="Phase">
       <ol className="steps">
-        {PHASES.map((phase, index) => {
-          const state = index < current ? 'done' : index === current ? 'current' : 'todo'
+        {PHASE_SEQUENCE.map((phase, index) => {
+          const state = multi ? 'parallel' : index < current ? 'done' : index === current ? 'current' : 'todo'
           const label = PHASE[phase].label
           return (
             <li key={phase} className={`step ${state}`}>
@@ -189,6 +201,19 @@ function PhaseStepper({ project }: { project: Project }) {
           )
         })}
       </ol>
+      {canWrite ? (
+        <button
+          type="button"
+          className={`release-toggle${multi ? ' active' : ''}`}
+          aria-pressed={multi}
+          title={multi ? 'Clear multi-phase' : 'Phases run in parallel across releases'}
+          onClick={() => update('phase', multi ? '' : 'multi_phase')}
+        >
+          {multiLabel}
+        </button>
+      ) : (
+        multi && <span className="release-toggle active">{multiLabel}</span>
+      )}
       <div className="stepper-progress">
         <span className="stepper-value">{project.progress}%</span>
         <span className="muted small">progress</span>
@@ -478,7 +503,7 @@ function UpdateDrawer({ project, onClose }: { project: Project; onClose: () => v
             </button>
           ))}
         </div>
-        <div className="form-grid">
+        <div className="form-grid three">
           <label className="field">
             <span>{FIELD_LABELS.trending}</span>
             <select className="select" value={project.trending} onChange={(event) => update('trending', event.target.value as Trend)}>
@@ -496,6 +521,17 @@ function UpdateDrawer({ project, onClose }: { project: Project; onClose: () => v
               {PHASES.map((key) => (
                 <option key={key} value={key}>
                   {PHASE[key].label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="field">
+            <span>{FIELD_LABELS.validation}</span>
+            <select className="select" value={project.validation} onChange={(event) => update('validation', event.target.value as Validation)}>
+              <option value="">Not set</option>
+              {VALIDATIONS.map((key) => (
+                <option key={key} value={key}>
+                  {VALIDATION[key].label}
                 </option>
               ))}
             </select>
@@ -519,7 +555,15 @@ function UpdateDrawer({ project, onClose }: { project: Project; onClose: () => v
       </fieldset>
 
       <fieldset className="form-section">
-        <legend>Risk and decision</legend>
+        <legend>Dependencies, risk and decision</legend>
+        <label className="field">
+          <span>{FIELD_LABELS.dependencies}</span>
+          <EditableTextArea
+            value={project.dependencies}
+            placeholder="Teams, vendors or other projects this one is waiting on"
+            onCommit={(value) => update('dependencies', value)}
+          />
+        </label>
         <label className="field">
           <span>{FIELD_LABELS.keyRisk}</span>
           <EditableTextArea value={project.keyRisk} placeholder="Why the status is what it is" onCommit={(value) => update('keyRisk', value)} />

@@ -5,11 +5,15 @@
 // your account holds the editor role. The browser asks once at startup.
 //
 // Running locally against IndexedDB there is no server and no Entra, so the
-// app falls back to a name you type once, kept in this browser. Nothing here
-// is a security boundary. The API enforces the role on every write; this
-// only decides which buttons are worth showing.
+// app falls back to a name you type once, kept in this browser, and the role
+// picked on the sign-in screen. With VITE_AUTH_MODE=entra the roles come from
+// the account's app-role claims instead. Nothing here is a security boundary.
+// The API enforces the role on every write; this only decides which buttons
+// and views are worth showing.
 
 import { useCallback, useEffect, useState } from 'react'
+import { canEdit, rolesFromClaims, type Role } from '../auth/roles'
+import { authMode, readDevRole, writeDevRole } from '../auth/session'
 import type { Identity } from '../types'
 import { uid } from '../lib/id'
 
@@ -17,13 +21,15 @@ const STORAGE_KEY = 'savant-tracker:identity'
 
 export interface IdentityState {
   identity: Identity
-  roles: string[]
+  roles: Role[]
   canWrite: boolean
   /** 'entra' when the server vouched for it, 'local' when self-declared. */
   source: 'entra' | 'local'
   /** True until the server has answered, so the UI does not flash view-only. */
   resolving: boolean
   setName: (name: string) => void
+  /** Local testing only: act as a different role without signing out. */
+  setTestRole: ((role: Role) => void) | null
 }
 
 const readStored = (): Identity | null => {
@@ -56,9 +62,11 @@ interface MeResponse {
 }
 
 export function useIdentity(): IdentityState {
+  const entraRoles = authMode() === 'entra'
   const [identity, setIdentity] = useState<Identity>(() => readStored() ?? { id: uid('local'), name: '' })
-  const [roles, setRoles] = useState<string[]>([])
-  const [canWrite, setCanWrite] = useState(true)
+  const [claimRoles, setClaimRoles] = useState<Role[]>([])
+  const [testRole, setTestRoleState] = useState<Role>(readDevRole)
+  const [serverAllowsWrite, setServerAllowsWrite] = useState(true)
   const [source, setSource] = useState<'entra' | 'local'>('local')
   const [resolving, setResolving] = useState(true)
 
@@ -77,14 +85,16 @@ export function useIdentity(): IdentityState {
         // you typed in this browser is still the best answer.
         const name = me.local ? (stored?.name ?? '') : (me.name || '')
         setIdentity({ id: me.id || stored?.id || uid('local'), name })
-        setRoles(me.roles ?? [])
-        setCanWrite(me.canWrite !== false)
+        setClaimRoles(rolesFromClaims(me.roles ?? []))
+        // A local server lets the tester's picked role through, so only a
+        // server with real sign-in gets a veto over writes.
+        setServerAllowsWrite(me.local || me.canWrite !== false)
         setSource(me.local ? 'local' : 'entra')
       } catch {
-        // No server, or not signed in. Local mode: you are the only writer.
+        // No server, or not signed in. Local mode: the picked role decides.
         if (cancelled) return
         setSource('local')
-        setCanWrite(true)
+        setServerAllowsWrite(true)
       } finally {
         if (!cancelled) setResolving(false)
       }
@@ -108,5 +118,20 @@ export function useIdentity(): IdentityState {
     [source],
   )
 
-  return { identity, roles, canWrite, source, resolving, setName }
+  const setTestRole = useCallback((role: Role) => {
+    writeDevRole(role)
+    setTestRoleState(role)
+  }, [])
+
+  const roles = entraRoles ? claimRoles : [testRole]
+
+  return {
+    identity,
+    roles,
+    canWrite: canEdit(roles) && serverAllowsWrite,
+    source,
+    resolving,
+    setName,
+    setTestRole: entraRoles ? null : setTestRole,
+  }
 }

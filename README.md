@@ -108,11 +108,16 @@ React app in browser
 Production uses Microsoft Entra ID through App Service Easy Auth.
 
 - Auth is enforced in the server before route access.
-- Reader access is granted to anyone with either of these app roles:
-  - Tracker.Viewer
+- Reader access is granted to anyone with any of these app roles:
+  - Tracker.Admin
   - Tracker.Editor
-- Writer access is allowed only to members of Tracker.Editor.
-- If a signed-in user has neither role, the API returns a 403 and asks them to request access.
+  - Tracker.Executive
+  - Tracker.Viewer
+- Writer access is allowed only to Tracker.Admin and Tracker.Editor.
+- The access policy document (tracker.access), which decides which roles see which views and reports, can be changed only by Tracker.Admin. Admins edit it in the app under **Admin**.
+- If a signed-in user has none of these roles, the API returns a 403 and asks them to request access.
+
+The browser takes roles from Entra only when built with `VITE_AUTH_MODE=entra`. Until then it shows the shared username and password screen with a role picker, so anyone can test every role. Turn it on once people are assigned roles; see [docs/PMO-ACTION-PLAN.md](docs/PMO-ACTION-PLAN.md).
 
 The server reads the App Service injected principal from the X-MS-CLIENT-PRINCIPAL header. Authorization logic lives in [server/auth.js](server/auth.js).
 
@@ -121,7 +126,7 @@ The server reads the App Service injected principal from the X-MS-CLIENT-PRINCIP
 When no Cosmos endpoint is configured, the server runs in local/demo mode.
 
 - No real authentication is used.
-- The app treats the caller as a local editor with a browser-local name.
+- The app acts as the role picked on the sign-in screen (Editor if none was picked), with a browser-local name. The browser sends the role in the `x-tracker-dev-role` header, which the server honours only while sign-in is off.
 - This is intended only for local testing or a shared laptop demo.
 - The server refuses to run with NODE_ENV=production unless COSMOS_ENDPOINT is set.
 

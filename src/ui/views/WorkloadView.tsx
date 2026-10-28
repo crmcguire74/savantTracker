@@ -1,16 +1,52 @@
 // 👥 Workload: who owns what. One row per person pulled from the owner
 // fields, with their projects split by status and by role. A row opens that
-// person's work page.
+// person's work page. The PM heat map layout lives in PmHeatmap.tsx.
 
 import { useMemo, useState } from 'react'
 import { countByRag } from '../../lib/rollups'
 import type { Person } from '../../lib/people'
+import type { WorkloadLayout } from '../../hooks/useRoute'
 import { Avatar, EmptyState, PageHeader, Segmented, StackedBar } from '../common'
 import { useApp } from '../context'
+import { PmHeatmap } from './PmHeatmap'
 
 type SortKey = 'total' | 'red' | 'issues' | 'name'
 
-export function WorkloadView() {
+export function WorkloadView(props: { layout: WorkloadLayout }) {
+  const { navigate, can } = useApp()
+  const showHeatmap = can('workload.pm-heatmap')
+  const layout = showHeatmap ? props.layout : 'people'
+
+  return (
+    <div className="page">
+      <PageHeader
+        eyebrow="Team workload"
+        title={layout === 'pm-heatmap' ? 'Which projects need help' : 'Who owns what'}
+        sub={
+          layout === 'pm-heatmap'
+            ? 'Every project in its project manager’s row, heated by how urgently it needs attention. Hottest rows first.'
+            : "Names are read from each project's business owner, delivery owner and project manager fields."
+        }
+        actions={
+          showHeatmap && (
+            <Segmented<WorkloadLayout>
+              label="View"
+              value={layout}
+              options={[
+                { value: 'people', label: 'People' },
+                { value: 'pm-heatmap', label: 'PM heat map' },
+              ]}
+              onChange={(next) => navigate({ view: 'workload', layout: next }, { replace: true })}
+            />
+          )
+        }
+      />
+      {layout === 'pm-heatmap' ? <PmHeatmap /> : <People />}
+    </div>
+  )
+}
+
+function People() {
   const { people, tracker, navigate, me } = useApp()
   const [sort, setSort] = useState<SortKey>('total')
 
@@ -44,25 +80,20 @@ export function WorkloadView() {
   const open = (person: Person) => navigate({ view: 'work', person: person.key === me?.key ? undefined : person.key })
 
   return (
-    <div className="page">
-      <PageHeader
-        eyebrow="Team workload"
-        title="Who owns what"
-        sub="Names are read from each project's business owner, delivery owner and project manager fields."
-        actions={
-          <Segmented<SortKey>
-            label="Sort"
-            value={sort}
-            options={[
-              { value: 'total', label: 'Most projects' },
-              { value: 'red', label: 'Off track' },
-              { value: 'issues', label: 'Open issues' },
-              { value: 'name', label: 'Name' },
-            ]}
-            onChange={setSort}
-          />
-        }
-      />
+    <>
+      <div className="workload-sort">
+        <Segmented<SortKey>
+          label="Sort"
+          value={sort}
+          options={[
+            { value: 'total', label: 'Most projects' },
+            { value: 'red', label: 'Off track' },
+            { value: 'issues', label: 'Open issues' },
+            { value: 'name', label: 'Name' },
+          ]}
+          onChange={setSort}
+        />
+      </div>
 
       {rows.length === 0 ? (
         <EmptyState title="No owners recorded yet">Add business or delivery owners on projects to see workload here.</EmptyState>
@@ -99,6 +130,6 @@ export function WorkloadView() {
           ))}
         </div>
       )}
-    </div>
+    </>
   )
 }

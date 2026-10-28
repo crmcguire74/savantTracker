@@ -1,7 +1,12 @@
 // 🔒 Temporary access gate. It keeps casual visitors out while the app is
 // being trialled; it is not security. The credentials ship in the bundle, so
 // real access control stays with the server (Easy Auth in Azure).
+//
+// Locally the gate also asks which role to test as. With VITE_AUTH_MODE=entra
+// the gate steps aside: Entra has signed the user in and supplies the roles.
 import { useState, type FormEvent, type ReactNode } from 'react'
+import { ROLE_ORDER, ROLES, type Role } from '../auth/roles'
+import { authMode, forgetDevRole, readDevRole, writeDevRole } from '../auth/session'
 import { Icon } from './icons'
 
 const USERNAME = 'savant'
@@ -30,15 +35,17 @@ export function forgetUnlock(): void {
   } catch {
     // Nothing stored means nothing to forget.
   }
+  forgetDevRole()
 }
 
 export function LoginGate({ children }: { children: ReactNode }) {
   const [unlocked, setUnlocked] = useState(readUnlocked)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [role, setRole] = useState<Role>(readDevRole)
   const [error, setError] = useState('')
 
-  if (unlocked) return <>{children}</>
+  if (unlocked || authMode() === 'entra') return <>{children}</>
 
   const submit = (event: FormEvent) => {
     event.preventDefault()
@@ -52,6 +59,7 @@ export function LoginGate({ children }: { children: ReactNode }) {
     } catch {
       // Private windows may refuse storage; the gate just asks again next load.
     }
+    writeDevRole(role)
     setUnlocked(true)
   }
 
@@ -88,13 +96,24 @@ export function LoginGate({ children }: { children: ReactNode }) {
             onChange={(event) => setPassword(event.target.value)}
           />
         </label>
+        <fieldset className="login-roles">
+          <legend>Test as</legend>
+          {ROLE_ORDER.map((value) => (
+            <label key={value} className={`login-role${role === value ? ' active' : ''}`}>
+              <input type="radio" name="role" value={value} checked={role === value} onChange={() => setRole(value)} />
+              <span className="login-role-name">{ROLES[value].label}</span>
+              <span className="login-role-desc">{ROLES[value].description}</span>
+            </label>
+          ))}
+          <p className="hint">Local testing only. In Azure, your role comes from your Microsoft account.</p>
+        </fieldset>
         {error && (
           <p className="login-error" role="alert">
             {error}
           </p>
         )}
         <button type="submit" className="btn btn-primary block" disabled={!username || !password}>
-          Sign in
+          Sign in as {ROLES[role].label.toLowerCase()}
         </button>
       </form>
     </main>

@@ -7,11 +7,14 @@
 // with no envelope and a `updatedBy` field that held a display name; those
 // files still import cleanly and get normalized on the way in.
 
+import { LEGACY_PHASE, PHASE, VALIDATION } from '../constants'
 import type {
   Initiative,
   Issue,
+  LegacyPhase,
   LogEntry,
   Phase,
+  Validation,
   Pillar,
   Project,
   RagStatus,
@@ -50,17 +53,14 @@ export interface ParseResult {
 const RAG_VALUES: RagStatus[] = ['green', 'amber', 'red']
 const TREND_VALUES: Trend[] = ['improving', 'stable', 'declining']
 const SEVERITY_VALUES: Severity[] = ['low', 'medium', 'high']
-const PHASE_VALUES: Phase[] = [
-  '',
-  'discovery',
-  'design',
-  'execution',
-  'build',
-  'uat',
-  'launch',
-  'continuous_improvement',
-  'close',
-]
+const PHASE_VALUES: Phase[] = ['', ...(Object.keys(PHASE) as Exclude<Phase, ''>[])]
+const VALIDATION_VALUES: Validation[] = ['', ...(Object.keys(VALIDATION) as Exclude<Validation, ''>[])]
+
+/** Current phase for any stored value, retired ones included. */
+export function migratePhase(value: unknown): Phase {
+  if (typeof value === 'string' && value in LEGACY_PHASE) return LEGACY_PHASE[value as LegacyPhase]
+  return PHASE_VALUES.includes(value as Phase) ? (value as Phase) : ''
+}
 
 const asRecord = (value: unknown): Record<string, unknown> =>
   value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {}
@@ -103,13 +103,15 @@ function normalizeProject(raw: unknown, index: number, warnings: string[]): Proj
     projectManager: str(source.projectManager),
     scope: str(source.scope),
     trending: oneOf(source.trending, TREND_VALUES, 'stable'),
-    phase: oneOf(source.phase, PHASE_VALUES, ''),
+    phase: migratePhase(source.phase),
+    validation: oneOf(source.validation, VALIDATION_VALUES, ''),
     planLink: str(source.planLink),
     startDate: str(source.startDate),
     originalEndDate: str(source.originalEndDate),
     forecastEndDate: str(source.forecastEndDate),
     nextMilestone: str(source.nextMilestone),
     nextMilestoneDate: str(source.nextMilestoneDate),
+    dependencies: str(source.dependencies),
     keyRisk: str(source.keyRisk),
     decisionNeeded: str(source.decisionNeeded),
     decisionOutcome: str(source.decisionOutcome),
@@ -225,6 +227,23 @@ export function parseAppFile(input: unknown): ParseResult {
     },
     warnings,
   }
+}
+
+/**
+ * Brings a stored state document up to the current shape: retired phases
+ * mapped, new fields defaulted. Runs on every read, so a document written by
+ * an older build is upgraded in memory and saved in the new shape on the
+ * next edit. Returns the same object when nothing needed changing.
+ */
+export function upgradeState(state: TrackerState): TrackerState {
+  const stale = state.projects.some(
+    (project) =>
+      !('validation' in project) ||
+      !('dependencies' in project) ||
+      migratePhase(project.phase) !== project.phase,
+  )
+  if (!stale) return state
+  return { ...state, projects: state.projects.map((project, index) => normalizeProject(project, index, [])) }
 }
 
 export function createAppFile(

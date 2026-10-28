@@ -1,10 +1,24 @@
 [
   {
     "allowedMemberTypes": ["User"],
+    "description": "Can edit everything and decide which roles see which views and reports.",
+    "displayName": "Tracker Admin",
+    "isEnabled": true,
+    "value": "Tracker.Admin"
+  },
+  {
+    "allowedMemberTypes": ["User"],
     "description": "Can view and edit every project, initiative and pillar in the tracker.",
     "displayName": "Tracker Editor",
     "isEnabled": true,
     "value": "Tracker.Editor"
+  },
+  {
+    "allowedMemberTypes": ["User"],
+    "description": "Leadership. Can view the tracker and executive reports but cannot change anything.",
+    "displayName": "Tracker Executive",
+    "isEnabled": true,
+    "value": "Tracker.Executive"
   },
   {
     "allowedMemberTypes": ["User"],

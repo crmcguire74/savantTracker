@@ -56,32 +56,37 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 2. The two roles
+# 2. The app roles (Admin, Editor, Executive, Viewer)
 #
 # Roles are declared on the registration, then assigned to people. A role has
-# to keep the same id across updates, so ids are generated once and reused.
+# to keep the same id across updates, or every assignment to it is lost, so an
+# existing role's id is reused and only roles new to app-roles.json get one.
 # ---------------------------------------------------------------------------
-echo "==> [2/6] App roles (Tracker.Editor, Tracker.Viewer)"
-EXISTING_ROLES=$(az ad app show --id "$APP_ID" --query "appRoles[?value=='Tracker.Editor' || value=='Tracker.Viewer'] | length(@)" -o tsv)
+echo "==> [2/6] App roles (from infra/app-roles.json)"
+EXISTING_JSON=$(mktemp)
+az ad app show --id "$APP_ID" --query "appRoles" -o json > "$EXISTING_JSON"
+ROLES_FILE=$(mktemp)
 
-if [[ "$EXISTING_ROLES" != "2" ]]; then
-  EDITOR_ID=$(cat /proc/sys/kernel/random/uuid)
-  VIEWER_ID=$(cat /proc/sys/kernel/random/uuid)
-  ROLES_FILE=$(mktemp)
-  python3 - "$SCRIPT_DIR/app-roles.json" "$EDITOR_ID" "$VIEWER_ID" > "$ROLES_FILE" <<'PY'
-import json, sys
-roles = json.load(open(sys.argv[1]))
-ids = {'Tracker.Editor': sys.argv[2], 'Tracker.Viewer': sys.argv[3]}
-for role in roles:
-    role['id'] = ids[role['value']]
-print(json.dumps(roles))
+if python3 - "$SCRIPT_DIR/app-roles.json" "$EXISTING_JSON" > "$ROLES_FILE" <<'PY'
+import json, sys, uuid
+wanted = json.load(open(sys.argv[1]))
+existing = {role['value']: role for role in json.load(open(sys.argv[2])) or []}
+missing = [role['value'] for role in wanted if role['value'] not in existing]
+for role in wanted:
+    role['id'] = existing.get(role['value'], {}).get('id') or str(uuid.uuid4())
+# Roles on the registration that the file no longer lists stay, so removing
+# one is a deliberate act in the portal rather than a side effect of a deploy.
+kept = [role for value, role in existing.items() if value not in {r['value'] for r in wanted}]
+print(json.dumps(wanted + kept))
+sys.exit(0 if missing else 3)
 PY
+then
   az ad app update --id "$APP_ID" --app-roles "@${ROLES_FILE}" --output none
-  rm -f "$ROLES_FILE"
-  echo "    roles created"
+  echo "    roles added or updated"
 else
-  echo "    roles already present, leaving them alone"
+  echo "    every role already present, leaving them alone"
 fi
+rm -f "$ROLES_FILE" "$EXISTING_JSON"
 
 # ---------------------------------------------------------------------------
 # 3. Service principal

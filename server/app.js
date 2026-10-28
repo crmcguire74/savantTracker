@@ -16,9 +16,16 @@ import express from 'express'
 import compression from 'compression'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { readIdentity, requireEditor, requireReader } from './auth.js'
+import { readIdentity, requireAdmin, requireEditor, requireReader } from './auth.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
+
+// The access policy decides who sees which views and reports; only an admin
+// may change it. Matches DOC_KEYS.access in src/data/repository.ts.
+const ADMIN_DOCUMENTS = new Set(['tracker.access'])
+
+const requireWriter = (request, response, next) =>
+  ADMIN_DOCUMENTS.has(request.params.key) ? requireAdmin(request, response, next) : requireEditor(request, response, next)
 
 const ifMatchVersion = (request) => {
   const header = request.headers['if-match']
@@ -65,6 +72,7 @@ export function createApp({ store, staticRoot = join(here, '..', 'dist'), serveS
       name: identity.name,
       roles: identity.roles,
       canWrite: identity.canWrite,
+      isAdmin: identity.isAdmin,
       // true when the server has no real sign-in behind it, so the browser
       // knows to keep offering the "set your name" prompt.
       local: identity.source === 'local-dev',
@@ -95,7 +103,7 @@ export function createApp({ store, staticRoot = join(here, '..', 'dist'), serveS
     }
   })
 
-  app.put('/api/documents/:key', requireEditor, async (request, response) => {
+  app.put('/api/documents/:key', requireWriter, async (request, response) => {
     try {
       response.json(await store.writeDocument(request.params.key, request.body?.value, ifMatchVersion(request)))
     } catch (error) {
@@ -107,7 +115,7 @@ export function createApp({ store, staticRoot = join(here, '..', 'dist'), serveS
     }
   })
 
-  app.delete('/api/documents/:key', requireEditor, async (request, response) => {
+  app.delete('/api/documents/:key', requireWriter, async (request, response) => {
     try {
       await store.deleteDocument(request.params.key, ifMatchVersion(request))
       response.status(204).end()

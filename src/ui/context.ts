@@ -3,6 +3,9 @@
 // identity or routing.
 
 import { createContext, useContext } from 'react'
+import type { FeatureKey } from '../auth/access'
+import type { Role } from '../auth/roles'
+import type { ReportId } from '../reports/catalog'
 import type { Route } from '../hooks/useRoute'
 import type { ThemePreference, Theme } from '../hooks/useTheme'
 import type { TrackerApi } from '../hooks/useTracker'
@@ -23,6 +26,14 @@ export interface AppContextValue {
   identitySource: 'entra' | 'local'
   canWrite: boolean
   setName: (name: string) => void
+
+  roles: Role[]
+  isAdmin: boolean
+  /** True when the access policy lets the current roles use this view or layout. */
+  can: (feature: FeatureKey) => boolean
+  canReport: (id: ReportId) => boolean
+  /** Local testing only; null under Entra, where roles come from the account. */
+  setTestRole: ((role: Role) => void) | null
 
   route: Route
   navigate: (route: Route, options?: { replace?: boolean }) => void

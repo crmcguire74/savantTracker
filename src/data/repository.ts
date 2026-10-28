@@ -13,15 +13,18 @@ import {
   type Unsubscribe,
   type Versioned,
 } from '../storage'
+import { normalizePolicy, type AccessPolicy } from '../auth/access'
 import { LOG_LIMIT } from '../constants'
 import type { LogEntry, Settings, TrackerState } from '../types'
-import { APP_FILE_ID, createAppFile, parseAppFile, type AppFile } from './appfile'
+import { APP_FILE_ID, createAppFile, parseAppFile, upgradeState, type AppFile } from './appfile'
 import rawSnapshot from './snapshot.json'
 
 export const DOC_KEYS = {
   state: 'tracker.state',
   log: 'tracker.log',
   settings: 'tracker.settings',
+  /** Who sees which views and reports. Admin-only writes, enforced by the API. */
+  access: 'tracker.access',
 } as const
 
 export interface Bootstrap {
@@ -84,7 +87,7 @@ export class TrackerRepository {
     const settings = this.#remember(await this.#storage.get<Settings>(DOC_KEYS.settings), DOC_KEYS.settings)
 
     return {
-      state: state ?? { quarter: '', pillars: [], initiatives: [], projects: [] },
+      state: state ? upgradeState(state) : { quarter: '', pillars: [], initiatives: [], projects: [] },
       log: logDoc?.entries ?? [],
       settings: settings ?? { staleThresholdDays: 30 },
       seeded,
@@ -93,7 +96,8 @@ export class TrackerRepository {
   }
 
   async readState(): Promise<TrackerState | null> {
-    return this.#remember(await this.#storage.get<TrackerState>(DOC_KEYS.state), DOC_KEYS.state)
+    const state = this.#remember(await this.#storage.get<TrackerState>(DOC_KEYS.state), DOC_KEYS.state)
+    return state && upgradeState(state)
   }
 
   /**
@@ -128,9 +132,27 @@ export class TrackerRepository {
     this.#versions.set(DOC_KEYS.settings, written.version)
   }
 
+  /** The stored policy, upgraded to the current catalog; defaults when none was ever saved. */
+  async readAccess(): Promise<AccessPolicy> {
+    return normalizePolicy(this.#remember(await this.#storage.get<AccessPolicy>(DOC_KEYS.access), DOC_KEYS.access))
+  }
+
+  /** Last write wins: access is edited by a handful of admins, rarely at once. */
+  async saveAccess(policy: AccessPolicy): Promise<void> {
+    const written = await this.#storage.put(DOC_KEYS.access, policy)
+    this.#versions.set(DOC_KEYS.access, written.version)
+  }
+
+  subscribeAccess(listener: (policy: AccessPolicy) => void): Unsubscribe {
+    return this.#storage.subscribe<AccessPolicy>(DOC_KEYS.access, (doc) => {
+      listener(normalizePolicy(this.#remember(doc, DOC_KEYS.access)))
+    })
+  }
+
   subscribeState(listener: (state: TrackerState | null) => void): Unsubscribe {
     return this.#storage.subscribe<TrackerState>(DOC_KEYS.state, (doc) => {
-      listener(this.#remember(doc, DOC_KEYS.state))
+      const state = this.#remember(doc, DOC_KEYS.state)
+      listener(state && upgradeState(state))
     })
   }
 
