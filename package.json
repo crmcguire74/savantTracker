@@ -8,6 +8,8 @@
   },
   "scripts": {
     "dev": "vite",
+    "dev:module": "vite --open /workbench.html",
+    "new:module": "node tools/new-module.mjs",
     "build": "tsc -b && tsc -p tsconfig.node.json && vite build",
     "build:static": "tsc -b && tsc -p tsconfig.node.json && vite build --mode static",
     "preview": "vite preview",

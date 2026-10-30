@@ -15,3 +15,11 @@ export const daysSince = (iso: string): number | null => {
   if (Number.isNaN(parsed)) return null
   return Math.floor((Date.now() - parsed) / (24 * 60 * 60 * 1000))
 }
+
+const DAY = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })
+
+/** "Oct 13, 2026" for a date or timestamp, read as a calendar day. */
+export const formatDay = (iso: string): string => {
+  const time = Date.parse(iso.slice(0, 10) + 'T00:00:00Z')
+  return Number.isNaN(time) ? iso : DAY.format(time)
+}

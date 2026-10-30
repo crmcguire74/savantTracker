@@ -2,6 +2,11 @@
 // in the admin console; it is stored as its own document (tracker.access)
 // so changing access never touches project data.
 //
+// Features are not listed here. Each module declares the features it adds in
+// its manifest, and the platform hands the assembled catalogue to these
+// functions. A stored grant for a feature this build does not know is kept,
+// not dropped, so removing a module and adding it back loses nothing.
+//
 // Admin always sees everything, whatever the policy says, so no edit can
 // lock the last admin out of the console that would undo it.
 //
@@ -13,17 +18,8 @@
 import { REPORT_CATALOG, REPORT_IDS, type ReportId } from '../reports/catalog'
 import { isRole, ROLE_ORDER, type Role } from './roles'
 
-export type FeatureKey =
-  | 'portfolio'
-  | 'portfolio.heatmap'
-  | 'portfolio.brief'
-  | 'portfolio.pace'
-  | 'board'
-  | 'timeline'
-  | 'work'
-  | 'workload'
-  | 'workload.pm-heatmap'
-  | 'admin'
+/** A module-declared key such as `board` or `portfolio.brief`. */
+export type FeatureKey = string
 
 export interface FeatureInfo {
   key: FeatureKey
@@ -33,23 +29,7 @@ export interface FeatureInfo {
   defaultRoles: Role[]
 }
 
-const EVERYONE: Role[] = ['admin', 'editor', 'executive', 'viewer']
-const LEADERSHIP: Role[] = ['admin', 'editor', 'executive']
-
-export const FEATURE_CATALOG: FeatureInfo[] = [
-  { key: 'portfolio', label: 'Portfolio', defaultRoles: EVERYONE },
-  { key: 'portfolio.heatmap', label: 'Initiative heatmap', parent: 'portfolio', defaultRoles: EVERYONE },
-  { key: 'portfolio.brief', label: 'Leadership brief', parent: 'portfolio', defaultRoles: LEADERSHIP },
-  { key: 'portfolio.pace', label: 'Pillar pace', parent: 'portfolio', defaultRoles: LEADERSHIP },
-  { key: 'board', label: 'Board', defaultRoles: EVERYONE },
-  { key: 'timeline', label: 'Timeline', defaultRoles: EVERYONE },
-  { key: 'work', label: 'My work', defaultRoles: ['admin', 'editor'] },
-  { key: 'workload', label: 'Workload', defaultRoles: LEADERSHIP },
-  { key: 'workload.pm-heatmap', label: 'PM heat map', parent: 'workload', defaultRoles: LEADERSHIP },
-  // Replaced the old Reports view; a fresh key so grants made for Reports
-  // don't carry over to a page built for the PMO.
-  { key: 'admin', label: 'Admin page', defaultRoles: ['admin', 'editor'] },
-]
+export type FeatureCatalog = readonly FeatureInfo[]
 
 export interface AccessPolicy {
   features: Record<FeatureKey, Role[]>
@@ -58,32 +38,31 @@ export interface AccessPolicy {
   updatedByName: string
 }
 
-export function defaultPolicy(): AccessPolicy {
+const cleanRoles = (value: unknown, fallback: readonly Role[]): Role[] => {
+  const roles = new Set(Array.isArray(value) ? value.filter(isRole) : fallback)
+  roles.add('admin')
+  return ROLE_ORDER.filter((role) => roles.has(role))
+}
+
+export function defaultPolicy(catalog: FeatureCatalog = []): AccessPolicy {
   return {
-    features: Object.fromEntries(FEATURE_CATALOG.map((f) => [f.key, [...f.defaultRoles]])) as AccessPolicy['features'],
-    reports: Object.fromEntries(REPORT_CATALOG.map((r) => [r.id, [...r.defaultRoles]])) as AccessPolicy['reports'],
+    features: Object.fromEntries(catalog.map((f) => [f.key, cleanRoles(undefined, f.defaultRoles)])),
+    reports: Object.fromEntries(REPORT_CATALOG.map((r) => [r.id, cleanRoles(undefined, r.defaultRoles)])) as AccessPolicy['reports'],
     updatedAt: '',
     updatedByName: '',
   }
 }
 
-const cleanRoles = (value: unknown, fallback: Role[]): Role[] => {
-  if (!Array.isArray(value)) return [...fallback]
-  const roles = new Set(value.filter(isRole))
-  roles.add('admin')
-  return ROLE_ORDER.filter((role) => roles.has(role))
-}
-
 /**
- * Reads a stored policy of any age. Features or reports added since it was
- * saved get their defaults; ones that no longer exist are dropped.
+ * Reads a stored policy of any age. Features in the catalogue that it never
+ * saved get their defaults; features outside the catalogue are kept as saved.
  */
-export function normalizePolicy(raw: unknown): AccessPolicy {
-  const base = defaultPolicy()
+export function normalizePolicy(raw: unknown, catalog: FeatureCatalog = []): AccessPolicy {
+  const base = defaultPolicy(catalog)
   const source = raw && typeof raw === 'object' ? (raw as Partial<Record<keyof AccessPolicy, unknown>>) : {}
   const features = (source.features && typeof source.features === 'object' ? source.features : {}) as Record<string, unknown>
   const reports = (source.reports && typeof source.reports === 'object' ? source.reports : {}) as Record<string, unknown>
-  for (const feature of FEATURE_CATALOG) base.features[feature.key] = cleanRoles(features[feature.key], feature.defaultRoles)
+  for (const [key, value] of Object.entries(features)) base.features[key] = cleanRoles(value, base.features[key] ?? [])
   for (const id of REPORT_IDS) base.reports[id] = cleanRoles(reports[id], base.reports[id])
   base.updatedAt = typeof source.updatedAt === 'string' ? source.updatedAt : ''
   base.updatedByName = typeof source.updatedByName === 'string' ? source.updatedByName : ''
@@ -93,18 +72,25 @@ export function normalizePolicy(raw: unknown): AccessPolicy {
 const holds = (allowed: readonly Role[], roles: readonly Role[]): boolean =>
   roles.includes('admin') || roles.some((role) => allowed.includes(role))
 
+/** The roles a feature is open to: the saved grant, else the declared default. */
+export function featureRoles(policy: AccessPolicy, key: FeatureKey, catalog: FeatureCatalog = []): Role[] {
+  return policy.features[key] ?? catalog.find((feature) => feature.key === key)?.defaultRoles ?? []
+}
+
 /** A layout needs its parent view too, so hiding Workload hides the PM heat map. */
-export function canUseFeature(policy: AccessPolicy, roles: readonly Role[], key: FeatureKey): boolean {
-  const info = FEATURE_CATALOG.find((feature) => feature.key === key)
-  if (info?.parent && !canUseFeature(policy, roles, info.parent)) return false
-  return holds(policy.features[key] ?? [], roles)
+export function canUseFeature(policy: AccessPolicy, roles: readonly Role[], key: FeatureKey, catalog: FeatureCatalog = []): boolean {
+  const info = catalog.find((feature) => feature.key === key)
+  if (info?.parent && !canUseFeature(policy, roles, info.parent, catalog)) return false
+  return holds(featureRoles(policy, key, catalog), roles)
 }
 
 /**
- * Spreadsheets download from the account menu, so they need nothing else. The
- * one-pager is printed from the leadership brief, so it needs the brief too.
+ * Spreadsheets download from the account menu, so they need nothing else. A
+ * report printed from a view (the one-pager, from the leadership brief) needs
+ * that view too.
  */
-export function canRunReport(policy: AccessPolicy, roles: readonly Role[], id: ReportId): boolean {
-  if (id === 'pillar-one-pager' && !canUseFeature(policy, roles, 'portfolio.brief')) return false
+export function canRunReport(policy: AccessPolicy, roles: readonly Role[], id: ReportId, catalog: FeatureCatalog = []): boolean {
+  const needs = REPORT_CATALOG.find((report) => report.id === id)?.requiresFeature
+  if (needs && !canUseFeature(policy, roles, needs, catalog)) return false
   return holds(policy.reports[id] ?? [], roles)
 }

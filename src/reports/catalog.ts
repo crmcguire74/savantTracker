@@ -22,6 +22,8 @@ export interface ReportInfo {
   audience: string
   formats: ReportFormat[]
   defaultRoles: Role[]
+  /** An access-policy feature the report also needs, because it opens from that view. */
+  requiresFeature?: string
 }
 
 const EVERYONE: Role[] = ['admin', 'editor', 'executive', 'viewer']
@@ -36,6 +38,7 @@ export const REPORT_CATALOG: ReportInfo[] = [
     audience: 'Leadership',
     formats: ['print'],
     defaultRoles: LEADERSHIP,
+    requiresFeature: 'portfolio.brief',
   },
   {
     id: 'status-register',

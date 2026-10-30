@@ -3,14 +3,12 @@
 // view falls back to. Colors come from CSS tokens so both themes just work.
 
 import { useEffect, useRef, type ReactNode } from 'react'
-import { primaryRole, ROLES } from '../auth/roles'
-import { firstAllowedRoute } from './access'
 import { RAG, TREND, VALIDATION } from '../constants'
 import { daysSince } from '../lib/id'
 import { noFilters, phaseLabel, type ViewFilters } from '../lib/insights'
 import { isStale, type RagCounts } from '../lib/rollups'
 import type { Project, RagStatus, Trend, Validation } from '../types'
-import { useApp } from './context'
+import { usePlatform } from '../platform/context'
 import { Icon } from './icons'
 
 export const RAG_KEYS: RagStatus[] = ['green', 'amber', 'red']
@@ -74,7 +72,7 @@ export function Segmented<T extends string>(props: {
 
 /** The pillar / status / stale / decisions chip row. Shared by every filterable view. */
 export function FilterChips(props: { count?: number; noun?: string }) {
-  const { filters, setFilters, filtering, tracker, people } = useApp()
+  const { filters, setFilters, filtering, tracker, people } = usePlatform()
   const managers = people.filter((person) => person.pm.length > 0).sort((a, b) => a.name.localeCompare(b.name))
   const toggleRag = (key: RagStatus) =>
     setFilters((current: ViewFilters) => ({
@@ -248,25 +246,6 @@ export function EmptyState(props: { title: string; children?: ReactNode }) {
   )
 }
 
-/** Shown in place of a page the current role may not open. */
-export function NoAccess() {
-  const { navigate, can, roles, setTestRole } = useApp()
-  const role = primaryRole(roles)
-  return (
-    <div className="page">
-      <EmptyState title="This page isn’t available to your role">
-        <p>
-          {role ? `Your ${ROLES[role].label.toLowerCase()} role` : 'Your account'} doesn’t include this view. Ask a tracker
-          admin to grant it in the admin console{setTestRole ? ', or sign in as a different role to test it' : ''}.
-        </p>
-        <button type="button" className="btn btn-primary" onClick={() => navigate(firstAllowedRoute(can), { replace: true })}>
-          Go to a page you can open
-        </button>
-      </EmptyState>
-    </div>
-  )
-}
-
 export function Drawer(props: { onClose: () => void; label: string; header?: ReactNode; actions?: ReactNode; footer?: ReactNode; children: ReactNode; wide?: boolean }) {
   const panelRef = useRef<HTMLDivElement | null>(null)
   const onClose = props.onClose
@@ -325,7 +304,7 @@ export function ownerLine(project: Project): string {
 
 /** Table-style list of projects. Used for filtered results and lists in reports. */
 export function ProjectList(props: { projects: Project[]; showPath?: boolean; empty?: string }) {
-  const { openProject, contextOf, tracker } = useApp()
+  const { openProject, contextOf, tracker } = usePlatform()
   const staleDays = tracker.settings.staleThresholdDays
   const now = Date.now()
 

@@ -2,7 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
 import { startPwa } from './hooks/usePwa'
-import { LoginGate } from './ui/LoginGate'
+import { LoginGate } from './platform/LoginGate'
 import './styles.css'
 
 const container = document.getElementById('root')

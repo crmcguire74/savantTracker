@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { canRunReport, canUseFeature, defaultPolicy, normalizePolicy } from '../auth/access'
 import { rolesFromClaims } from '../auth/roles'
 import { buildPeople } from '../lib/people'
+import { MODULES } from '../modules'
+import { createRegistry } from '../platform/registry'
 import { makeProject, makeState } from '../test-fixtures'
 import type { LogEntry } from '../types'
 import { buildCsvReport, type ReportInput } from './builders'
@@ -96,35 +98,45 @@ describe('pillar one-pager', () => {
 })
 
 describe('access policy', () => {
+  // The catalogue is assembled from the modules, as the running app does.
+  const catalog = createRegistry(MODULES, { strict: true }).features
+
   it('maps Entra claims to roles and ignores unknown ones', () => {
     expect(rolesFromClaims(['Tracker.Viewer', 'Tracker.Admin', 'Something.Else'])).toEqual(['admin', 'viewer'])
   })
 
   it('gives admins everything whatever the policy says', () => {
-    const policy = normalizePolicy({ features: { workload: [] }, reports: { 'change-log': [] } })
-    expect(canUseFeature(policy, ['admin'], 'workload')).toBe(true)
-    expect(canRunReport(policy, ['admin'], 'change-log')).toBe(true)
+    const policy = normalizePolicy({ features: { workload: [] }, reports: { 'change-log': [] } }, catalog)
+    expect(canUseFeature(policy, ['admin'], 'workload', catalog)).toBe(true)
+    expect(canRunReport(policy, ['admin'], 'change-log', catalog)).toBe(true)
     expect(policy.features.workload).toEqual(['admin'])
   })
 
   it('hides a layout when its parent view is hidden', () => {
-    const policy = defaultPolicy()
+    const policy = defaultPolicy(catalog)
     policy.features.workload = ['admin']
-    expect(canUseFeature(policy, ['executive'], 'workload.pm-heatmap')).toBe(false)
+    expect(canUseFeature(policy, ['executive'], 'workload.pm-heatmap', catalog)).toBe(false)
   })
 
   it('hides the one-pager with the leadership brief, but not the spreadsheets', () => {
-    const policy = defaultPolicy()
+    const policy = defaultPolicy(catalog)
     policy.features['portfolio.brief'] = ['admin']
-    expect(canRunReport(policy, ['executive'], 'pillar-one-pager')).toBe(false)
-    expect(canRunReport(policy, ['executive'], 'decision-log')).toBe(true)
-    expect(canRunReport(policy, ['viewer'], 'status-register')).toBe(true)
+    expect(canRunReport(policy, ['executive'], 'pillar-one-pager', catalog)).toBe(false)
+    expect(canRunReport(policy, ['executive'], 'decision-log', catalog)).toBe(true)
+    expect(canRunReport(policy, ['viewer'], 'status-register', catalog)).toBe(true)
   })
 
   it('fills in features and reports added after a policy was saved', () => {
-    const policy = normalizePolicy({ features: { board: ['viewer'] } })
+    const policy = normalizePolicy({ features: { board: ['viewer'] } }, catalog)
     expect(policy.features.board).toEqual(['admin', 'viewer'])
-    expect(policy.features['portfolio.pace']).toEqual(defaultPolicy().features['portfolio.pace'])
+    expect(policy.features['portfolio.pace']).toEqual(defaultPolicy(catalog).features['portfolio.pace'])
     expect(Object.keys(policy.reports)).toEqual(REPORT_IDS)
+  })
+
+  it('keeps grants for features this build does not include', () => {
+    const policy = normalizePolicy({ features: { 'retired-module': ['viewer'] } }, catalog)
+    expect(policy.features['retired-module']).toEqual(['admin', 'viewer'])
+    expect(canUseFeature(policy, ['viewer'], 'never-declared', catalog)).toBe(false)
+    expect(canUseFeature(policy, ['admin'], 'never-declared', catalog)).toBe(true)
   })
 })

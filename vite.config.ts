@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto'
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 
@@ -56,6 +57,26 @@ function serviceWorker(): Plugin {
 export default defineConfig({
   base: './',
   plugins: [react(), serviceWorker()],
-  build: { outDir: 'dist', sourcemap: true },
+  // Modules import the platform only through `@sdk`; see src/sdk/index.ts.
+  resolve: {
+    alias: [
+      { find: /^@sdk$/, replacement: fileURLToPath(new URL('./src/sdk/index.ts', import.meta.url)) },
+      { find: /^@sdk\/testing$/, replacement: fileURLToPath(new URL('./src/sdk/testing.ts', import.meta.url)) },
+    ],
+  },
+  build: {
+    outDir: 'dist',
+    sourcemap: true,
+    rollupOptions: {
+      output: {
+        // Each module is its own lazy chunk; name it after the module so a
+        // network panel or an error report says which one it is.
+        chunkFileNames: (chunk) => {
+          const owner = chunk.facadeModuleId?.match(/[\\/]src[\\/]modules[\\/]([^\\/]+)[\\/]entry\.tsx$/)?.[1]
+          return owner ? `assets/module-${owner}-[hash].js` : 'assets/[name]-[hash].js'
+        },
+      },
+    },
+  },
   server: { port: 5173 },
 })
