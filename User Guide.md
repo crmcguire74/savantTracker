@@ -89,7 +89,7 @@ When the app opens:
 ## 4. Main screen layout
 
 - **Top bar**: the On track / At risk / Off track counts (click one to see those projects), the search box (press `/` to jump to it), the theme toggle, and your avatar menu (My work, Change log, Export backup, theme, Settings).
-- **Left rail**: Portfolio, Board, Timeline, My work, Workload, Reports, Settings. On a phone the rail moves to the bottom of the screen.
+- **Left rail**: Portfolio, Board, Timeline, My work, Workload, Admin, Access (admins only), Settings. On a phone the rail moves to the bottom of the screen.
 - **Filter chips**: On track, At risk, Off track, Stale and Decisions. They work the same way on Portfolio, Board and Timeline, and stay applied as you move between those three. Click **Clear** to reset.
 
 Every page has its own link, so you can bookmark a pillar, a board layout or a project and send it to a colleague.
@@ -167,11 +167,19 @@ Type in the search box at the top to jump straight to a project, an initiative o
 - **Stale** means not updated for longer than the stale threshold, which is set in Settings.
 - **Decisions** means a decision has been requested but no outcome has been recorded yet.
 
-## 10. Reports and the change log
+## 10. Admin, exports and the change log
 
-**Reports** is the printable status pack: headline numbers, status by pillar, projects by phase, the decision backlog, stale projects (oldest first) and recent activity. Click **Print** for a clean, paper-friendly version. The headline tiles open the matching projects.
+**Admin** is the PMO's upkeep page. It shows how many decisions are waiting and how many projects are stale, plus the monday.com sync status (with a **Pull from monday** button once the connection is set up). Below that are three lists:
 
-**Change log**: open it from a project page (that project's history first, with an "Everything" switch), from your avatar menu, or from Reports or Settings. Each entry shows what changed, who changed it, when, and the old and new values. Editors can click **Restore previous** to undo a field edit.
+- **Stale projects**, longest without an update first. Use **Stale for** to show only projects quiet for 30, 60 or 90+ days, and the PM picker to see one PM's projects or the ones with no PM.
+- **Decisions needed**, the running list of decisions waiting on leadership, longest-waiting first.
+- **Recent activity**, the latest edits.
+
+**Export**: open your avatar menu and choose **Export** to download any spreadsheet report your role can use (status register, status by PM, needs attention, decision log, change log) or a full backup.
+
+**Pillar one-pager**: on **Portfolio → Leadership brief**, click **Open one-pager**. If you've picked a pillar with the pillar filter, it opens just that pillar. Each page links back to its pillar in WiseTrack, and the link still works after you save it as a PDF.
+
+**Change log**: open it from a project page (that project's history first, with an "Everything" switch), from your avatar menu, or from Admin or Settings. Each entry shows what changed, who changed it, when, and the old and new values. Editors can click **Restore previous** to undo a field edit.
 
 ## 11. Importing and exporting tracker data
 
@@ -236,7 +244,7 @@ Settings → Access shows the role you are signed in with. If you cannot access 
 
 ### Find stale work
 
-1. Click the **Stale** chip on Portfolio or Board, or see "Stale projects" in Reports.
+1. Click the **Stale** chip on Portfolio or Board, or see "Stale projects" on the Admin page, where you can narrow by how long they have been quiet and by PM.
 2. Open each project, refresh its status, or ping its owner.
 
 ### Fix a mistake

@@ -14,10 +14,11 @@ describe('hash routes', () => {
     { view: 'portfolio', layout: 'pace' },
     { view: 'workload', layout: 'people' },
     { view: 'workload', layout: 'pm-heatmap' },
-    { view: 'reports' },
-    { view: 'reports', report: 'pillar-one-pager', pillar: 'obj-2' },
+    { view: 'onepager' },
+    { view: 'onepager', pillar: 'obj-2' },
     { view: 'settings' },
     { view: 'admin' },
+    { view: 'access' },
     { view: 'project', id: 'proj-1789-42' },
   ])('round-trips %o', (route) => {
     expect(parseRoute(formatRoute(route))).toEqual({ ...route })
@@ -27,6 +28,11 @@ describe('hash routes', () => {
     expect(parseRoute('')).toEqual({ view: 'portfolio', layout: 'ledger', pillar: undefined, initiative: undefined })
     expect(parseRoute('#/nope')).toMatchObject({ view: 'portfolio', layout: 'ledger' })
     expect(parseRoute('#/project/')).toMatchObject({ view: 'portfolio' })
+  })
+
+  it('sends links from the old Reports page to their new homes', () => {
+    expect(parseRoute('#/reports')).toEqual({ view: 'admin' })
+    expect(parseRoute('#/reports?report=pillar-one-pager&pillar=obj-2')).toEqual({ view: 'onepager', pillar: 'obj-2' })
   })
 
   it('ignores unknown layout values', () => {

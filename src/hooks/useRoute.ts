@@ -14,10 +14,13 @@ export type Route =
   | { view: 'timeline' }
   | { view: 'work'; person?: string }
   | { view: 'workload'; layout: WorkloadLayout }
-  /** `report` opens a printable report in place of the reports page. */
-  | { view: 'reports'; report?: string; pillar?: string }
+  /** The printable pillar one-pager; every pillar unless one is named. */
+  | { view: 'onepager'; pillar?: string }
   | { view: 'settings' }
+  /** PMO upkeep: stale projects, open decisions, recent activity, monday sync. */
   | { view: 'admin' }
+  /** Who sees which views and reports. Admin role only. */
+  | { view: 'access' }
   | { view: 'project'; id: string }
 
 export type View = Route['view']
@@ -37,12 +40,17 @@ export function parseRoute(hash: string): Route {
       return { view: 'work', person: get('person') }
     case 'workload':
       return { view: 'workload', layout: get('layout') === 'pm-heatmap' ? 'pm-heatmap' : 'people' }
+    case 'onepager':
+      return { view: 'onepager', pillar: get('pillar') }
+    // Links saved before the Reports page became Admin.
     case 'reports':
-      return { view: 'reports', report: get('report'), pillar: get('pillar') }
+      return get('report') === 'pillar-one-pager' ? { view: 'onepager', pillar: get('pillar') } : { view: 'admin' }
     case 'settings':
       return { view: 'settings' }
     case 'admin':
       return { view: 'admin' }
+    case 'access':
+      return { view: 'access' }
     case 'project':
       if (id) return { view: 'project', id: decodeURIComponent(id) }
       break
@@ -76,8 +84,8 @@ export function formatRoute(route: Route): string {
       return `#/work${query({ person: route.person })}`
     case 'workload':
       return `#/workload${query({ layout: route.layout === 'people' ? undefined : route.layout })}`
-    case 'reports':
-      return `#/reports${query({ report: route.report, pillar: route.pillar })}`
+    case 'onepager':
+      return `#/onepager${query({ pillar: route.pillar })}`
     case 'project':
       return `#/project/${encodeURIComponent(route.id)}`
     default:

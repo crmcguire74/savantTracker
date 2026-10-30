@@ -1,10 +1,10 @@
 // 📄 Project page. Reads like a status report; editing happens in place for
 // the things people do often (resolve an issue, record a decision, move the
-// phase) and in the "Update status" drawer for everything else. Every edit
+// phase) and in the "Update project" drawer for everything else. Every edit
 // goes through updateProjectField with the value the field started from,
 // which is what lets the tracker detect a concurrent edit.
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { FIELD_LABELS, PHASE, PHASE_SEQUENCE, RAG, SEVERITY, TREND, VALIDATION } from '../../constants'
 import { dateOnly, daysSince } from '../../lib/id'
 import { pillarLabel, slipDays } from '../../lib/insights'
@@ -97,7 +97,7 @@ export function ProjectView(props: { id: string }) {
           </button>
           {canWrite && (
             <button type="button" className="btn btn-primary" onClick={() => setEditing(true)}>
-              Update status
+              Update project
             </button>
           )}
         </div>
@@ -474,7 +474,6 @@ function RecentChanges({ project }: { project: Project }) {
 }
 
 function UpdateDrawer({ project, onClose }: { project: Project; onClose: () => void }) {
-  const { ask, tracker, navigate, contextOf } = useApp()
   const update = useFieldUpdater(project)
 
   return (
@@ -483,8 +482,14 @@ function UpdateDrawer({ project, onClose }: { project: Project; onClose: () => v
       onClose={onClose}
       wide
       header={<span className="muted small">Changes save as you go and are logged.</span>}
+      actions={<ProjectSettingsMenu project={project} onClose={onClose} />}
+      footer={
+        <button type="button" className="btn btn-primary block" onClick={onClose}>
+          Save and close
+        </button>
+      }
     >
-      <h2 className="drawer-title">Update status</h2>
+      <h2 className="drawer-title">Update project</h2>
       <p className="muted">{project.title}</p>
 
       <fieldset className="form-section">
@@ -637,33 +642,61 @@ function UpdateDrawer({ project, onClose }: { project: Project; onClose: () => v
           <EditableText value={project.planLink} placeholder="https://…" onCommit={(value) => update('planLink', value)} />
         </label>
       </fieldset>
-
-      <fieldset className="form-section danger-zone">
-        <legend>Danger zone</legend>
-        <button
-          type="button"
-          className="btn btn-danger"
-          onClick={() =>
-            ask({
-              title: 'Delete project?',
-              message: `Delete “${project.title}”? The change log records the deletion but cannot undo it.`,
-              confirmLabel: 'Delete project',
-              onConfirm: () => {
-                const context = contextOf(project)
-                void tracker.actions.deleteProject(project.id)
-                onClose()
-                navigate({ view: 'portfolio', layout: 'ledger', pillar: context.pillar?.id, initiative: context.initiative?.id }, { replace: true })
-              },
-            })
-          }
-        >
-          <Icon.Trash size={15} /> Delete project
-        </button>
-      </fieldset>
-
-      <button type="button" className="btn btn-primary block" onClick={onClose}>
-        Done
-      </button>
     </Drawer>
+  )
+}
+
+/** Gear menu in the drawer's corner. Rare, destructive actions live here so they take a deliberate extra click. */
+function ProjectSettingsMenu({ project, onClose }: { project: Project; onClose: () => void }) {
+  const { ask, tracker, navigate, contextOf } = useApp()
+  const [open, setOpen] = useState(false)
+  const wrapRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const onClick = (event: MouseEvent) => {
+      if (!wrapRef.current?.contains(event.target as Node)) setOpen(false)
+    }
+    window.addEventListener('mousedown', onClick)
+    return () => window.removeEventListener('mousedown', onClick)
+  }, [open])
+
+  const confirmDelete = () => {
+    setOpen(false)
+    ask({
+      title: 'Delete project?',
+      message: `Delete “${project.title}”? It disappears from the portfolio and every report. The change log records the deletion but cannot undo it.`,
+      confirmLabel: 'Delete project',
+      onConfirm: () => {
+        const context = contextOf(project)
+        void tracker.actions.deleteProject(project.id)
+        onClose()
+        navigate({ view: 'portfolio', layout: 'ledger', pillar: context.pillar?.id, initiative: context.initiative?.id }, { replace: true })
+      },
+    })
+  }
+
+  return (
+    <div className="drawer-menu" ref={wrapRef}>
+      <button
+        type="button"
+        className={`icon-btn${open ? ' active' : ''}`}
+        aria-label="Project settings"
+        title="Project settings"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+      >
+        <Icon.Settings />
+      </button>
+      {open && (
+        <div className="menu" role="menu">
+          <div className="menu-label">Project settings</div>
+          <button type="button" role="menuitem" className="menu-item danger" onClick={confirmDelete}>
+            <Icon.Trash size={16} /> Delete project…
+          </button>
+        </div>
+      )}
+    </div>
   )
 }

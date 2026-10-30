@@ -1,10 +1,12 @@
-// 🖨️ Printable reports. Today that is the pillar one-pager: one landscape
-// page per pillar laid out like the leadership OKR slide, so it can be saved
-// as PDF from the print dialog and dropped into the deck. The toolbar never
-// prints; each page breaks onto its own sheet.
+// 🖨️ The pillar one-pager: one landscape page per pillar laid out like the
+// leadership OKR slide, so it can be saved as PDF from the print dialog and
+// dropped into the deck. Opened from the leadership brief. Each sheet links
+// back to its pillar in WiseTrack, and the link survives "Save as PDF". The
+// toolbar never prints; each page breaks onto its own sheet.
 
 import { useMemo, type ReactNode } from 'react'
-import { REPORT_CATALOG, reportInfo, type ReportId } from '../../reports/catalog'
+import { formatRoute } from '../../hooks/useRoute'
+import { reportInfo } from '../../reports/catalog'
 import { buildOnePager, type Bullet, type OnePager } from '../../reports/onepager'
 import { Dot, EmptyState, RagCountRow } from '../common'
 import { useApp } from '../context'
@@ -12,9 +14,11 @@ import { Icon } from '../icons'
 import { PaceTag, PaceTrack } from '../pace'
 import { formatDay } from './WorkView'
 
-const isReportId = (value: string): value is ReportId => REPORT_CATALOG.some((report) => report.id === value)
+/** Absolute, so it still works from a PDF opened outside the app. */
+const pillarUrl = (pillarId: string): string =>
+  `${window.location.origin}${window.location.pathname}${formatRoute({ view: 'portfolio', layout: 'ledger', pillar: pillarId })}`
 
-export function ReportPreview(props: { report: string; pillar?: string }) {
+export function ReportPreview(props: { pillar?: string }) {
   const { tracker, navigate, canReport } = useApp()
   const { state, log, settings } = tracker
 
@@ -24,16 +28,16 @@ export function ReportPreview(props: { report: string; pillar?: string }) {
   }, [state, log, settings.staleThresholdDays, props.pillar])
 
   const back = (
-    <button type="button" className="back-link" onClick={() => navigate({ view: 'reports' })}>
-      <Icon.ArrowLeft size={15} /> Reports
+    <button type="button" className="back-link" onClick={() => navigate({ view: 'portfolio', layout: 'brief' })}>
+      <Icon.ArrowLeft size={15} /> Leadership brief
     </button>
   )
 
-  if (!isReportId(props.report) || props.report !== 'pillar-one-pager' || !canReport(props.report)) {
+  if (!canReport('pillar-one-pager')) {
     return (
       <div className="page">
         {back}
-        <EmptyState title="That report isn’t available">It may have been renamed, or your role may not include it.</EmptyState>
+        <EmptyState title="The one-pager isn’t available to your role">An admin can turn it on from the Access page.</EmptyState>
       </div>
     )
   }
@@ -43,7 +47,7 @@ export function ReportPreview(props: { report: string; pillar?: string }) {
       <div className="report-toolbar no-print">
         {back}
         <div className="report-toolbar-title">
-          <strong>{reportInfo(props.report).title}</strong>
+          <strong>{reportInfo('pillar-one-pager').title}</strong>
           <span className="muted small">
             {pages.length} page{pages.length === 1 ? '' : 's'} · landscape · choose “Save as PDF” in the print dialog
           </span>
@@ -53,7 +57,7 @@ export function ReportPreview(props: { report: string; pillar?: string }) {
           <select
             className="select"
             value={props.pillar ?? ''}
-            onChange={(event) => navigate({ view: 'reports', report: props.report, pillar: event.target.value || undefined }, { replace: true })}
+            onChange={(event) => navigate({ view: 'onepager', pillar: event.target.value || undefined }, { replace: true })}
           >
             <option value="">All pillars</option>
             {state.pillars.map((pillar) => (
@@ -78,17 +82,25 @@ export function ReportPreview(props: { report: string; pillar?: string }) {
 }
 
 function OnePagerSheet({ page }: { page: OnePager }) {
+  const url = pillarUrl(page.pillar.id)
   return (
     <article className="sheet" aria-label={`${page.eyebrow}: ${page.title}`}>
       <header className="sheet-head">
         <div>
           <div className="sheet-eyebrow">{page.eyebrow}</div>
-          <h1 className="sheet-title">{page.title}</h1>
+          <h1 className="sheet-title">
+            <a href={url}>{page.title}</a>
+          </h1>
         </div>
-        <div className="sheet-brand">
+        <a className="sheet-brand" href={url} title="Open this pillar in WiseTrack">
           <Icon.Logo size={30} />
-          <span>WiseTrack</span>
-        </div>
+          <span className="sheet-brand-text">
+            WiseTrack
+            <span className="sheet-brand-link">
+              View live <Icon.External size={11} />
+            </span>
+          </span>
+        </a>
       </header>
 
       <div className="sheet-grid">
@@ -176,6 +188,9 @@ function OnePagerSheet({ page }: { page: OnePager }) {
       <footer className="sheet-foot">
         <span className="sheet-updated">Updated {formatDay(page.asOf)}</span>
         <span>Bars show work done; the line marks where the schedule says it should be today.</span>
+        <a className="sheet-link" href={url}>
+          Open {page.eyebrow} in WiseTrack
+        </a>
       </footer>
     </article>
   )

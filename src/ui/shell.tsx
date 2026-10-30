@@ -7,7 +7,10 @@ import { primaryRole, ROLE_ORDER, ROLES } from '../auth/roles'
 import { RAG } from '../constants'
 import { applyUpdate, promptInstall, usePwa } from '../hooks/usePwa'
 import type { View } from '../hooks/useRoute'
+import { downloadText } from '../lib/file-io'
 import { projectMatchesQuery } from '../lib/insights'
+import { buildCsvReport } from '../reports/builders'
+import { REPORT_CATALOG, type ReportId } from '../reports/catalog'
 import { countByRag } from '../lib/rollups'
 import { initialsOf } from '../lib/people'
 import { Avatar, Dot, pillarTitle, RAG_KEYS } from './common'
@@ -22,17 +25,21 @@ const NAV: Array<{ view: View; label: string; icon: (p: { size?: number }) => JS
   { view: 'timeline', label: 'Timeline', icon: Icon.Timeline, feature: 'timeline' },
   { view: 'work', label: 'My work', icon: Icon.Person, feature: 'work' },
   { view: 'workload', label: 'Workload', icon: Icon.People, feature: 'workload' },
-  { view: 'reports', label: 'Reports', icon: Icon.Reports, feature: 'reports' },
-  { view: 'admin', label: 'Admin', icon: Icon.Shield },
+  { view: 'admin', label: 'Admin', icon: Icon.Clipboard, feature: 'admin' },
+  { view: 'access', label: 'Access', icon: Icon.Shield },
   { view: 'settings', label: 'Settings', icon: Icon.Settings },
 ]
 
 export function NavRail() {
   const { route, navigate, me, can, isAdmin } = useApp()
-  // A project page belongs to the portfolio; someone else's work belongs to Workload.
+  // Project pages and the one-pager belong to the portfolio; someone else's work belongs to Workload.
   const active: View =
-    route.view === 'project' ? 'portfolio' : route.view === 'work' && route.person && route.person !== me?.key ? 'workload' : route.view
-  const items = NAV.filter((item) => (item.view === 'admin' ? isAdmin : !item.feature || can(item.feature)))
+    route.view === 'project' || route.view === 'onepager'
+      ? 'portfolio'
+      : route.view === 'work' && route.person && route.person !== me?.key
+        ? 'workload'
+        : route.view
+  const items = NAV.filter((item) => (item.view === 'access' ? isAdmin : !item.feature || can(item.feature)))
 
   return (
     <nav className="rail" aria-label="Main">
@@ -347,13 +354,21 @@ function OmniItem(props: { active: boolean; onHover: () => void; onChoose: () =>
 }
 
 function AccountMenu() {
-  const { identity, identitySource, roles, setTestRole, navigate, me, openIdentity, openStorage, openChangeLog, themePreference, setThemePreference, tracker } = useApp()
+  const { identity, identitySource, roles, setTestRole, navigate, me, openIdentity, openStorage, openChangeLog, themePreference, setThemePreference, tracker, people, canReport } = useApp()
   const role = primaryRole(roles)
   const pwa = usePwa()
   const [open, setOpen] = useState(false)
+  const [exportOpen, setExportOpen] = useState(false)
   const wrapRef = useRef<HTMLDivElement | null>(null)
+  const spreadsheets = REPORT_CATALOG.filter((report) => report.formats.includes('csv') && canReport(report.id))
+
+  const download = (id: ReportId) => {
+    const file = buildCsvReport(id, { state: tracker.state, log: tracker.log, settings: tracker.settings, people })
+    if (file) downloadText(file.filename, file.text, file.type)
+  }
 
   useEffect(() => {
+    if (!open) setExportOpen(false)
     if (!open) return
     const onClick = (event: MouseEvent) => {
       if (!wrapRef.current?.contains(event.target as Node)) setOpen(false)
@@ -400,9 +415,44 @@ function AccountMenu() {
           <button type="button" role="menuitem" className="menu-item" onClick={act(() => openChangeLog())}>
             <Icon.History size={16} /> Change log
           </button>
-          <button type="button" role="menuitem" className="menu-item" onClick={act(() => void tracker.actions.exportData())}>
-            <Icon.Download size={16} /> Export backup
+          <button
+            type="button"
+            role="menuitem"
+            className="menu-item"
+            aria-expanded={exportOpen}
+            aria-controls="menu-export"
+            onClick={() => setExportOpen((current) => !current)}
+          >
+            <Icon.Download size={16} /> Export
+            <Icon.Chevron size={14} className={`menu-chev${exportOpen ? ' open' : ''}`} />
           </button>
+          {exportOpen && (
+            <div className="menu-sub" id="menu-export" role="group" aria-label="Export">
+              {spreadsheets.map((report) => (
+                <button
+                  key={report.id}
+                  type="button"
+                  role="menuitem"
+                  className="menu-item menu-sub-item"
+                  title={report.description}
+                  onClick={act(() => download(report.id))}
+                >
+                  <Icon.Sheet size={15} />
+                  <span className="menu-sub-text">
+                    {report.title}
+                    <span className="menu-sub-meta">Spreadsheet · {report.audience}</span>
+                  </span>
+                </button>
+              ))}
+              <button type="button" role="menuitem" className="menu-item menu-sub-item" onClick={act(() => void tracker.actions.exportData())}>
+                <Icon.Database size={15} />
+                <span className="menu-sub-text">
+                  Full backup
+                  <span className="menu-sub-meta">Every pillar, initiative and project, for restoring</span>
+                </span>
+              </button>
+            </div>
+          )}
           {identitySource === 'local' && (
             <>
               <button type="button" role="menuitem" className="menu-item" onClick={act(openIdentity)}>

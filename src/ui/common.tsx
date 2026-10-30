@@ -72,7 +72,7 @@ export function Segmented<T extends string>(props: {
   )
 }
 
-/** The status / stale / decisions chip row. Shared by every filterable view. */
+/** The pillar / status / stale / decisions chip row. Shared by every filterable view. */
 export function FilterChips(props: { count?: number; noun?: string }) {
   const { filters, setFilters, filtering, tracker, people } = useApp()
   const managers = people.filter((person) => person.pm.length > 0).sort((a, b) => a.name.localeCompare(b.name))
@@ -84,6 +84,23 @@ export function FilterChips(props: { count?: number; noun?: string }) {
 
   return (
     <div className="chip-row" role="group" aria-label="Filters">
+      {tracker.state.pillars.length > 1 && (
+        <>
+          <label className={`chip chip-select${filters.pillar ? ' active' : ''}`}>
+            <Icon.Portfolio size={14} />
+            <span className="sr-only">Pillar</span>
+            <select value={filters.pillar} onChange={(event) => setFilters({ pillar: event.target.value })}>
+              <option value="">All pillars</option>
+              {tracker.state.pillars.map((pillar) => (
+                <option key={pillar.id} value={pillar.id}>
+                  {pillarTitle(pillar.title)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <span className="chip-divider" aria-hidden />
+        </>
+      )}
       {RAG_KEYS.map((key) => (
         <button
           key={key}
@@ -250,7 +267,7 @@ export function NoAccess() {
   )
 }
 
-export function Drawer(props: { onClose: () => void; label: string; header?: ReactNode; children: ReactNode; wide?: boolean }) {
+export function Drawer(props: { onClose: () => void; label: string; header?: ReactNode; actions?: ReactNode; footer?: ReactNode; children: ReactNode; wide?: boolean }) {
   const panelRef = useRef<HTMLDivElement | null>(null)
   const onClose = props.onClose
 
@@ -279,11 +296,15 @@ export function Drawer(props: { onClose: () => void; label: string; header?: Rea
       >
         <div className="drawer-top">
           <div className="drawer-header">{props.header}</div>
-          <button type="button" className="icon-btn" aria-label="Close" onClick={onClose}>
-            <Icon.Close />
-          </button>
+          <div className="drawer-top-actions">
+            {props.actions}
+            <button type="button" className="icon-btn" aria-label="Close" onClick={onClose}>
+              <Icon.Close />
+            </button>
+          </div>
         </div>
         <div className="drawer-body">{props.children}</div>
+        {props.footer && <div className="drawer-foot">{props.footer}</div>}
       </div>
     </div>
   )

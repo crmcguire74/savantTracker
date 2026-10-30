@@ -2,10 +2,11 @@
 // shown only to the roles the access policy allows:
 //   Ledger           pillars on the left, initiatives as an accordion
 //   Heatmap          every initiative as a tile, colored by its worst project
-//   Leadership brief headline numbers, pillar cards, what needs attention
+//   Leadership brief the one-pager, headline numbers, pillar (or initiative)
+//                    cards, what needs attention grouped by initiative
 //   Pillar pace      progress against schedule per pillar (PaceView.tsx)
-// Filter chips apply in every layout. In the ledger, an active filter swaps
-// the accordion for a flat list of matches across all pillars.
+// Filter chips apply in every layout. In the ledger the pillar chip selects a
+// pillar; any other filter swaps the accordion for a flat list of matches.
 
 import { useEffect, useMemo, useState } from 'react'
 import type { FeatureKey } from '../../auth/access'
@@ -13,14 +14,16 @@ import type { PortfolioLayout } from '../../hooks/useRoute'
 import { PillarPace } from './PaceView'
 import {
   byStatusThenTitle,
+  groupByInitiative,
+  hasFilters,
   initiativeHeat,
   needsAttention,
   pillarLabel,
   portfolioStats,
   summarizePillar,
 } from '../../lib/insights'
-import { initiativeRollup, needsDecision, projectsForInitiative } from '../../lib/rollups'
-import type { Initiative, Pillar } from '../../types'
+import { countByRag, initiativeRollup, isStale, needsDecision, projectsForInitiative } from '../../lib/rollups'
+import type { Initiative, Pillar, Project } from '../../types'
 import {
   EmptyState,
   FilterChips,
@@ -80,13 +83,17 @@ export function PortfolioView(props: { layout: PortfolioLayout; pillar?: string;
 // ── ledger ────────────────────────────────────────────────────────────────
 
 function Ledger(props: { pillarId?: string; initiativeId?: string }) {
-  const { tracker, canWrite, navigate, filtering, matches, ask } = useApp()
+  const { tracker, canWrite, navigate, filters, setFilters, matches, ask } = useApp()
   const { state, actions } = tracker
   const [addingPillar, setAddingPillar] = useState(false)
   const [editingPillar, setEditingPillar] = useState(false)
 
-  const selected = state.pillars.find((pillar) => pillar.id === props.pillarId) ?? state.pillars[0]
+  // The ledger already picks one pillar at a time, so the pillar filter just
+  // selects it; only the other filters swap the accordion for a flat list.
+  const selected =
+    state.pillars.find((pillar) => pillar.id === (filters.pillar || props.pillarId)) ?? state.pillars[0]
   const selectedIndex = selected ? state.pillars.indexOf(selected) : -1
+  const filtering = hasFilters({ ...filters, pillar: '' })
 
   useEffect(() => setEditingPillar(false), [selected?.id])
 
@@ -99,7 +106,10 @@ function Ledger(props: { pillarId?: string; initiativeId?: string }) {
     )
   }
 
-  const selectPillar = (pillar: Pillar) => navigate({ view: 'portfolio', layout: 'ledger', pillar: pillar.id }, { replace: true })
+  const selectPillar = (pillar: Pillar) => {
+    if (filters.pillar) setFilters({ pillar: pillar.id })
+    navigate({ view: 'portfolio', layout: 'ledger', pillar: pillar.id }, { replace: true })
+  }
 
   const deletePillar = (pillar: Pillar) => {
     const initiatives = state.initiatives.filter((initiative) => initiative.pillarId === pillar.id)
@@ -362,7 +372,7 @@ function InitiativeRow(props: { initiative: Initiative; expanded: boolean; onTog
 // ── heatmap ───────────────────────────────────────────────────────────────
 
 function Heatmap() {
-  const { tracker, navigate, matches, filtering } = useApp()
+  const { tracker, navigate, matches, filtering, filters } = useApp()
   const { state } = tracker
 
   return (
@@ -372,6 +382,7 @@ function Heatmap() {
         {filtering && ' Only projects matching the filters count toward each tile.'}
       </p>
       {state.pillars.map((pillar, index) => {
+        if (filters.pillar && pillar.id !== filters.pillar) return null
         const label = pillarLabel(pillar, index)
         const summary = summarizePillar(state, pillar, index, tracker.settings.staleThresholdDays, matches)
         const initiatives = state.initiatives.filter((initiative) => initiative.pillarId === pillar.id)
@@ -420,16 +431,25 @@ function StatusTagInline({ status, total }: { status: ReturnType<typeof initiati
 }
 
 // ── leadership brief ──────────────────────────────────────────────────────
+// With a pillar filter the cards break that pillar down by initiative, so the
+// brief reads the same way whether it covers the portfolio or one pillar.
 
 function Brief() {
-  const { tracker, navigate, matches, setFilters, filters, openProject, contextOf } = useApp()
+  const { tracker, navigate, matches, setFilters, filters, openProject, canReport } = useApp()
   const { state, settings } = tracker
   const projects = useMemo(() => state.projects.filter(matches), [state.projects, matches])
   const stats = portfolioStats(state, projects, settings.staleThresholdDays)
-  const attention = needsAttention(projects)
+  const initiatives = useMemo(() => new Map(state.initiatives.map((initiative) => [initiative.id, initiative])), [state.initiatives])
+  const attention = groupByInitiative(needsAttention(projects), (project) => initiatives.get(project.initiativeId))
+  const attentionCount = attention.reduce((total, group) => total + group.items.length, 0)
+  const pillarIndex = state.pillars.findIndex((pillar) => pillar.id === filters.pillar)
+  const focus = pillarIndex >= 0 ? state.pillars[pillarIndex] : null
+  const focusInitiatives = focus ? state.initiatives.filter((initiative) => initiative.pillarId === focus.id) : []
 
   return (
     <div className="brief">
+      {canReport('pillar-one-pager') && <OnePagerStrip pillar={focus} index={pillarIndex} />}
+
       <div className="tiles">
         <StatTile label="Projects" value={stats.projects} sub={`${stats.initiatives} initiatives`} />
         <StatTile
@@ -466,77 +486,162 @@ function Brief() {
         />
       </div>
 
+      <div className="section-head">
+        <h2 className="card-title">{focus ? `${pillarLabel(focus, pillarIndex).title} by initiative` : 'Status by pillar'}</h2>
+        <span className="muted small">
+          {focus ? 'Choose an initiative to open it in the ledger.' : 'Choose a pillar to see it by initiative.'}
+        </span>
+      </div>
+
       <div className="pillar-cards">
-        {state.pillars.map((pillar, index) => {
-          const label = pillarLabel(pillar, index)
-          const summary = summarizePillar(state, pillar, index, settings.staleThresholdDays, matches)
-          return (
-            <button
-              key={pillar.id}
-              type="button"
-              className="card pillar-card clickable"
-              onClick={() => navigate({ view: 'portfolio', layout: 'ledger', pillar: pillar.id })}
-            >
-              <span className="pillar-card-head">
-                <span className="pillar-card-title">{label.title}</span>
-                <span className="muted small">{label.eyebrow}</span>
-              </span>
-              <StackedBar counts={summary.counts} height={10} />
-              <span className="metrics">
-                <Metric value={summary.projects.length} label="projects" />
-                <Metric value={`${summary.avgProgress}%`} label="avg progress" />
-                <Metric value={summary.decisions} label="decisions" tone="blue" />
-                <Metric value={summary.stale} label="stale" tone="amber" />
-              </span>
-            </button>
-          )
-        })}
+        {focus
+          ? focusInitiatives.map((initiative) => {
+              const summary = summarizeProjects(projectsForInitiative(state, initiative.id).filter(matches), settings.staleThresholdDays)
+              return (
+                <button
+                  key={initiative.id}
+                  type="button"
+                  className="card pillar-card clickable"
+                  onClick={() => navigate({ view: 'portfolio', layout: 'ledger', pillar: focus.id, initiative: initiative.id })}
+                >
+                  <span className="pillar-card-head">
+                    <span className="pillar-card-title">{initiative.title}</span>
+                    <span className="muted small">Initiative</span>
+                  </span>
+                  <StackedBar counts={summary.counts} height={10} />
+                  <span className="metrics">
+                    <Metric value={summary.projects} label="projects" />
+                    <Metric value={`${summary.avgProgress}%`} label="avg progress" />
+                    <Metric value={summary.decisions} label="decisions" tone="blue" />
+                    <Metric value={summary.stale} label="stale" tone="amber" />
+                  </span>
+                </button>
+              )
+            })
+          : state.pillars.map((pillar, index) => {
+              const label = pillarLabel(pillar, index)
+              const summary = summarizePillar(state, pillar, index, settings.staleThresholdDays, matches)
+              return (
+                <button
+                  key={pillar.id}
+                  type="button"
+                  className="card pillar-card clickable"
+                  title="Show this pillar by initiative"
+                  onClick={() => setFilters({ pillar: pillar.id })}
+                >
+                  <span className="pillar-card-head">
+                    <span className="pillar-card-title">{label.title}</span>
+                    <span className="muted small">{label.eyebrow}</span>
+                  </span>
+                  <StackedBar counts={summary.counts} height={10} />
+                  <span className="metrics">
+                    <Metric value={summary.projects.length} label="projects" />
+                    <Metric value={`${summary.avgProgress}%`} label="avg progress" />
+                    <Metric value={summary.decisions} label="decisions" tone="blue" />
+                    <Metric value={summary.stale} label="stale" tone="amber" />
+                  </span>
+                </button>
+              )
+            })}
+        {focus && focusInitiatives.length === 0 && <div className="list-empty">No initiatives in this pillar yet.</div>}
       </div>
 
       <div className="card">
         <div className="card-title-row">
           <h2 className="card-title">Needs leadership attention</h2>
-          <span className="muted small">Off track, or waiting on a decision</span>
+          <span className="muted small">
+            Off track, or waiting on a decision
+            {attentionCount > 0 && ` · ${attentionCount} across ${attention.length} initiative${attention.length === 1 ? '' : 's'}`}
+          </span>
         </div>
         {attention.length === 0 ? (
           <div className="list-empty">Nothing is off track or waiting on a decision.</div>
         ) : (
-          <ul className="attention">
-            {attention.map((project) => {
-              const context = contextOf(project)
-              const waiting = needsDecision(project)
-              return (
-                <li key={project.id}>
-                  <button type="button" className="attention-row" onClick={() => openProject(project.id)}>
-                    <span className="attention-status">
-                      <StatusTag status={project.rag} />
-                    </span>
-                    <span className="attention-main">
-                      <span className="plist-title">{project.title}</span>
-                      <span className="plist-path">{context.pillar ? pillarTitle(context.pillar.title) : ''}</span>
-                    </span>
-                    <span className="attention-text">
-                      {waiting ? (
-                        <>
-                          <strong>Decision needed:</strong> {project.decisionNeeded}
-                        </>
-                      ) : project.keyRisk.trim() ? (
-                        <>
-                          <strong>Key risk:</strong> {project.keyRisk}
-                        </>
-                      ) : (
-                        <span className="muted">No risk recorded.</span>
-                      )}
-                    </span>
-                  </button>
-                </li>
-              )
-            })}
-          </ul>
+          attention.map((group) => {
+            const pillar = group.initiative ? state.pillars.find((item) => item.id === group.initiative!.pillarId) : undefined
+            const title = group.initiative?.title ?? 'No initiative'
+            return (
+              <section key={group.initiative?.id ?? 'none'} className="attention-group" aria-label={title}>
+                <header className="attention-group-head">
+                  <span className="attention-group-title">{title}</span>
+                  {!focus && pillar && <span className="attention-group-pillar">{pillarTitle(pillar.title)}</span>}
+                  <span className="attention-group-count" aria-label={`${group.items.length} projects`}>
+                    {group.items.length}
+                  </span>
+                </header>
+                <ul className="attention">
+                  {group.items.map((project) => (
+                    <li key={project.id}>
+                      <button type="button" className="attention-row" onClick={() => openProject(project.id)}>
+                        <span className="attention-status">
+                          <StatusTag status={project.rag} />
+                        </span>
+                        <span className="attention-main">
+                          <span className="plist-title">{project.title}</span>
+                        </span>
+                        <span className="attention-text">
+                          {needsDecision(project) ? (
+                            <>
+                              <strong>Decision needed:</strong> {project.decisionNeeded}
+                            </>
+                          ) : project.keyRisk.trim() ? (
+                            <>
+                              <strong>Key risk:</strong> {project.keyRisk}
+                            </>
+                          ) : (
+                            <span className="muted">No risk recorded.</span>
+                          )}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )
+          })
         )}
       </div>
     </div>
   )
+}
+
+/** The leadership slide, one click from the brief. Follows the pillar filter. */
+function OnePagerStrip(props: { pillar: Pillar | null; index: number }) {
+  const { navigate, tracker } = useApp()
+  const count = tracker.state.pillars.length
+  const label = props.pillar ? pillarLabel(props.pillar, props.index) : null
+
+  return (
+    <section className="onepager-strip" aria-labelledby="onepager-strip-title">
+      <span className="onepager-strip-icon" aria-hidden>
+        <Icon.Print size={20} />
+      </span>
+      <div className="onepager-strip-text">
+        <h2 id="onepager-strip-title">Pillar one-pager</h2>
+        <p>
+          <strong>{label ? `${label.eyebrow}: ${label.title}` : `All ${count} pillar${count === 1 ? '' : 's'}, one page each`}</strong>
+          <span className="onepager-strip-sep" aria-hidden>
+            ·
+          </span>
+          Landscape slide for the leadership deck. Every page links back to its pillar in WiseTrack.
+        </p>
+      </div>
+      <button type="button" className="btn btn-primary" onClick={() => navigate({ view: 'onepager', pillar: props.pillar?.id })}>
+        Open one-pager
+      </button>
+    </section>
+  )
+}
+
+function summarizeProjects(projects: Project[], staleDays: number) {
+  const now = Date.now()
+  return {
+    projects: projects.length,
+    counts: countByRag(projects),
+    avgProgress: projects.length ? Math.round(projects.reduce((sum, project) => sum + project.progress, 0) / projects.length) : 0,
+    decisions: projects.filter(needsDecision).length,
+    stale: projects.filter((project) => isStale(project, staleDays, now)).length,
+  }
 }
 
 function Metric(props: { value: number | string; label: string; tone?: 'blue' | 'amber' }) {

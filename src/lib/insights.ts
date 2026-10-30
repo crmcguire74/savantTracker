@@ -16,12 +16,19 @@ export interface ViewFilters {
   decisions: boolean
   /** Person key from the people directory; only projects they manage. Empty for any. */
   pm: string
+  /** Pillar id; only projects under it. Empty for every pillar. */
+  pillar: string
 }
 
-export const noFilters = (): ViewFilters => ({ query: '', rag: [], stale: false, decisions: false, pm: '' })
+export const noFilters = (): ViewFilters => ({ query: '', rag: [], stale: false, decisions: false, pm: '', pillar: '' })
 
 export const hasFilters = (filters: ViewFilters): boolean =>
-  filters.query.trim() !== '' || filters.rag.length > 0 || filters.stale || filters.decisions || filters.pm !== ''
+  filters.query.trim() !== '' ||
+  filters.rag.length > 0 ||
+  filters.stale ||
+  filters.decisions ||
+  filters.pm !== '' ||
+  filters.pillar !== ''
 
 export function projectMatchesQuery(project: Project, query: string, initiative?: Initiative): boolean {
   const needle = query.trim().toLowerCase()
@@ -43,6 +50,7 @@ export function makeProjectFilter(state: TrackerState, filters: ViewFilters, sta
   // Through the directory, so "Padman" and "Padman Perumal" are one PM.
   const managed = filters.pm ? new Set(people.find((person) => person.key === filters.pm)?.pm ?? []) : null
   return (project: Project): boolean =>
+    (!filters.pillar || initiatives.get(project.initiativeId)?.pillarId === filters.pillar) &&
     (!managed || managed.has(project.id)) &&
     (filters.rag.length === 0 || filters.rag.includes(project.rag)) &&
     (!filters.stale || isStale(project, staleDays, now)) &&
@@ -152,6 +160,29 @@ export function needsAttention(projects: Project[]): Project[] {
   return projects
     .filter((project) => project.rag === 'red' || needsDecision(project))
     .sort((a, b) => RAG_SORT[a.rag] - RAG_SORT[b.rag] || Number(needsDecision(b)) - Number(needsDecision(a)))
+}
+
+export interface InitiativeGroup<T> {
+  /** Undefined for items whose initiative no longer exists. */
+  initiative?: Initiative
+  items: T[]
+}
+
+/**
+ * Buckets an already-sorted list by initiative without re-sorting it. Groups
+ * appear in the order of their first item and items keep their order inside
+ * each group, so the list's ranking carries through to the groups.
+ */
+export function groupByInitiative<T>(items: T[], initiativeOf: (item: T) => Initiative | undefined): InitiativeGroup<T>[] {
+  const groups = new Map<string, InitiativeGroup<T>>()
+  for (const item of items) {
+    const initiative = initiativeOf(item)
+    const key = initiative?.id ?? ''
+    const group = groups.get(key) ?? { initiative, items: [] }
+    group.items.push(item)
+    groups.set(key, group)
+  }
+  return [...groups.values()]
 }
 
 export function initiativeHeat(state: TrackerState, initiative: Initiative, include: (project: Project) => boolean) {

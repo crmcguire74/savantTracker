@@ -114,7 +114,7 @@ Production uses Microsoft Entra ID through App Service Easy Auth.
   - Tracker.Executive
   - Tracker.Viewer
 - Writer access is allowed only to Tracker.Admin and Tracker.Editor.
-- The access policy document (tracker.access), which decides which roles see which views and reports, can be changed only by Tracker.Admin. Admins edit it in the app under **Admin**.
+- The access policy document (tracker.access), which decides which roles see which views and reports, can be changed only by Tracker.Admin. Admins edit it in the app under **Access**.
 - If a signed-in user has none of these roles, the API returns a 403 and asks them to request access.
 
 The browser takes roles from Entra only when built with `VITE_AUTH_MODE=entra`. Until then it shows the shared username and password screen with a role picker, so anyone can test every role. Turn it on once people are assigned roles; see [docs/PMO-ACTION-PLAN.md](docs/PMO-ACTION-PLAN.md).
@@ -243,9 +243,9 @@ The app is a single-page shell: a top bar, a left navigation rail, and seven vie
 | **Timeline** | Twelve-month window (pages by quarter) with start→forecast bars, milestone diamonds and a today line. |
 | **My work** | Decisions, open issues and milestones on projects *you* own, with in-place actions (record a decision, resolve an issue, update a milestone). |
 | **Workload** | Everyone named in owner fields, with projects by status and by role. A row opens that person's work. |
-| **Reports** | Printable portfolio status: tiles, status by pillar, phase mix, decision backlog, stale projects, recent activity. |
+| **Admin** | PMO upkeep: decisions waiting and stale counts, stale projects filterable by age and PM, the running decision list, recent activity, and monday.com sync status. Spreadsheet exports live under Export in the account menu; the pillar one-pager opens from the Leadership brief. |
 | **Settings** | Stale threshold, appearance (light / dark / match system), access, export/import, and in local mode only your name and the storage driver. |
-| **Project page** | Status report layout with a clickable phase stepper, decision and issue cards, owners, schedule slip, recent changes, and an **Update status** drawer for every field. |
+| **Project page** | Status report layout with a clickable phase stepper, decision and issue cards, owners, schedule slip, recent changes, and an **Update project** drawer for every field. |
 
 **Filters are shared.** The status / stale / decisions chips (and a search applied from the omnibox) narrow Portfolio, Board and Timeline in place, and stay applied as you move between those views.
 

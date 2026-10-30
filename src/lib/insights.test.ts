@@ -3,6 +3,7 @@ import { bundledSnapshot } from '../data/repository'
 import { makeProject } from '../test-fixtures'
 import type { TrackerState } from '../types'
 import {
+  groupByInitiative,
   makeProjectFilter,
   needsAttention,
   noFilters,
@@ -92,6 +93,22 @@ describe('filters and attention', () => {
     expect(run({ decisions: true })).toEqual(['a'])
     expect(run({ query: 'padman' })).toEqual(['r'])
     expect(run({ query: 'wiseanalytics' })).toHaveLength(4)
+    expect(run({ pillar: 'pl' })).toHaveLength(4)
+    expect(run({ pillar: 'elsewhere' })).toEqual([])
+  })
+
+  it('groups a ranked list by initiative without reordering it', () => {
+    const rows = [
+      { id: 'r1', initiative: 'b' },
+      { id: 'a1', initiative: 'a' },
+      { id: 'r2', initiative: 'b' },
+      { id: 'x', initiative: '' },
+    ]
+    const groups = groupByInitiative(rows, (row) =>
+      row.initiative ? { ...state.initiatives[0], id: row.initiative } : undefined,
+    )
+    expect(groups.map((group) => group.initiative?.id ?? null)).toEqual(['b', 'a', null])
+    expect(groups[0].items.map((row) => row.id)).toEqual(['r1', 'r2'])
   })
 
   it('ranks off-track projects ahead of decisions', () => {

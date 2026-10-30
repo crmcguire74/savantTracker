@@ -113,10 +113,12 @@ describe('access policy', () => {
     expect(canUseFeature(policy, ['executive'], 'workload.pm-heatmap')).toBe(false)
   })
 
-  it('hides every report when the Reports view is hidden', () => {
+  it('hides the one-pager with the leadership brief, but not the spreadsheets', () => {
     const policy = defaultPolicy()
-    policy.features.reports = ['admin']
-    expect(canRunReport(policy, ['viewer'], 'status-register')).toBe(false)
+    policy.features['portfolio.brief'] = ['admin']
+    expect(canRunReport(policy, ['executive'], 'pillar-one-pager')).toBe(false)
+    expect(canRunReport(policy, ['executive'], 'decision-log')).toBe(true)
+    expect(canRunReport(policy, ['viewer'], 'status-register')).toBe(true)
   })
 
   it('fills in features and reports added after a policy was saved', () => {

@@ -80,6 +80,24 @@ export const Icon = {
       <path d="m9 12 2 2 4-4" />
     </Svg>
   ),
+  Clipboard: (p: IconProps) => (
+    <Svg {...p}>
+      <rect x="5" y="4.5" width="14" height="16.5" rx="2" />
+      <path d="M9 4.5V3.8A.8.8 0 0 1 9.8 3h4.4a.8.8 0 0 1 .8.8v.7M8.5 11h7M8.5 14.5h7M8.5 18h4" />
+    </Svg>
+  ),
+  Sync: (p: IconProps) => (
+    <Svg {...p}>
+      <path d="M19.5 9A7.5 7.5 0 0 0 6 6.6L4.5 8M4.5 15A7.5 7.5 0 0 0 18 17.4l1.5-1.4" />
+      <path d="M4.5 4v4h4M19.5 20v-4h-4" />
+    </Svg>
+  ),
+  Sheet: (p: IconProps) => (
+    <Svg {...p}>
+      <rect x="4" y="4" width="16" height="16" rx="2" />
+      <path d="M4 9.5h16M4 14.5h16M10 9.5V20" />
+    </Svg>
+  ),
   Search: (p: IconProps) => (
     <Svg {...p}>
       <circle cx="11" cy="11" r="6.5" />

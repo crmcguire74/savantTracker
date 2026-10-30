@@ -23,7 +23,7 @@ export type FeatureKey =
   | 'work'
   | 'workload'
   | 'workload.pm-heatmap'
-  | 'reports'
+  | 'admin'
 
 export interface FeatureInfo {
   key: FeatureKey
@@ -46,7 +46,9 @@ export const FEATURE_CATALOG: FeatureInfo[] = [
   { key: 'work', label: 'My work', defaultRoles: ['admin', 'editor'] },
   { key: 'workload', label: 'Workload', defaultRoles: LEADERSHIP },
   { key: 'workload.pm-heatmap', label: 'PM heat map', parent: 'workload', defaultRoles: LEADERSHIP },
-  { key: 'reports', label: 'Reports', defaultRoles: EVERYONE },
+  // Replaced the old Reports view; a fresh key so grants made for Reports
+  // don't carry over to a page built for the PMO.
+  { key: 'admin', label: 'Admin page', defaultRoles: ['admin', 'editor'] },
 ]
 
 export interface AccessPolicy {
@@ -98,7 +100,11 @@ export function canUseFeature(policy: AccessPolicy, roles: readonly Role[], key:
   return holds(policy.features[key] ?? [], roles)
 }
 
-/** Reports live on the Reports page, so they need it as well. */
+/**
+ * Spreadsheets download from the account menu, so they need nothing else. The
+ * one-pager is printed from the leadership brief, so it needs the brief too.
+ */
 export function canRunReport(policy: AccessPolicy, roles: readonly Role[], id: ReportId): boolean {
-  return canUseFeature(policy, roles, 'reports') && holds(policy.reports[id] ?? [], roles)
+  if (id === 'pillar-one-pager' && !canUseFeature(policy, roles, 'portfolio.brief')) return false
+  return holds(policy.reports[id] ?? [], roles)
 }

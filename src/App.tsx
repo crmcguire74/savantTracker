@@ -4,6 +4,7 @@ import { isAdmin } from './auth/roles'
 import type { ReportId } from './reports/catalog'
 import { featureForRoute } from './ui/access'
 import { NoAccess } from './ui/common'
+import { AccessView } from './ui/views/AccessView'
 import { AdminView } from './ui/views/AdminView'
 import { ReportPreview } from './ui/views/ReportPreview'
 import { useIdentity } from './hooks/useIdentity'
@@ -21,7 +22,6 @@ import { NavRail, TopBar, UpdatePrompt } from './ui/shell'
 import { BoardView } from './ui/views/BoardView'
 import { PortfolioView } from './ui/views/PortfolioView'
 import { ProjectView } from './ui/views/ProjectView'
-import { ReportsView } from './ui/views/ReportsView'
 import { SettingsView } from './ui/views/SettingsView'
 import { TimelineView } from './ui/views/TimelineView'
 import { WorkloadView } from './ui/views/WorkloadView'
@@ -195,7 +195,7 @@ export default function App() {
 
   function renderView() {
     const feature = featureForRoute(route)
-    if ((feature && !can(feature)) || (route.view === 'admin' && !admin)) return <NoAccess />
+    if ((feature && !can(feature)) || (route.view === 'access' && !admin)) return <NoAccess />
 
     switch (route.view) {
       case 'portfolio':
@@ -208,12 +208,14 @@ export default function App() {
         return <WorkView person={route.person} />
       case 'workload':
         return <WorkloadView layout={route.layout} />
-      case 'reports':
-        return route.report ? <ReportPreview report={route.report} pillar={route.pillar} /> : <ReportsView />
+      case 'onepager':
+        return <ReportPreview pillar={route.pillar} />
       case 'settings':
         return <SettingsView />
       case 'admin':
         return <AdminView />
+      case 'access':
+        return <AccessView />
       case 'project':
         return <ProjectView id={route.id} />
     }

@@ -11,8 +11,8 @@ Action plan for the Project Management team's dashboard requests (Oct 2026) and 
 | Request | What changed | Where |
 |---|---|---|
 | Search by PM (search only matched business and delivery owners) | A **PM filter chip** on Portfolio, Board and Timeline. A **"Managed by"** group in the top search that filters to a PM's projects. Name variants are folded together, so "Padman" and "Padman Perumal" count as one person. The older search helper now also matches the PM field. | Filter row; top search |
-| New phase list | Discovery, Planning, Execution, Review, Launch, Stabilize, Closed, **Multi-Phase (Release Based)** | Update status drawer, board columns, phase stepper |
-| Validation dropdown, to the right of Phase | Not Started, Pending, In Progress, Completed, N/A. Shown as a tag on the project header, logged in the change log, and included in exports. | Update status drawer |
+| New phase list | Discovery, Planning, Execution, Review, Launch, Stabilize, Closed, **Multi-Phase (Release Based)** | Update project drawer, board columns, phase stepper |
+| Validation dropdown, to the right of Phase | Not Started, Pending, In Progress, Completed, N/A. Shown as a tag on the project header, logged in the change log, and included in exports. | Update project drawer |
 | Dependencies free-text field, before Key risks/blockers | A new field placed ahead of Key risk on the project page, in the drawer and in every export. | Project page, drawer |
 
 ### Moving existing projects to the new phases

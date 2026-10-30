@@ -14,10 +14,13 @@ export function featureForRoute(route: Route): FeatureKey | null {
     case 'board':
     case 'timeline':
     case 'work':
-    case 'reports':
+    case 'admin':
       return route.view
-    // Project pages, settings and admin are decided elsewhere: every role may
-    // read a project and its own settings; admin is admin-only, not policy.
+    // The one-pager is printed from the leadership brief.
+    case 'onepager':
+      return 'portfolio.brief'
+    // Project pages, settings and access are decided elsewhere: every role may
+    // read a project and its own settings; access is admin-only, not policy.
     default:
       return null
   }
@@ -27,7 +30,7 @@ const LANDING: Array<{ feature: FeatureKey; route: Route }> = [
   { feature: 'portfolio', route: { view: 'portfolio', layout: 'ledger' } },
   { feature: 'board', route: { view: 'board', layout: 'phase' } },
   { feature: 'timeline', route: { view: 'timeline' } },
-  { feature: 'reports', route: { view: 'reports' } },
+  { feature: 'admin', route: { view: 'admin' } },
   { feature: 'work', route: { view: 'work' } },
 ]
 
