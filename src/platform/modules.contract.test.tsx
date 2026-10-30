@@ -2,6 +2,7 @@
 // with real data, without tripping its sandbox. A new module is covered the
 // moment it is added to src/modules/index.ts.
 
+import { act } from 'react'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { bundledSnapshot } from '../data/repository'
 import { MODULES } from '../modules'
@@ -56,6 +57,19 @@ describe('the assembled app', () => {
     app = await mountModule(portfolio, { with: MODULES, shell: true, hash: '#/reports?report=pillar-one-pager&pillar=obj-2' })
     await waitFor(() => window.location.hash === '#/onepager?pillar=obj-2')
     expect(app.container.querySelector('[data-module="onepager"]')).not.toBeNull()
+  })
+
+  it('offers import from the account menu to roles that can edit', async () => {
+    const menuItems = async (role: 'editor' | 'viewer') => {
+      app = await mountModule(portfolio, { with: MODULES, shell: true, role })
+      act(() => app!.container.querySelector<HTMLButtonElement>('.account-btn')!.click())
+      const labels = [...app.container.querySelectorAll('.menu-item')].map((item) => item.textContent?.trim())
+      app.unmount()
+      app = undefined
+      return labels
+    }
+    expect(await menuItems('editor')).toContain('Import from file')
+    expect(await menuItems('viewer')).not.toContain('Import from file')
   })
 
   it('lands an unknown address on the first page the role may open', async () => {

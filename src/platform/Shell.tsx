@@ -392,7 +392,7 @@ function OmniItem(props: { active: boolean; onHover: () => void; onChoose: () =>
 }
 
 function AccountMenu() {
-  const { identity, identitySource, roles, setTestRole, navigate, me, openIdentity, openStorage, openChangeLog, themePreference, setThemePreference, tracker, people, canReport } = usePlatform()
+  const { identity, identitySource, roles, setTestRole, navigate, me, openIdentity, openStorage, openChangeLog, themePreference, setThemePreference, tracker, people, canReport, canWrite, startImport } = usePlatform()
   const role = primaryRole(roles)
   const pwa = usePwa()
   const [open, setOpen] = useState(false)
@@ -490,6 +490,13 @@ function AccountMenu() {
                 </span>
               </button>
             </div>
+          )}
+          {canWrite && (
+            // Replaces everything from an exported tracker file (this app or the
+            // Azure deployment); a backup of the current data downloads first.
+            <button type="button" role="menuitem" className="menu-item" onClick={act(startImport)}>
+              <Icon.Upload size={16} /> Import from file
+            </button>
           )}
           {identitySource === 'local' && (
             <>
