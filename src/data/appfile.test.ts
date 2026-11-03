@@ -5,12 +5,12 @@ import { countByRag, initiativeRollup, isStale, searchProjects } from '../lib/ro
 import { makeProject, makeState } from '../test-fixtures'
 
 describe('bundled migration snapshot', () => {
-  it('carries the full tracker that was live in the Claude artifact', () => {
+  it('carries the tracker as monday shows it', () => {
     const file = bundledSnapshot()
-    expect(file.state.pillars).toHaveLength(4)
-    expect(file.state.initiatives).toHaveLength(28)
-    expect(file.state.projects).toHaveLength(43)
-    expect(file.log).toHaveLength(183)
+    expect(file.state.pillars).toHaveLength(6)
+    expect(file.state.initiatives).toHaveLength(35)
+    expect(file.state.projects).toHaveLength(27)
+    expect(file.log).toHaveLength(210)
   })
 
   it('has no orphaned initiatives or projects', () => {
@@ -26,12 +26,12 @@ describe('bundled migration snapshot', () => {
     const file = bundledSnapshot()
     expect(file.state.projects.every((p) => typeof p.decisionOutcome === 'string')).toBe(true)
     expect(file.state.projects.every((p) => Array.isArray(p.issues))).toBe(true)
-    expect(file.state.projects.filter((p) => p.updatedByName !== '')).toHaveLength(23)
+    expect(file.state.projects.filter((p) => p.updatedByName !== '')).toHaveLength(27)
   })
 
-  it('matches the RAG counts the old tracker showed', () => {
+  it('matches the RAG counts of the monday data', () => {
     const counts = countByRag(bundledSnapshot().state.projects)
-    expect(counts).toEqual({ green: 16, amber: 18, red: 9 })
+    expect(counts).toEqual({ green: 14, amber: 12, red: 1 })
   })
 })
 
@@ -107,7 +107,7 @@ describe('derived numbers', () => {
   it('filters by RAG', () => {
     const state = bundledSnapshot().state
     const red = searchProjects(state, { query: '', rag: 'red', staleOnly: false, decisionsOnly: false }, 30)
-    expect(red).toHaveLength(9)
+    expect(red).toHaveLength(1)
     expect(red.every((hit) => hit.project.rag === 'red')).toBe(true)
   })
 

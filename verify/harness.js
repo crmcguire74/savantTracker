@@ -159,16 +159,16 @@ async function run() {
   // ── 6. Migration snapshot ──────────────────────────────────────────
   await record('Bundled snapshot carries the live tracker data', async () => {
     const file = bundledSnapshot()
-    assertEqual(file.state.pillars.length, 4, 'four pillars')
-    assertEqual(file.state.initiatives.length, 28, 'twenty-eight initiatives')
-    assertEqual(file.state.projects.length, 43, 'forty-three projects')
-    assertEqual(file.log.length, 183, 'one hundred eighty-three log entries')
+    assertEqual(file.state.pillars.length, 6, 'six pillars')
+    assertEqual(file.state.initiatives.length, 35, 'thirty-five initiatives')
+    assertEqual(file.state.projects.length, 27, 'twenty-seven projects')
+    assertEqual(file.log.length, 210, 'two hundred ten log entries')
 
     const counts = countByRag(file.state.projects)
-    assertEqual(counts.green + counts.amber + counts.red, 43, 'every project has a valid RAG value')
+    assertEqual(counts.green + counts.amber + counts.red, 27, 'every project has a valid RAG value')
 
     const withLegacyName = file.state.projects.filter((p) => p.updatedByName !== '').length
-    assertEqual(withLegacyName, 23, 'legacy updatedBy names were carried into updatedByName')
+    assertEqual(withLegacyName, 27, 'legacy updatedBy names were carried into updatedByName')
     assert(
       file.state.projects.every((p) => typeof p.decisionOutcome === 'string'),
       'every project has the decisionOutcome field the old schema lacked',
@@ -198,12 +198,12 @@ async function run() {
 
     const first = await repository.bootstrap()
     assertEqual(first.seeded, true, 'first boot seeds')
-    assertEqual(first.state.projects.length, 43, 'all projects landed')
-    assertEqual(first.log.length, 183, 'the change log landed')
+    assertEqual(first.state.projects.length, 27, 'all projects landed')
+    assertEqual(first.log.length, 210, 'the change log landed')
 
     const second = await repository.bootstrap()
     assertEqual(second.seeded, false, 'second boot does not reseed')
-    assertEqual(second.state.projects.length, 43, 'data is unchanged')
+    assertEqual(second.state.projects.length, 27, 'data is unchanged')
     await proxy.close()
   })
 
@@ -257,8 +257,8 @@ async function run() {
     const text = serializeAppFile(exported)
     const reparsed = parseAppFile(JSON.parse(text))
 
-    assertEqual(reparsed.file.state.projects.length, 43, 'projects survive the round-trip')
-    assertEqual(reparsed.file.log.length, 183, 'log entries survive the round-trip')
+    assertEqual(reparsed.file.state.projects.length, 27, 'projects survive the round-trip')
+    assertEqual(reparsed.file.log.length, 210, 'log entries survive the round-trip')
     assertEqual(
       JSON.stringify(reparsed.file.state),
       JSON.stringify(exported.state),
@@ -332,12 +332,12 @@ async function run() {
   await record('Search and rollups agree with the data', async () => {
     const file = bundledSnapshot()
     const counts = countByRag(file.state.projects)
-    assertEqual(counts.amber, 18, 'amber count matches the live tracker')
-    assertEqual(counts.green, 16, 'green count matches the live tracker')
-    assertEqual(counts.red, 9, 'red count matches the live tracker')
+    assertEqual(counts.amber, 12, 'amber count matches the live tracker')
+    assertEqual(counts.green, 14, 'green count matches the live tracker')
+    assertEqual(counts.red, 1, 'red count matches the live tracker')
 
     const red = searchProjects(file.state, { query: '', rag: 'red', staleOnly: false, decisionsOnly: false }, 30)
-    assertEqual(red.length, 9, 'the red filter returns nine projects')
+    assertEqual(red.length, 1, 'the red filter returns one project')
     assert(
       red.every((hit) => hit.project.rag === 'red'),
       'every hit really is red',
@@ -345,12 +345,12 @@ async function run() {
 
     const named = searchProjects(
       file.state,
-      { query: 'brent', rag: null, staleOnly: false, decisionsOnly: false },
+      { query: 'padman', rag: null, staleOnly: false, decisionsOnly: false },
       30,
     )
     assert(named.length > 0, 'an owner search finds projects')
     assert(
-      named.every((hit) => hit.ownerMatch !== null || hit.project.title.toLowerCase().includes('brent')),
+      named.every((hit) => hit.ownerMatch !== null || hit.project.title.toLowerCase().includes('padman')),
       'owner matches are labelled',
     )
 
@@ -393,7 +393,7 @@ async function run() {
     assert(captured instanceof Blob, 'a Blob was handed to the browser')
     assertEqual(captured.type, 'application/json', 'the blob is typed as JSON')
     const text = await captured.text()
-    assertEqual(JSON.parse(text).state.projects.length, 43, 'the blob holds the full dataset')
+    assertEqual(JSON.parse(text).state.projects.length, 27, 'the blob holds the full dataset')
   })
 
   await destroyLocalDatabase('savant-tracker-test')

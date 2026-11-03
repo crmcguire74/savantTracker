@@ -10,8 +10,14 @@ Schema drift handled here:
     the name lands in `updatedByName`, the id in `updatedById`.
   - `decisionOutcome` was added after most rows were written; defaults to "".
   - every optional field is filled so the TypeScript model has no holes.
+
+One-way tool for the ORIGINAL artifact export. It refuses to overwrite an output
+file whose "source" is anything else (for example the monday data now in
+src/data/snapshot.json) unless you pass --force as a third argument. It also
+drops fields the artifact never had (validation, dependencies, mondayId).
 """
 import json
+import os
 import sys
 from datetime import datetime, timezone
 
@@ -80,6 +86,22 @@ def normalize_project(raw):
     return project
 
 
+def guard_existing_output():
+    """Stop before replacing a snapshot that came from somewhere other than the artifact."""
+    if "--force" in sys.argv or not os.path.exists(OUT):
+        return
+    try:
+        with open(OUT, encoding="utf-8") as existing:
+            current = json.load(existing).get("source")
+    except (OSError, ValueError):
+        return
+    if current not in (None, "claude-artifact-db"):
+        sys.exit(
+            f"Refusing to overwrite {OUT}: it holds data from '{current}', not the Claude "
+            "artifact export. Pass --force as a third argument to replace it anyway."
+        )
+
+
 def main():
     with open(RAW + "/state.json") as handle:
         state = json.load(handle)
@@ -116,6 +138,8 @@ def main():
         },
         "log": entries,
     }
+
+    guard_existing_output()
 
     with open(OUT, "w") as handle:
         json.dump(payload, handle, indent=2, ensure_ascii=False)

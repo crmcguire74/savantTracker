@@ -66,7 +66,7 @@ describe('buildPeople', () => {
     const directory = buildPeople(bundledSnapshot().state)
     const names = directory.map((person) => person.key)
     expect(names).toContain('padman perumal')
-    expect(names).toContain('kevin')
+    expect(names).toContain('kevin hrdlicka')
     expect(names).not.toContain('tbd')
     expect(names).not.toContain('saba')
   })

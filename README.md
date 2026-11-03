@@ -560,7 +560,7 @@ The production build was also exercised in headless Edge: every rail module rend
 ├── tools/
 │   ├── new-module.mjs         # scaffolder
 │   ├── module-template/       # what it copies
-│   └── build-snapshot.py
+│   └── build-snapshot.py      # legacy: artifact export -> snapshot; refuses to overwrite monday data without --force
 ├── server/                    # Express API, auth, Cosmos and file stores
 ├── infra/                     # Azure provisioning, Entra app roles, deploy, seed
 ├── pwa/service-worker.js
