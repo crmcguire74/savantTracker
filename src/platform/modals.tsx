@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import { FIELD_LABELS } from '../constants'
 import { MemoryAdapter, RestAdapter, storage, type StorageStatus, type SwapReport } from '../storage'
 import { IndexedDbAdapter } from '../storage/indexeddb'
+import type { DatasetOffer } from '../data/dataset'
 import type { Conflict } from '../hooks/useTracker'
 import { GhostButton, PrimaryButton } from '../ui/atoms'
 
@@ -33,6 +34,65 @@ export function ConfirmModal(props: {
           <GhostButton onClick={props.onCancel}>Cancel</GhostButton>
           <PrimaryButton danger onClick={props.onConfirm}>
             {props.confirmLabel ?? 'Confirm'}
+          </PrimaryButton>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Browser-only storage: this build carries a monday.com dataset the browser has
+ * not taken yet. Replace (with a backup download first), keep mine for good, or ask later.
+ */
+export function DatasetOfferModal(props: {
+  offer: DatasetOffer
+  onReplace: () => Promise<boolean>
+  onKeep: () => void
+  onLater: () => void
+}) {
+  const { offer, onReplace, onKeep, onLater } = props
+  const [busy, setBusy] = useState(false)
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !busy) onLater()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [busy, onLater])
+
+  const replace = async () => {
+    setBusy(true)
+    try {
+      await onReplace()
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="modal-scrim" role="dialog" aria-modal="true" aria-labelledby="dataset-offer-title">
+      <div className="modal">
+        <h2 id="dataset-offer-title">Newer monday.com data is available</h2>
+        <p>
+          This version of the tracker carries a dataset exported from monday.com on {offer.exportedAt.slice(0, 10)}:{' '}
+          {offer.bundledProjects} projects. Your browser holds {offer.localProjects}
+          {offer.untracked ? ', and that data was not loaded from monday.com' : ''}.
+        </p>
+        <p>
+          Replacing swaps your local data for the monday.com dataset. A backup of your current data downloads first.
+          Keeping your data leaves everything as it is and stops asking about this dataset.
+        </p>
+        <div className="modal-actions">
+          <GhostButton onClick={() => !busy && onLater()}>
+            Ask me later
+          </GhostButton>
+          <GhostButton onClick={() => !busy && onKeep()}>
+            Keep my data
+          </GhostButton>
+          <PrimaryButton danger onClick={() => !busy && void replace()}>
+            {busy ? 'Replacing…' : 'Replace with monday data'}
           </PrimaryButton>
         </div>
       </div>

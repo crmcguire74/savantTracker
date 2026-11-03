@@ -403,6 +403,8 @@ Tracker data is a small set of versioned documents: `tracker.state`, `tracker.lo
 
 Driver selection: `VITE_STORAGE_DRIVER`, else `?storage=` in the URL, else IndexedDB. Settings → Storage swaps the driver at runtime and migrates the data.
 
+**Dataset refresh prompt (IndexedDB only).** The monday.com data ships inside each build as `src/data/snapshot.json`. When a build carries a monday dataset (`source` starting `monday-sync`) that this browser has not taken yet, the app asks on load: replace the local data (a backup downloads first), keep it (stops asking about that dataset), or ask later. The browser remembers its dataset in `localStorage` (`savant-tracker:dataset`). Edits made after taking a dataset never trigger the prompt; only a newer dataset does. Shared backends (REST/Cosmos) never prompt.
+
 ### App file format
 
 ```json

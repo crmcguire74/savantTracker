@@ -18,7 +18,7 @@ import { Icon } from '../ui/icons'
 import { ChangeLogDrawer } from './ChangeLog'
 import { PlatformContext, RegistryContext, type ConfirmRequest, type PlatformApi } from './context'
 import { formatLocation, useLocation } from './location'
-import { ConfirmModal, ConflictModal, IdentityModal, StorageModal } from './modals'
+import { ConfirmModal, ConflictModal, DatasetOfferModal, IdentityModal, StorageModal } from './modals'
 import type { LinkTo } from './module'
 import { resolveLocation, type Registry } from './registry'
 
@@ -207,6 +207,15 @@ export function PlatformProvider(props: { registry: Registry; children: ReactNod
 
         {showStorage && <StorageModal status={storageStatus} onClose={() => setShowStorage(false)} />}
         {showIdentity && <IdentityModal name={identity.name} onSave={setName} onClose={() => setShowIdentity(false)} />}
+
+        {tracker.datasetOffer && !showIdentity && (
+          <DatasetOfferModal
+            offer={tracker.datasetOffer}
+            onReplace={actions.refreshFromBundledDataset}
+            onKeep={actions.keepMyDataset}
+            onLater={actions.askDatasetLater}
+          />
+        )}
       </PlatformContext.Provider>
     </RegistryContext.Provider>
   )

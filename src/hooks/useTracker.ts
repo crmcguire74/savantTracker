@@ -10,6 +10,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { defaultPolicy, normalizePolicy, type AccessPolicy } from '../auth/access'
 import { FIELD_LABELS } from '../constants'
 import { TrackerRepository, bundledSnapshot } from '../data/repository'
+import { decideDatasetOffer, readMarker, writeMarker, type DatasetOffer } from '../data/dataset'
 import type { AppFile } from '../data/appfile'
 import { downloadAppFile, loadAppFile } from '../lib/file-io'
 import { nowISO, uid } from '../lib/id'
@@ -27,6 +28,11 @@ import type {
 } from '../types'
 
 const EMPTY_STATE: TrackerState = { quarter: '', pillars: [], initiatives: [], projects: [] }
+
+/** Browser-only storage: note which dataset the stored data now came from. */
+const rememberDataset = (file: Pick<AppFile, 'source' | 'exportedAt'>) => {
+  if (storage.status.driver === 'indexeddb') writeMarker({ source: file.source, exportedAt: file.exportedAt })
+}
 
 export interface Conflict {
   projectId: string
@@ -64,6 +70,7 @@ export function useTracker(identity: Identity, canWrite = true, canAdmin = false
   const [loading, setLoading] = useState(true)
   const [notice, setNotice] = useState<Notice | null>(null)
   const [conflict, setConflict] = useState<Conflict | null>(null)
+  const [datasetOffer, setDatasetOffer] = useState<DatasetOffer | null>(null)
   const [storageStatus, setStorageStatus] = useState<StorageStatus>(storage.status)
 
   const stateRef = useRef(state)
@@ -123,6 +130,22 @@ export function useTracker(identity: Identity, canWrite = true, canAdmin = false
             tone: 'success',
             message: `Loaded the migrated snapshot: ${boot.state.projects.length} projects across ${boot.state.pillars.length} pillars.`,
           })
+        }
+
+        // Browser-only storage: remember where this data came from, or offer the newer monday dataset.
+        if (opened.driver === 'indexeddb' && !opened.degraded) {
+          const bundled = bundledSnapshot()
+          if (boot.seeded) {
+            writeMarker({ source: bundled.source, exportedAt: bundled.exportedAt })
+          } else {
+            setDatasetOffer(
+              decideDatasetOffer(
+                { source: bundled.source, exportedAt: bundled.exportedAt, projects: bundled.state.projects.length },
+                readMarker(),
+                boot.state.projects.length,
+              ),
+            )
+          }
         }
 
         unsubscribers.push(repository.subscribeState((next) => next && setState(next)))
@@ -609,6 +632,7 @@ export function useTracker(identity: Identity, canWrite = true, canAdmin = false
       const parsed = await loadAppFile(file)
       if (backupFirst) await exportData('backup-before-import')
       await repository.replaceAll(parsed.file)
+      rememberDataset(parsed.file)
       setState(parsed.file.state)
       setLog(parsed.file.log)
       setSettings(parsed.file.settings)
@@ -640,9 +664,53 @@ export function useTracker(identity: Identity, canWrite = true, canAdmin = false
     setState(file.state)
     setLog(file.log)
     setSettings(file.settings)
+    rememberDataset(file)
+    setDatasetOffer(null)
     flash({ tone: 'info', message: 'Reset to the migrated snapshot.' })
     return file
   }, [repository, flash])
+
+  // ── browser-only: take the monday dataset this build carries ──────────
+  const refreshFromBundledDataset = useCallback(async (): Promise<boolean> => {
+    if (!canWriteRef.current) {
+      flash({ tone: 'error', message: 'Replacing the data needs editor access.' })
+      return false
+    }
+    try {
+      await exportData('backup-before-monday-refresh')
+      const file = await repository.resetToSnapshot()
+      setState(file.state)
+      setLog(file.log)
+      setSettings(file.settings)
+      rememberDataset(file)
+      setDatasetOffer(null)
+      await appendLog({
+        projectId: '',
+        projectTitle: '(entire tracker)',
+        field: 'Dataset refresh',
+        fieldKey: '',
+        oldValue: 'previous browser data',
+        newValue: file.source,
+      })
+      flash({
+        tone: 'success',
+        message: `Loaded the monday.com dataset: ${file.state.projects.length} projects across ${file.state.pillars.length} pillars.`,
+      })
+      return true
+    } catch (error) {
+      flash({ tone: 'error', message: error instanceof Error ? error.message : 'The dataset could not be loaded.' })
+      return false
+    }
+  }, [repository, exportData, appendLog, flash])
+
+  const keepMyDataset = useCallback(() => {
+    if (datasetOffer) {
+      writeMarker({ ...(readMarker() ?? { source: '', exportedAt: '' }), dismissed: datasetOffer.source })
+    }
+    setDatasetOffer(null)
+  }, [datasetOffer])
+
+  const askDatasetLater = useCallback(() => setDatasetOffer(null), [])
 
   return {
     state,
@@ -653,6 +721,7 @@ export function useTracker(identity: Identity, canWrite = true, canAdmin = false
     notice,
     conflict,
     storageStatus,
+    datasetOffer,
     snapshotInfo: useMemo(() => {
       const file = bundledSnapshot()
       return { exportedAt: file.exportedAt, projects: file.state.projects.length }
@@ -679,6 +748,9 @@ export function useTracker(identity: Identity, canWrite = true, canAdmin = false
       exportData,
       importData,
       resetToSnapshot,
+      refreshFromBundledDataset,
+      keepMyDataset,
+      askDatasetLater,
       dismissNotice: () => setNotice(null),
     },
   }
