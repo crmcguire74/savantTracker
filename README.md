@@ -388,7 +388,7 @@ Module → usePlatform().tracker → useTracker → TrackerRepository → Storag
        → IndexedDbAdapter | MemoryAdapter | RestAdapter → (Express → Cosmos DB)
 ```
 
-Tracker data is a small set of versioned documents: `tracker.state`, `tracker.log`, `tracker.settings` and `tracker.access`.
+Tracker data is a small set of versioned documents: `tracker.state`, `tracker.log`, `tracker.settings` and `tracker.access`. The server also keeps `tracker.sync` (last monday sync, readable by everyone for the freshness line) and `tracker.syncconfig` (pull interval); both are admin-write-only, as are `tracker.backup.*`.
 
 ```json
 { "key": "tracker/state", "value": { "quarter": "Q4 2026", "pillars": [], "initiatives": [], "projects": [] }, "version": 12, "updatedAt": "2026-10-13T12:00:00.000Z" }
@@ -402,6 +402,8 @@ Tracker data is a small set of versioned documents: `tracker.state`, `tracker.lo
 | Cosmos DB via Express | Production, using managed identity and no embedded credentials |
 
 Driver selection: `VITE_STORAGE_DRIVER`, else `?storage=` in the URL, else IndexedDB. Settings → Storage swaps the driver at runtime and migrates the data.
+
+**monday.com sync.** monday.com is the source of truth for the 17 project fields; the tracker keeps issues, decision outcome and plan link. Admins run it from Admin, Open sync: live with a server-side token, or from a capture file (or the bundled sample) when there is no token, in any build. With a token, an admin can also turn on automatic pulls (Open sync, Automatic pulls: 5 minutes to once a day). Each scheduled check compares monday's board change times first and reads nothing when monday has not changed, so every user sees current data with little load. The top bar shows "monday data as of <time>" to everyone. Scheduled pulls never remove records. Sign-in is detected at start-up: Entra roles in Azure, the test sign-in elsewhere. Setup, Azure steps and troubleshooting: [MONDAY-INTEGRATION.md](MONDAY-INTEGRATION.md).
 
 **Dataset refresh prompt (IndexedDB only).** The monday.com data ships inside each build as `src/data/snapshot.json`. When a build carries a monday dataset (`source` starting `monday-sync`) that this browser has not taken yet, the app asks on load: replace the local data (a backup downloads first), keep it (stops asking about that dataset), or ask later. The browser remembers its dataset in `localStorage` (`savant-tracker:dataset`). Edits made after taking a dataset never trigger the prompt; only a newer dataset does. Shared backends (REST/Cosmos) never prompt.
 
@@ -432,6 +434,7 @@ The import parser is tolerant: it accepts v1 files and legacy bare-state exports
 | `GET /api/documents/:key` | Read one versioned document |
 | `PUT /api/documents/:key` | Write; honours `If-Match` for optimistic concurrency (409 on conflict) |
 | `DELETE /api/documents/:key` | Delete if the version matches |
+| `POST /api/admin/sync/schedule` | Admin: set the automatic pull interval (0, or 5 to 1440 minutes) |
 | `GET /api/stream?keys=a,b` | One SSE stream per tab for live updates (falls back to polling) |
 | `GET /api/health` | Database connectivity |
 

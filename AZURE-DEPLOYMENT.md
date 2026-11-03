@@ -233,6 +233,10 @@ saying to ask an administrator, not a broken page.
 **Stop. Do not run this until Chris confirms the app is deployed, the data is
 loaded, and he can sign in.**
 
+If the tracker will read monday.com, run `./infra/monday-setup.sh` first. It
+needs the public door open to write the token into Key Vault. See
+`MONDAY-INTEGRATION.md`, Part 3.
+
 Before running it, confirm with your network team:
 
 - the office network and VPN can route to the virtual network

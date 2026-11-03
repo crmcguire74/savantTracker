@@ -35,22 +35,25 @@ export function resolveDriver(): DriverName {
   return readUrlDriver() ?? configured ?? 'indexeddb'
 }
 
+/** Where the API lives. Shared by the storage adapter and the admin sync calls. */
+export const apiBaseUrl = (): string => readEnv('VITE_API_BASE_URL') ?? '/api'
+
+/** Headers every API call carries. */
+export function apiHeaders(): Record<string, string> {
+  const token = readEnv('VITE_API_TOKEN')
+  // The local server acts as the tester's picked role; a server with
+  // real sign-in ignores this header and reads the Entra claims.
+  const headers: Record<string, string> = authMode() === 'local' ? { [DEV_ROLE_HEADER]: readDevRole() } : {}
+  if (token) headers.Authorization = `Bearer ${token}`
+  return headers
+}
+
 export function createAdapter(driver: DriverName = resolveDriver()): StorageAdapter {
   switch (driver) {
     case 'memory':
       return new MemoryAdapter()
     case 'rest':
-      return new RestAdapter({
-        baseUrl: readEnv('VITE_API_BASE_URL') ?? '/api',
-        authHeaders: (): Record<string, string> => {
-          const token = readEnv('VITE_API_TOKEN')
-          // The local server acts as the tester's picked role; a server with
-          // real sign-in ignores this header and reads the Entra claims.
-          const headers: Record<string, string> = authMode() === 'local' ? { [DEV_ROLE_HEADER]: readDevRole() } : {}
-          if (token) headers.Authorization = `Bearer ${token}`
-          return headers
-        },
-      })
+      return new RestAdapter({ baseUrl: apiBaseUrl(), authHeaders: apiHeaders })
     case 'indexeddb':
     default:
       return new IndexedDbAdapter()

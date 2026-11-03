@@ -8,13 +8,16 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { defaultPolicy, normalizePolicy, type AccessPolicy } from '../auth/access'
+import { runtimeInfo } from '../auth/runtime'
 import { FIELD_LABELS } from '../constants'
-import { TrackerRepository, bundledSnapshot } from '../data/repository'
+import { TrackerRepository, bundledSnapshot, type SyncInfo } from '../data/repository'
 import { decideDatasetOffer, readMarker, writeMarker, type DatasetOffer } from '../data/dataset'
+import { createMondaySync, type MondaySyncApi } from '../data/mondaySync'
+import { ownedByMonday, ownedMessage } from '../data/ownership'
 import type { AppFile } from '../data/appfile'
 import { downloadAppFile, loadAppFile } from '../lib/file-io'
 import { nowISO, uid } from '../lib/id'
-import { openStorage, storage, type StorageStatus } from '../storage'
+import { apiBaseUrl, apiHeaders, openStorage, storage, type StorageStatus } from '../storage'
 import type {
   Identity,
   Initiative,
@@ -67,6 +70,7 @@ export function useTracker(identity: Identity, canWrite = true, canAdmin = false
   const [log, setLog] = useState<LogEntry[]>([])
   const [settings, setSettings] = useState<Settings>({ staleThresholdDays: 30 })
   const [access, setAccess] = useState<AccessPolicy>(defaultPolicy)
+  const [syncInfo, setSyncInfo] = useState<SyncInfo | null>(null)
   const [loading, setLoading] = useState(true)
   const [notice, setNotice] = useState<Notice | null>(null)
   const [conflict, setConflict] = useState<Conflict | null>(null)
@@ -152,6 +156,9 @@ export function useTracker(identity: Identity, canWrite = true, canAdmin = false
         unsubscribers.push(repository.subscribeLog(setLog))
         unsubscribers.push(repository.subscribeSettings(setSettings))
         unsubscribers.push(repository.subscribeAccess(setAccess))
+        // The "monday data as of" line. Not worth failing the boot over.
+        repository.readSyncInfo().then((info) => !cancelled && setSyncInfo(info), () => undefined)
+        unsubscribers.push(repository.subscribeSync(setSyncInfo))
         unsubscribers.push(storage.onStatusChange(setStorageStatus))
       } catch (error) {
         if (cancelled) return
@@ -227,6 +234,10 @@ export function useTracker(identity: Identity, canWrite = true, canAdmin = false
     ) => {
       const project = base.projects.find((candidate) => candidate.id === projectId)
       if (!project) return
+      if (ownedByMonday(project, field, runtimeInfo().mondayLive)) {
+        flash({ tone: 'info', message: ownedMessage(FIELD_LABELS[field] ?? field) })
+        return
+      }
 
       const next: TrackerState = {
         ...base,
@@ -249,13 +260,17 @@ export function useTracker(identity: Identity, canWrite = true, canAdmin = false
         })
       }
     },
-    [persist, appendLog, stamp],
+    [persist, appendLog, stamp, flash],
   )
 
   const updateProjectField = useCallback(
     async (projectId: string, field: ProjectFieldKey, value: ProjectFieldValue, baseline: ProjectFieldValue) => {
       const fresh = (await repository.readState()) ?? stateRef.current
       const live = fresh.projects.find((candidate) => candidate.id === projectId)
+      if (ownedByMonday(live, field, runtimeInfo().mondayLive)) {
+        flash({ tone: 'info', message: ownedMessage(FIELD_LABELS[field] ?? field) })
+        return
+      }
       const liveValue = (live ? live[field] : baseline) as ProjectFieldValue
 
       // Someone changed this field to a third value while the field was open.
@@ -265,7 +280,7 @@ export function useTracker(identity: Identity, canWrite = true, canAdmin = false
       }
       await commitField(fresh, projectId, field, value, liveValue)
     },
-    [repository, commitField],
+    [repository, commitField, flash],
   )
 
   const resolveConflict = useCallback(
@@ -703,6 +718,40 @@ export function useTracker(identity: Identity, canWrite = true, canAdmin = false
     }
   }, [repository, exportData, appendLog, flash])
 
+  // ── monday.com sync (admin screen) ────────────────────────────────────
+  /** Re-reads everything from storage after the sync changed it. */
+  const reload = useCallback(async () => {
+    const boot = await repository.bootstrap()
+    setState(boot.state)
+    stateRef.current = boot.state
+    setLog(boot.log)
+    setSettings(boot.settings)
+  }, [repository])
+
+  const mondaySync = useMemo<MondaySyncApi>(() => {
+    const api = createMondaySync({
+      repository,
+      driver: () => storage.status.driver,
+      isAdmin: () => canAdminRef.current,
+      apiBase: apiBaseUrl(),
+      headers: apiHeaders,
+      download: (file, tag) => downloadAppFile(file, tag),
+    })
+    return {
+      ...api,
+      run: async (request) => {
+        const result = await api.run(request)
+        if (result.written) await reload()
+        return result
+      },
+      restore: async (key, apply) => {
+        const result = await api.restore(key, apply)
+        if (result.written) await reload()
+        return result
+      },
+    }
+  }, [repository, reload])
+
   const keepMyDataset = useCallback(() => {
     if (datasetOffer) {
       writeMarker({ ...(readMarker() ?? { source: '', exportedAt: '' }), dismissed: datasetOffer.source })
@@ -717,11 +766,13 @@ export function useTracker(identity: Identity, canWrite = true, canAdmin = false
     log,
     settings,
     access,
+    syncInfo,
     loading,
     notice,
     conflict,
     storageStatus,
     datasetOffer,
+    mondaySync,
     snapshotInfo: useMemo(() => {
       const file = bundledSnapshot()
       return { exportedAt: file.exportedAt, projects: file.state.projects.length }

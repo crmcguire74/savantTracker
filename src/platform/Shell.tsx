@@ -18,6 +18,7 @@ import { usePlatform, useRegistry, type PlatformApi } from './context'
 import { guard } from './diagnostics'
 import { forgetUnlock, lockApp } from './LoginGate'
 import { CurrentModule } from './ModuleHost'
+import { SyncFreshness } from './SyncFreshness'
 import { canOpen, homeModule, type Registry } from './registry'
 
 /** The production layout: top bar, rail, and the current module. */
@@ -148,6 +149,8 @@ export function TopBar() {
       {!canWrite && <span className="env-badge viewer">View only</span>}
 
       <div className="topbar-spacer" />
+
+      <SyncFreshness info={tracker.syncInfo} />
 
       <div className="topbar-counts" aria-label="Portfolio status">
         {RAG_KEYS.map((key) => (

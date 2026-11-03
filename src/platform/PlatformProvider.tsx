@@ -16,6 +16,7 @@ import { contextIndex, hasFilters, makeProjectFilter, noFilters, type ViewFilter
 import { buildPeople } from '../lib/people'
 import { Icon } from '../ui/icons'
 import { ChangeLogDrawer } from './ChangeLog'
+import { NoRoleScreen } from './NoRoleScreen'
 import { PlatformContext, RegistryContext, type ConfirmRequest, type PlatformApi } from './context'
 import { formatLocation, useLocation } from './location'
 import { ConfirmModal, ConflictModal, DatasetOfferModal, IdentityModal, StorageModal } from './modals'
@@ -155,6 +156,11 @@ export function PlatformProvider(props: { registry: Registry; children: ReactNod
     openIdentity: () => setShowIdentity(true),
     openChangeLog: (projectId) => setChangeLog({ projectId }),
     startImport: () => importInputRef.current?.click(),
+  }
+
+  // Signed in through Entra, but nobody has given this account a tracker role yet.
+  if (!identityResolving && identitySource === 'entra' && roles.length === 0) {
+    return <NoRoleScreen name={identity.name} />
   }
 
   if (loading || identityResolving) {

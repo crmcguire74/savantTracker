@@ -16,6 +16,9 @@ import { readFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createApp } from './app.js'
+import { createMondayClient } from './monday/client.js'
+import { createSyncService } from './monday/service.js'
+import { startScheduler } from './monday/scheduler.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const port = process.env.PORT || 8080
@@ -53,7 +56,20 @@ if (azureMode) {
   ]
 }
 
-const app = createApp({ store })
+// monday.com sync. The routes are always there. With MONDAY_API_TOKEN and MONDAY_WORKSPACE_ID set
+// they read monday live; without them an admin can still upload a capture file to test the sync.
+const sync = createSyncService({ store, env: process.env, makeClient: () => createMondayClient() })
+const app = createApp({ store, sync })
+const scheduler = startScheduler({ sync })
+const scheduleMinutes = scheduler ? await sync.currentInterval() : 0
+banner.push(
+  sync.live ? '  monday:   live (token set)' : '  monday:   test mode (no token; upload a capture on the Admin screen)',
+  !scheduler
+    ? '  schedule: off (monday is not live)'
+    : scheduleMinutes > 0
+      ? `  schedule: every ${scheduleMinutes} minutes, skips when monday is unchanged (never retires)`
+      : '  schedule: off (an admin can turn it on in the Admin screen)',
+)
 
 app.listen(port, '0.0.0.0', () => {
   console.log('')

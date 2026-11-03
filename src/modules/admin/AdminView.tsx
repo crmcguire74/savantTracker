@@ -1,23 +1,18 @@
 // 🧰 Admin: the PMO's upkeep page. What has gone quiet (filterable by how
 // long and by PM), the running list of decisions waiting on leadership, the
-// latest edits, and the monday.com sync once it is connected. Replaces the
+// latest edits, and the monday.com sync (a live pull, or a capture file when there is no token). Replaces the
 // old Reports page; spreadsheets now download from Export in the account
 // menu and the one-pager opens from the leadership brief.
 
 import { useMemo, useState } from 'react'
-import { ageLabel, Dot, PageHeader, pillarTitle, StatTile, Tag, usePlatform, Icon, daysSince, byStatusThenTitle, isStale, needsDecision, type Project } from '@sdk'
+import { ageLabel, Dot, PageHeader, pillarTitle, StatTile, usePlatform, Icon, daysSince, byStatusThenTitle, isStale, needsDecision, type Project } from '@sdk'
+import { MondaySyncCard } from './MondaySync'
 
 /** Age floors offered as stale filters, beyond the stale threshold itself. */
 const AGE_STEPS = [30, 60, 90]
 /** Days at which the age meter on a stale row reads full. */
 const METER_FULL_DAYS = 120
 const NO_PM = '__none'
-
-/**
- * monday.com is not connected yet (action plan, phase 4). When the sync job
- * lands, this becomes its last-run record; the panel already reads from it.
- */
-const MONDAY_SYNC: { connected: boolean; lastPullAt: string } = { connected: false, lastPullAt: '' }
 
 const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 
@@ -51,7 +46,7 @@ export function AdminView() {
           sub={`no update in ${threshold}+ days`}
           onClick={() => scrollTo('admin-stale')}
         />
-        <MondaySync />
+        <MondaySyncCard />
       </div>
 
       <div className="admin-grid">
@@ -290,38 +285,6 @@ function RecentActivity() {
           ))}
         </ul>
       )}
-    </section>
-  )
-}
-
-// ── monday.com ────────────────────────────────────────────────────────────
-
-function MondaySync() {
-  const { connected, lastPullAt } = MONDAY_SYNC
-  const last = lastPullAt ? new Date(lastPullAt) : null
-
-  return (
-    <section className="card sync-card" aria-labelledby="sync-title">
-      <div className="sync-head">
-        <span className={`sync-light${connected ? ' on' : ''}`} aria-hidden />
-        <h2 className="stat-label" id="sync-title">
-          monday.com sync
-        </h2>
-        <Tag tone={connected ? 'green' : 'outline'}>{connected ? 'Connected' : 'Not connected'}</Tag>
-      </div>
-      <div className="sync-body">
-        <div>
-          <div className="sync-last">{last ? ageLabel(lastPullAt) : 'No pulls yet'}</div>
-          <div className="stat-sub">
-            {last
-              ? `Last pull ${last.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}`
-              : 'Pulls start once WiseTrack is linked to the PMO’s monday boards.'}
-          </div>
-        </div>
-        <button type="button" className="btn btn-ghost sm" disabled={!connected} title={connected ? undefined : 'Available once monday.com is connected'}>
-          <Icon.Sync size={15} /> Pull from monday
-        </button>
-      </div>
     </section>
   )
 }

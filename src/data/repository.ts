@@ -25,7 +25,23 @@ export const DOC_KEYS = {
   settings: 'tracker.settings',
   /** Who sees which views and reports. Admin-only writes, enforced by the API. */
   access: 'tracker.access',
+  /** Last monday sync, written by the server. Everyone reads it for the "monday data as of" line. */
+  sync: 'tracker.sync',
 } as const
+
+/** The part of the sync record every user may see. */
+export interface SyncInfo {
+  /** When the app last checked monday (a pull, or a check that found nothing new). */
+  at: string
+  ok: boolean
+  source?: string
+  checkedUnchanged?: boolean
+}
+
+const toSyncInfo = (value: unknown): SyncInfo | null => {
+  const found = value as Partial<SyncInfo> | null
+  return found && typeof found.at === 'string' ? { at: found.at, ok: found.ok !== false, source: found.source, checkedUnchanged: found.checkedUnchanged } : null
+}
 
 export interface Bootstrap {
   state: TrackerState
@@ -141,6 +157,14 @@ export class TrackerRepository {
   async saveAccess(policy: AccessPolicy): Promise<void> {
     const written = await this.#storage.put(DOC_KEYS.access, policy)
     this.#versions.set(DOC_KEYS.access, written.version)
+  }
+
+  async readSyncInfo(): Promise<SyncInfo | null> {
+    return toSyncInfo((await this.#storage.get<unknown>(DOC_KEYS.sync))?.value)
+  }
+
+  subscribeSync(listener: (info: SyncInfo | null) => void): Unsubscribe {
+    return this.#storage.subscribe<unknown>(DOC_KEYS.sync, (doc) => listener(toSyncInfo(doc?.value)))
   }
 
   subscribeAccess(listener: (policy: AccessPolicy) => void): Unsubscribe {

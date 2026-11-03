@@ -6,8 +6,8 @@
 //
 // Running locally against IndexedDB there is no server and no Entra, so the
 // app falls back to a name you type once, kept in this browser, and the role
-// picked on the sign-in screen. With VITE_AUTH_MODE=entra the roles come from
-// the account's app-role claims instead. Nothing here is a security boundary.
+// picked on the sign-in screen. When Entra sign-in is detected (or forced with
+// VITE_AUTH_MODE=entra) the roles come from the account's app-role claims instead. Nothing here is a security boundary.
 // The API enforces the role on every write; this only decides which buttons
 // and views are worth showing.
 

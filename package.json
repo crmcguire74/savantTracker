@@ -17,7 +17,10 @@
     "test": "vitest run",
     "start": "node server/index.js",
     "start:local": "node server/index.js",
-    "seed": "node infra/seed-cosmos.mjs"
+    "seed": "node infra/seed-cosmos.mjs",
+    "sync:monday": "node server/monday/cli.js",
+    "monday:capture": "node server/monday/cli.js --save-capture=monday-capture.json",
+    "monday:test": "node server/monday/cli.js --test"
   },
   "dependencies": {
     "@azure/cosmos": "^4.2.0",

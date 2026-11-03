@@ -30,6 +30,17 @@ export type { AccessPolicy, FeatureCatalog, FeatureInfo, FeatureKey } from '../a
 export * from '../reports/catalog'
 export * from '../reports/onepager'
 export type { NewInitiativeInput, NewProjectInput, TrackerActions, TrackerApi } from '../hooks/useTracker'
+export type {
+  BackupInfo,
+  ConnectionCheck,
+  MondaySyncApi,
+  RestoreResult,
+  SyncResult,
+  SyncRunRequest,
+  SyncStatus,
+} from '../data/mondaySync'
+export { SyncRequestError } from '../data/mondaySync'
+export type { MondayCapture } from '../../server/monday/capture'
 export { applyUpdate, checkForUpdate, promptInstall, usePwa } from '../hooks/usePwa'
 
 // ── shared UI kit ─────────────────────────────────────────────────────────

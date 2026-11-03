@@ -105,9 +105,11 @@ export function createFileStore(filePath) {
       const state = appFile.state ?? appFile
       const log = Array.isArray(appFile.log) ? appFile.log : (appFile.log?.entries ?? [])
       const settings = appFile.settings ?? { staleThresholdDays: 30 }
-      await this.writeDocument('tracker/state', state)
-      await this.writeDocument('tracker/log', { entries: log })
-      await this.writeDocument('tracker/settings', settings)
+      // The keys the app reads (DOC_KEYS in src/data/repository.ts). They were 'tracker/state' before,
+      // which the app never read, so a seeded file looked empty to the sync and to everyone else.
+      await this.writeDocument('tracker.state', state)
+      await this.writeDocument('tracker.log', { entries: log })
+      await this.writeDocument('tracker.settings', settings)
       return state.projects?.length ?? 0
     },
 

@@ -1,14 +1,21 @@
 // 🔑 Which sign-in is in charge, and (locally) which role the tester picked.
 //
-//   VITE_AUTH_MODE=local   The default. The shared username and password
-//                          screen, with a role picker so anyone can try the
-//                          app as an admin, editor, executive or viewer.
-//   VITE_AUTH_MODE=entra   Azure with App Service authentication turned on.
-//                          No password screen: Entra has already signed the
-//                          user in, and roles come from their app-role claims.
+//   local   The shared username and password screen, with a role picker so
+//           anyone can try the app as an admin, editor, executive or viewer.
+//   entra   Azure with App Service authentication turned on. No password
+//           screen: Entra has already signed the user in, and roles come from
+//           their app-role claims.
 //
-// Flip to `entra` only once the app roles in infra/app-roles.json are
-// assigned to people; until then every Entra user would arrive with no role.
+// Which one is in charge:
+//   VITE_AUTH_MODE=local or entra   forces that mode (a build-time override).
+//   unset, or "auto"                the app asks the server at start-up (/api/me,
+//                                   see probeRuntime in ./runtime.ts). A server with
+//                                   real sign-in behind it answers local:false and the
+//                                   app runs on Entra roles. No server, or a server
+//                                   with no sign-in, keeps the test sign-in.
+//
+// An Entra user with no app role assigned lands on a "no role" screen, so it is
+// safe to deploy before the roles are handed out.
 
 import { isRole, type Role } from './roles'
 
@@ -16,13 +23,25 @@ export type AuthMode = 'local' | 'entra'
 
 const ROLE_KEY = 'savant-tracker:dev-role'
 
-export function authMode(): AuthMode {
+let detected: AuthMode | null = null
+
+/** Called once by probeRuntime() before the app renders. */
+export function setDetectedAuthMode(mode: AuthMode | null): void {
+  detected = mode
+}
+
+const configuredMode = (): AuthMode | 'auto' => {
   try {
     const value = (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_AUTH_MODE
-    return value === 'entra' ? 'entra' : 'local'
+    return value === 'entra' || value === 'local' ? value : 'auto'
   } catch {
-    return 'local'
+    return 'auto'
   }
+}
+
+export function authMode(): AuthMode {
+  const configured = configuredMode()
+  return configured === 'auto' ? (detected ?? 'local') : configured
 }
 
 /** The role picked at the local sign-in. Editor when nothing was picked, matching the app before roles existed. */

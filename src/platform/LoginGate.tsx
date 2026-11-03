@@ -2,8 +2,9 @@
 // being trialled; it is not security. The credentials ship in the bundle, so
 // real access control stays with the server (Easy Auth in Azure).
 //
-// Locally the gate also asks which role to test as. With VITE_AUTH_MODE=entra
-// the gate steps aside: Entra has signed the user in and supplies the roles.
+// Locally the gate also asks which role to test as. When the server has real
+// sign-in (detected at start-up, or forced with VITE_AUTH_MODE=entra) the gate
+// steps aside: Entra has signed the user in and supplies the roles.
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { ROLE_ORDER, ROLES, type Role } from '../auth/roles'
 import { authMode, forgetDevRole, readDevRole, writeDevRole } from '../auth/session'

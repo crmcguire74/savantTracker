@@ -1,3 +1,6 @@
 node_modules
 dist
 local-data
+
+# raw monday captures (npm run monday:capture)
+monday-capture.json

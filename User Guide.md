@@ -88,7 +88,7 @@ When the app opens:
 
 ## 4. Main screen layout
 
-- **Top bar**: the On track / At risk / Off track counts (click one to see those projects), the search box (press `/` to jump to it), the theme toggle, and your avatar menu (My work, Change log, Export backup, theme, Settings).
+- **Top bar**: the On track / At risk / Off track counts (click one to see those projects), the line **monday data as of 2:35 PM** (when the app last checked monday.com; it turns amber if that is over a day old or the last check failed; hidden on narrow screens), the search box (press `/` to jump to it), the theme toggle, and your avatar menu (My work, Change log, Export backup, theme, Settings).
 - **Left rail**: Portfolio, Board, Timeline, My work, Workload, Admin, Access (admins only), Settings. On a phone the rail moves to the bottom of the screen.
 - **Filter chips**: On track, At risk, Off track, Stale and Decisions. They work the same way on Portfolio, Board and Timeline, and stay applied as you move between those three. Click **Clear** to reset.
 
@@ -169,7 +169,7 @@ Type in the search box at the top to jump straight to a project, an initiative o
 
 ## 10. Admin, exports and the change log
 
-**Admin** is the PMO's upkeep page. It shows how many decisions are waiting and how many projects are stale, plus the monday.com sync status (with a **Pull from monday** button once the connection is set up). Below that are three lists:
+**Admin** is the PMO's upkeep page. It shows how many decisions are waiting and how many projects are stale, plus the monday.com sync card. Admins press **Open sync** to preview and apply a sync, either live from monday.com or from a capture file. In the same dialog, **Automatic pulls** sets how often the app checks monday.com for everyone (off, or every 5 minutes up to once a day). A check that finds nothing new changes nothing, and automatic pulls never remove records. Fields that come from monday.com are read-only in the tracker, so change them in monday.com and they appear here at the next pull. See `MONDAY-INTEGRATION.md`. Below that are three lists:
 
 - **Stale projects**, longest without an update first. Use **Stale for** to show only projects quiet for 30, 60 or 90+ days, and the PM picker to see one PM's projects or the ones with no PM.
 - **Decisions needed**, the running list of decisions waiting on leadership, longest-waiting first.

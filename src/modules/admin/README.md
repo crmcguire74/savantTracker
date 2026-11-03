@@ -1,6 +1,6 @@
 # Admin module
 
-PMO upkeep: decisions waiting and stale counts, stale projects filterable by age and PM, the running decision list, recent activity, and monday.com sync status.
+PMO upkeep: decisions waiting and stale counts, stale projects filterable by age and PM, the running decision list, recent activity, and the monday.com sync (status card, the Preview/Apply dialog and the automatic pull interval).
 
 | | |
 | --- | --- |
@@ -14,10 +14,11 @@ PMO upkeep: decisions waiting and stale counts, stale projects filterable by age
 - `manifest.ts`: the plug, including the legacy redirect.
 - `entry.tsx`: lazy entry.
 - `AdminView.tsx`: the page.
+- `MondaySync.tsx`: the sync status card and dialog. Admin only. Reads live monday with a server token, or replays a capture file or the bundled sample, so it works with no token. With a token it also sets the automatic pull interval (`mondaySync.setSchedule`). The "monday data as of" line in the top bar is `src/platform/SyncFreshness.tsx`, fed by `tracker.syncInfo`.
 
 ## Uses from the platform
 
-`tracker` (state, log, settings), `people`, `contextOf`, `openProject`, `openChangeLog`.
+`tracker` (state, log, settings, `mondaySync`), `isAdmin`, `ask`, `people`, `contextOf`, `openProject`, `openChangeLog`.
 
 ## Links out
 
