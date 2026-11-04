@@ -4,3 +4,8 @@ local-data
 
 # raw monday captures (npm run monday:capture)
 monday-capture.json
+
+# build caches and deploy packages
+*.tsbuildinfo
+deploy.zip
+.deploy/

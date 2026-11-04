@@ -1,5 +1,7 @@
 # Moving the tracker to Azure
 
+> **Day-to-day releases, ADO, roles and the monday setup:** use `DEPLOYMENT-RUNBOOK.md`. This page covers building the Azure resources the first time.
+
 Two people do this. Part A is for whoever holds admin rights in Azure. Part B
 is for Chris. Neither part assumes prior Azure experience.
 
@@ -287,9 +289,11 @@ export WEBAPP=app-savant-tracker-ab12cd
 ./infra/deploy.sh
 ```
 
-It installs dependencies, builds the front end, zips `dist` and `server`
-together, and pushes it. Azure installs the production dependencies on its
-side. Three or four minutes.
+It installs dependencies, builds the front end, installs the production
+dependencies, zips `dist`, `server` and `node_modules` together, and pushes
+it. Azure does not build anything (`SCM_DO_BUILD_DURING_DEPLOYMENT=false`);
+letting it build fails with `tsc: not found`. On Windows use
+`.\infra\deploy.ps1` instead. Allow two minutes for the app to restart.
 
 The production build reads `.env.production`, which points the app's storage
 proxy at `/api` instead of IndexedDB. That is the whole switch. The storage

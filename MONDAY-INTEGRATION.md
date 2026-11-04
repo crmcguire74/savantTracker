@@ -170,6 +170,8 @@ If you assign nobody a role, nobody gets in. Assign yourself before you release.
 
 ## Part 3. Push the release to Azure
 
+Step by step with the exact commands, including the Azure DevOps move: `DEPLOYMENT-RUNBOOK.md`.
+
 ### Before you start
 
 - `npm test` passes on your machine.
@@ -185,7 +187,7 @@ Follow `AZURE-DEPLOYMENT.md` and add the monday step. In order:
 | 1 | `./infra/provision.sh` | Azure admin |
 | 2 | `./infra/entra-app.sh` and assign roles (Part 2) | Identity admin |
 | 3 | `./infra/monday-setup.sh` | Azure admin |
-| 4 | `./infra/deploy.sh` | You |
+| 4 | `.\infra\deploy.ps1` (Windows) or `./infra/deploy.sh` | You |
 | 5 | `npm run seed` | You |
 | 6 | Sign in, run the first sync (Part 4) | You |
 | 7 | `./infra/lockdown.sh` | Azure admin |
