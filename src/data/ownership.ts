@@ -19,5 +19,18 @@ export const isMondayField = (field: string): boolean => OWNED.has(field)
 export const ownedByMonday = (project: Pick<Project, 'mondayId'> | undefined, field: ProjectFieldKey, live: boolean): boolean =>
   live && Boolean(project?.mondayId) && OWNED.has(field)
 
+/** Pillars, initiatives and projects that came from monday are managed there while the sync is live. */
+export const structureLocked = (record: { mondayId?: string } | undefined, live: boolean): boolean =>
+  live && Boolean(record?.mondayId)
+
+/** Link to the item on monday, or '' when the base address or the ids are missing. */
+export const mondayItemUrl = (project: Pick<Project, 'mondayId' | 'mondayBoardId'> | undefined, baseUrl: string): string =>
+  baseUrl && project?.mondayId && project.mondayBoardId
+    ? `${baseUrl.replace(/\/+$/, '')}/boards/${project.mondayBoardId}/pulses/${project.mondayId}`
+    : ''
+
+export const structureMessage = (what: string): string =>
+  `${what} are managed in monday.com. Add or change them there and the next sync brings them in.`
+
 export const ownedMessage = (label: string): string =>
   `${label} comes from monday.com. Change it there and the next sync brings it in.`

@@ -128,6 +128,7 @@ function normalizeProject(raw: unknown, index: number, warnings: string[]): Proj
     updatedByName: legacyName,
     issues: arr(source.issues).map(normalizeIssue),
     ...mondayLink(source.mondayId),
+    ...(str(source.mondayBoardId) ? { mondayBoardId: str(source.mondayBoardId) } : {}),
   }
 }
 

@@ -62,6 +62,8 @@ export interface Project {
   issues: Issue[]
   /** monday.com item id. Set by the monday sync; absent on records made in the tracker. */
   mondayId?: string
+  /** monday.com board id, so the tracker can link to the item. Set by the monday sync. */
+  mondayBoardId?: string
 }
 
 export interface Initiative {

@@ -11,7 +11,7 @@ const PHASES = Object.keys(PHASE) as Exclude<Phase, ''>[]
 const VALIDATIONS = Object.keys(VALIDATION) as Exclude<Validation, ''>[]
 
 export function ProjectView(props: { id: string }) {
-  const { tracker, navigate, canWrite, contextOf, openChangeLog } = usePlatform()
+  const { tracker, navigate, canWrite, contextOf, openChangeLog, mondayLink } = usePlatform()
   const project = tracker.state.projects.find((candidate) => candidate.id === props.id)
   const [editing, setEditing] = useState(false)
 
@@ -86,6 +86,11 @@ export function ProjectView(props: { id: string }) {
           <button type="button" className="btn btn-ghost" onClick={() => openChangeLog(project.id)}>
             <Icon.History size={16} /> Change log
           </button>
+          {mondayLink(project) && (
+            <a className="btn btn-ghost" href={mondayLink(project)} target="_blank" rel="noopener noreferrer">
+              Open in monday <Icon.External size={14} />
+            </a>
+          )}
           {canWrite && (
             <button type="button" className="btn btn-primary" onClick={() => setEditing(true)}>
               Update project
@@ -639,7 +644,8 @@ function UpdateDrawer({ project, onClose }: { project: Project; onClose: () => v
 
 /** Gear menu in the drawer's corner. Rare, destructive actions live here so they take a deliberate extra click. */
 function ProjectSettingsMenu({ project, onClose }: { project: Project; onClose: () => void }) {
-  const { ask, tracker, navigate, contextOf } = usePlatform()
+  const { ask, tracker, navigate, contextOf, mondayLive } = usePlatform()
+  const managed = mondayLive && Boolean(project.mondayId)
   const [open, setOpen] = useState(false)
   const wrapRef = useRef<HTMLDivElement | null>(null)
 
@@ -683,9 +689,13 @@ function ProjectSettingsMenu({ project, onClose }: { project: Project; onClose: 
       {open && (
         <div className="menu" role="menu">
           <div className="menu-label">Project settings</div>
-          <button type="button" role="menuitem" className="menu-item danger" onClick={confirmDelete}>
-            <Icon.Trash size={16} /> Delete project…
-          </button>
+          {managed ? (
+            <div className="menu-label">Managed in monday.com. Remove it there.</div>
+          ) : (
+            <button type="button" role="menuitem" className="menu-item danger" onClick={confirmDelete}>
+              <Icon.Trash size={16} /> Delete project…
+            </button>
+          )}
         </div>
       )}
     </div>

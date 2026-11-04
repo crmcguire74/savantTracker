@@ -13,9 +13,10 @@ import { FIELD_LABELS } from '../constants'
 import { TrackerRepository, bundledSnapshot, type SyncInfo } from '../data/repository'
 import { decideDatasetOffer, readMarker, writeMarker, type DatasetOffer } from '../data/dataset'
 import { createMondaySync, type MondaySyncApi } from '../data/mondaySync'
-import { ownedByMonday, ownedMessage } from '../data/ownership'
+import { ownedByMonday, ownedMessage, structureLocked, structureMessage } from '../data/ownership'
 import type { AppFile } from '../data/appfile'
 import { downloadAppFile, loadAppFile } from '../lib/file-io'
+import { orderState, type PillarOrder } from '../lib/pillarOrder'
 import { nowISO, uid } from '../lib/id'
 import { apiBaseUrl, apiHeaders, openStorage, storage, type StorageStatus } from '../storage'
 import type {
@@ -66,7 +67,10 @@ export interface NewInitiativeInput {
 export function useTracker(identity: Identity, canWrite = true, canAdmin = false) {
   const repository = useMemo(() => new TrackerRepository(storage), [])
 
-  const [state, setState] = useState<TrackerState>(EMPTY_STATE)
+  // `raw` is what is stored. `state` is what the app shows: the same data with pillars in order.
+  const [raw, setState] = useState<TrackerState>(EMPTY_STATE)
+  const [pillarOrder, setPillarOrder] = useState<PillarOrder | null>(null)
+  const state = useMemo(() => orderState(raw, pillarOrder), [raw, pillarOrder])
   const [log, setLog] = useState<LogEntry[]>([])
   const [settings, setSettings] = useState<Settings>({ staleThresholdDays: 30 })
   const [access, setAccess] = useState<AccessPolicy>(defaultPolicy)
@@ -77,10 +81,15 @@ export function useTracker(identity: Identity, canWrite = true, canAdmin = false
   const [datasetOffer, setDatasetOffer] = useState<DatasetOffer | null>(null)
   const [storageStatus, setStorageStatus] = useState<StorageStatus>(storage.status)
 
-  const stateRef = useRef(state)
+  const stateRef = useRef(raw)
   useEffect(() => {
-    stateRef.current = state
-  }, [state])
+    stateRef.current = raw
+  }, [raw])
+
+  const pillarOrderRef = useRef(pillarOrder)
+  useEffect(() => {
+    pillarOrderRef.current = pillarOrder
+  }, [pillarOrder])
 
   const identityRef = useRef(identity)
   useEffect(() => {
@@ -159,6 +168,8 @@ export function useTracker(identity: Identity, canWrite = true, canAdmin = false
         // The "monday data as of" line. Not worth failing the boot over.
         repository.readSyncInfo().then((info) => !cancelled && setSyncInfo(info), () => undefined)
         unsubscribers.push(repository.subscribeSync(setSyncInfo))
+        repository.readPillarOrder().then((order) => !cancelled && setPillarOrder(order), () => undefined)
+        unsubscribers.push(repository.subscribePillarOrder(setPillarOrder))
         unsubscribers.push(storage.onStatusChange(setStorageStatus))
       } catch (error) {
         if (cancelled) return
@@ -313,6 +324,10 @@ export function useTracker(identity: Identity, canWrite = true, canAdmin = false
   const addPillar = useCallback(
     async (title: string, owner: string) => {
       if (!title.trim()) return
+      if (runtimeInfo().mondayLive) {
+        flash({ tone: 'info', message: structureMessage('Pillars') })
+        return
+      }
       const base = stateRef.current
       const pillar: Pillar = { id: uid('obj'), title: title.trim(), owner: owner.trim() }
       if (await persist({ ...base, pillars: [...base.pillars, pillar] })) {
@@ -327,24 +342,32 @@ export function useTracker(identity: Identity, canWrite = true, canAdmin = false
       }
       return pillar.id
     },
-    [persist, appendLog],
+    [persist, appendLog, flash],
   )
 
   const updatePillar = useCallback(
     async (id: string, patch: Partial<Pillar>) => {
       const base = stateRef.current
+      if (structureLocked(base.pillars.find((pillar) => pillar.id === id), runtimeInfo().mondayLive)) {
+        flash({ tone: 'info', message: structureMessage('Pillars') })
+        return
+      }
       await persist({
         ...base,
         pillars: base.pillars.map((pillar) => (pillar.id === id ? { ...pillar, ...patch } : pillar)),
       })
     },
-    [persist],
+    [persist, flash],
   )
 
   const deletePillar = useCallback(
     async (id: string) => {
       const base = stateRef.current
       const pillar = base.pillars.find((candidate) => candidate.id === id)
+      if (structureLocked(pillar, runtimeInfo().mondayLive)) {
+        flash({ tone: 'info', message: structureMessage('Pillars') })
+        return
+      }
       const initiativeIds = new Set(
         base.initiatives.filter((initiative) => initiative.pillarId === id).map((initiative) => initiative.id),
       )
@@ -365,12 +388,16 @@ export function useTracker(identity: Identity, canWrite = true, canAdmin = false
         })
       }
     },
-    [persist, appendLog],
+    [persist, appendLog, flash],
   )
 
   const addInitiative = useCallback(
     async (pillarId: string, input: NewInitiativeInput) => {
       if (!input.title.trim() || !pillarId) return undefined
+      if (runtimeInfo().mondayLive) {
+        flash({ tone: 'info', message: structureMessage('Initiatives') })
+        return undefined
+      }
       const base = stateRef.current
       const initiative: Initiative = {
         id: uid('init'),
@@ -393,12 +420,16 @@ export function useTracker(identity: Identity, canWrite = true, canAdmin = false
       }
       return initiative.id
     },
-    [persist, appendLog],
+    [persist, appendLog, flash],
   )
 
   const updateInitiative = useCallback(
     async (id: string, patch: Partial<Initiative>) => {
       const base = stateRef.current
+      if (structureLocked(base.initiatives.find((initiative) => initiative.id === id), runtimeInfo().mondayLive)) {
+        flash({ tone: 'info', message: structureMessage('Initiatives') })
+        return
+      }
       await persist({
         ...base,
         initiatives: base.initiatives.map((initiative) =>
@@ -406,13 +437,17 @@ export function useTracker(identity: Identity, canWrite = true, canAdmin = false
         ),
       })
     },
-    [persist],
+    [persist, flash],
   )
 
   const deleteInitiative = useCallback(
     async (id: string) => {
       const base = stateRef.current
       const initiative = base.initiatives.find((candidate) => candidate.id === id)
+      if (structureLocked(initiative, runtimeInfo().mondayLive)) {
+        flash({ tone: 'info', message: structureMessage('Initiatives') })
+        return
+      }
       const next: TrackerState = {
         ...base,
         initiatives: base.initiatives.filter((candidate) => candidate.id !== id),
@@ -429,12 +464,16 @@ export function useTracker(identity: Identity, canWrite = true, canAdmin = false
         })
       }
     },
-    [persist, appendLog],
+    [persist, appendLog, flash],
   )
 
   const addProject = useCallback(
     async (initiativeId: string, input: NewProjectInput) => {
       if (!input.title.trim()) return
+      if (runtimeInfo().mondayLive) {
+        flash({ tone: 'info', message: structureMessage('Projects') })
+        return
+      }
       const base = stateRef.current
       const project: Project = {
         id: uid('proj'),
@@ -475,13 +514,17 @@ export function useTracker(identity: Identity, canWrite = true, canAdmin = false
         })
       }
     },
-    [persist, appendLog],
+    [persist, appendLog, flash],
   )
 
   const deleteProject = useCallback(
     async (id: string) => {
       const base = stateRef.current
       const project = base.projects.find((candidate) => candidate.id === id)
+      if (structureLocked(project, runtimeInfo().mondayLive)) {
+        flash({ tone: 'info', message: structureMessage('Projects') })
+        return
+      }
       if (await persist({ ...base, projects: base.projects.filter((candidate) => candidate.id !== id) })) {
         await appendLog({
           projectId: id,
@@ -493,7 +536,7 @@ export function useTracker(identity: Identity, canWrite = true, canAdmin = false
         })
       }
     },
-    [persist, appendLog],
+    [persist, appendLog, flash],
   )
 
   // ── issues ────────────────────────────────────────────────────────────
@@ -590,6 +633,41 @@ export function useTracker(identity: Identity, canWrite = true, canAdmin = false
     },
     [mapProject, appendLog],
   )
+
+  // ── pillar order (admins only) ────────────────────────────────────────
+  const writePillarOrder = useCallback(
+    async (ids: string[], logValue: string): Promise<boolean> => {
+      if (!canAdminRef.current) {
+        flash({ tone: 'error', message: 'Only a tracker admin can change the pillar order.' })
+        return false
+      }
+      const known = new Set(stateRef.current.pillars.map((pillar) => pillar.id))
+      const clean = ids.filter((id) => known.has(id))
+      const next: PillarOrder = { ids: clean, updatedAt: nowISO(), updatedByName: identityRef.current.name }
+      const previous = pillarOrderRef.current
+      setPillarOrder(clean.length > 0 ? next : null)
+      try {
+        await repository.savePillarOrder(next)
+      } catch (error) {
+        setPillarOrder(previous)
+        flash({ tone: 'error', message: error instanceof Error ? error.message : 'The pillar order could not be saved.' })
+        return false
+      }
+      await appendLog({
+        projectId: '',
+        projectTitle: '(structure)',
+        field: 'Pillar order',
+        fieldKey: '',
+        oldValue: previous ? 'Custom order' : 'monday order',
+        newValue: logValue,
+      })
+      return true
+    },
+    [repository, appendLog, flash],
+  )
+
+  const savePillarOrder = useCallback((ids: string[]) => writePillarOrder(ids, 'Custom order'), [writePillarOrder])
+  const clearPillarOrder = useCallback(() => writePillarOrder([], 'monday order'), [writePillarOrder])
 
   // ── settings ──────────────────────────────────────────────────────────
   const setStaleThreshold = useCallback(
@@ -767,6 +845,7 @@ export function useTracker(identity: Identity, canWrite = true, canAdmin = false
     settings,
     access,
     syncInfo,
+    pillarOrder,
     loading,
     notice,
     conflict,
@@ -796,6 +875,8 @@ export function useTracker(identity: Identity, canWrite = true, canAdmin = false
       deleteIssue,
       setStaleThreshold,
       saveAccess,
+      savePillarOrder,
+      clearPillarOrder,
       exportData,
       importData,
       resetToSnapshot,

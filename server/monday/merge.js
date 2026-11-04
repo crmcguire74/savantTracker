@@ -26,6 +26,27 @@ const titleKey = (title) => norm(title).replace(/^pillar \d+ /, '')
 
 const same = (a, b) => String(a) === String(b)
 
+/** A real rename on monday. A change of only the "Pillar 1:" prefix is not one. */
+const isRename = (current, name) => name !== '' && current !== name && titleKey(current) !== titleKey(name)
+
+const pillarNo = (title) => {
+  const match = String(title ?? '').match(/^\s*pillar\s*(\d+)\b/i)
+  return match ? Number(match[1]) : null
+}
+
+/** A rename, or a new "Pillar N" number in monday's name. A name with no number never removes one. */
+const isPillarRename = (current, name) => isRename(current, name) || (name !== '' && pillarNo(name) !== null && pillarNo(name) !== pillarNo(current))
+
+const structureEntry = (field, oldValue, newValue) => ({
+  kind: 'created',
+  projectId: '',
+  projectTitle: '(structure)',
+  field,
+  fieldKey: '',
+  oldValue,
+  newValue,
+})
+
 const replaceAt = (list, index, value) => list.map((entry, i) => (i === index ? value : entry))
 
 const blankProject = (id, initiativeId, title, mondayId) => ({
@@ -91,7 +112,18 @@ function resolvePillar(acc, folder, pillarMap) {
   }
 
   const found = acc.pillars[index]
-  if (found.mondayId === folder.id) return [addTo(acc, { warnings }), found.id]
+  if (found.mondayId === folder.id) {
+    if (!isPillarRename(found.title, folder.name)) return [addTo(acc, { warnings }), found.id]
+    return [
+      addTo(acc, {
+        pillars: replaceAt(acc.pillars, index, { ...found, title: folder.name }),
+        warnings,
+        entries: [...acc.entries, structureEntry('Pillar renamed', found.title, folder.name)],
+        counts: bump(acc, 'pillarsRenamed'),
+      }),
+      found.id,
+    ]
+  }
   return [
     addTo(acc, {
       pillars: replaceAt(acc.pillars, index, { ...found, mondayId: folder.id }),
@@ -128,7 +160,30 @@ function resolveInitiative(acc, folder, pillarId) {
   }
 
   const found = acc.initiatives[index]
-  if (found.mondayId === folder.id && found.pillarId === pillarId) return [acc, found.id]
+  const linkedAlready = found.mondayId === folder.id
+  const renamed = linkedAlready && isRename(found.title, folder.name)
+  const moved = linkedAlready && found.pillarId !== pillarId
+  if (linkedAlready && !renamed && !moved) return [acc, found.id]
+  if (linkedAlready) {
+    return [
+      addTo(acc, {
+        initiatives: replaceAt(acc.initiatives, index, {
+          ...found,
+          pillarId,
+          ...(renamed ? { title: folder.name } : {}),
+        }),
+        entries: [
+          ...acc.entries,
+          ...(renamed ? [structureEntry('Initiative renamed', found.title, folder.name)] : []),
+        ],
+        counts: {
+          ...(renamed ? bump(acc, 'initiativesRenamed') : {}),
+          ...(moved ? { linked: acc.counts.linked + 1 } : {}),
+        },
+      }),
+      found.id,
+    ]
+  }
   return [
     addTo(acc, {
       initiatives: replaceAt(acc.initiatives, index, { ...found, mondayId: folder.id, pillarId }),
@@ -150,7 +205,7 @@ const logEntry = (kind, project, field, fieldKey, oldValue, newValue) => ({
   newValue: String(newValue ?? ''),
 })
 
-function mergeProject(acc, item, initiative, boardName) {
+function mergeProject(acc, item, initiative, boardName, boardId) {
   const byLink = acc.projects.findIndex((project) => project.mondayId === item.mondayId)
   const byTitle = acc.projects.findIndex(
     (project) =>
@@ -164,7 +219,7 @@ function mergeProject(acc, item, initiative, boardName) {
 
   // New project: every synced value is a change from blank, but one line says it all.
   if (index === -1) {
-    const fresh = blankProject(`proj-monday-${item.mondayId}`, initiative.id, item.title, item.mondayId)
+    const fresh = { ...blankProject(`proj-monday-${item.mondayId}`, initiative.id, item.title, item.mondayId), mondayBoardId: boardId }
     const filled = {
       ...fresh,
       ...item.fields,
@@ -187,7 +242,7 @@ function mergeProject(acc, item, initiative, boardName) {
 
   const retitled = byLink !== -1 && item.title !== '' && item.title !== current.title
   const moved = byLink !== -1 && current.initiativeId !== initiative.id
-  const linked = current.mondayId !== item.mondayId
+  const linked = current.mondayId !== item.mondayId || (boardId && current.mondayBoardId !== boardId)
   const touched = changes.length > 0 || retitled || moved
 
   const updated = {
@@ -197,6 +252,7 @@ function mergeProject(acc, item, initiative, boardName) {
     ...(moved ? { initiativeId: initiative.id } : {}),
     ...(touched ? { updatedAt: item.updatedAt || acc.now, updatedById: SYNC_ID, updatedByName: SYNC_NAME } : {}),
     mondayId: item.mondayId,
+    ...(boardId ? { mondayBoardId: boardId } : {}),
   }
 
   const entries = [
@@ -223,7 +279,7 @@ function mergeBoard(acc, board, pillarMap) {
   const [withPillar, pillarId] = resolvePillar(acc, board.pillar, pillarMap)
   const [withInitiative, initiativeId] = resolveInitiative(withPillar, board.initiative, pillarId)
   const initiative = { id: initiativeId }
-  return board.projects.reduce((state, item) => mergeProject(state, item, initiative, board.board.name), withInitiative)
+  return board.projects.reduce((state, item) => mergeProject(state, item, initiative, board.board.name, board.board.id), withInitiative)
 }
 
 // ───────────────────────────── public ─────────────────────────────
@@ -245,7 +301,9 @@ export function mergeMonday(state, discovered, options = {}) {
     warnings: [],
     counts: {
       pillarsCreated: 0,
+      pillarsRenamed: 0,
       initiativesCreated: 0,
+      initiativesRenamed: 0,
       projectsCreated: 0,
       projectsUpdated: 0,
       projectsUnchanged: 0,
@@ -298,7 +356,8 @@ export function mergeMonday(state, discovered, options = {}) {
   }))
 
   const c = merged.counts
-  const changed = c.pillarsCreated + c.initiativesCreated + c.projectsCreated + c.projectsUpdated + c.linked > 0
+  const changed =
+    c.pillarsCreated + c.pillarsRenamed + c.initiativesCreated + c.initiativesRenamed + c.projectsCreated + c.projectsUpdated + c.linked > 0
 
   return {
     state: { ...state, pillars: merged.pillars, initiatives: merged.initiatives, projects: merged.projects },

@@ -1,6 +1,6 @@
 # Portfolio module
 
-The landing page: every pillar, initiative and project, in four layouts. Editors add, edit and delete pillars, initiatives and projects here.
+The landing page: every pillar, initiative and project, in four layouts. Editors add, edit and delete pillars, initiatives and projects here, except while the monday.com sync is live: then linked records show "Managed in monday.com" and the add, edit and delete controls are hidden (`mondayLive` from `usePlatform()`). Admins also get **Reorder** on the Pillars card: drag or use the arrows to save a custom pillar order (`tracker.pillarOrder`, `actions.savePillarOrder`, `actions.clearPillarOrder`). **Use monday order** removes it.
 
 | | |
 | --- | --- |

@@ -22,6 +22,14 @@ Before those, there is a section on trying everything with no accounts at all.
 | Board with the project columns, group "Projects" | Project register |
 | One row | One project |
 
+monday also owns the structure. A renamed folder renames the linked pillar or initiative. A new top-level folder or sub-folder becomes a new pillar or initiative at the next sync, once it holds a project board. A folder with no project board is not pulled. A change of only a missing "Pillar 1:" prefix is not treated as a rename. A new or changed number is.
+
+### Pillar order
+
+monday's API gives no folder position, so the tracker sorts pillars itself. The default order is: names that start "Pillar 1:", "Pillar 2:" and so on, by number. Then pillars without a number, in the order monday created them. Then pillars made in the tracker. The cleanest way to set the order is to number the pillar folders in monday.
+
+An admin can override it. Portfolio, Pillars card, **Reorder**: drag the pillars, or use the arrows, then press **Done**. The new order applies to everyone and the card says "Custom order". A new pillar from monday joins after the ones the admin placed. **Use monday order** removes the override and returns to the default. The override is stored in its own document (`tracker.pillarorder`, admin write only), so a sync never changes it.
+
 monday owns these 17 fields on every linked project: Business Owner, Delivery Owner, Project Manager, Scope, RAG Status, Trend, Phase, Validation, Project Progress, Start Date, Original End Date, Forecast End Date, Key Risk / Blocker, Dependencies, Decision Needed, Next Milestone, Next Milestone Date.
 
 The tracker keeps these: issues, decision outcome, plan link.
@@ -62,6 +70,12 @@ An Entra user with no role sees a "no role" page, not a broken app.
 ### Field lock
 
 When the server pulls live from monday, the 17 synced fields on linked projects are read-only in the tracker. An edit shows "comes from monday.com". Change it in monday and the next sync brings it in.
+
+The same lock covers structure. Linked pillars, initiatives and projects cannot be renamed, moved or deleted in the tracker, and nothing new can be added there. The buttons are hidden and show "Managed in monday.com". Add and rename in monday.
+
+The server enforces this as well as the browser. A write to the tracker data that changes a locked value gets a 403 with the reason. The sync is not affected, because it writes straight to the store. Records made in the tracker before the connection have no monday link, so they stay editable until an admin retires them (Part 4).
+
+Each project page has an **Open in monday** button when `MONDAY_ACCOUNT_URL` is set.
 
 With no token (test mode) nothing is locked, so testers can still edit. A later capture upload overwrites those edits.
 
@@ -317,6 +331,7 @@ How a scheduled check works:
 | `MONDAY_API_TOKEN` | none | Service account token. Turns on live mode. |
 | `MONDAY_WORKSPACE_ID` | none | Workspace to read. Required for live mode. |
 | `MONDAY_SYNC_INTERVAL_MINUTES` | `0` | Starting value for the timer. An admin can change it in the app, and that wins. `0` is off. Minimum `5`. |
+| `MONDAY_ACCOUNT_URL` | none | Your monday address, for example `https://savantwealth.monday.com`. Turns on the Open in monday button. Set it in the web app's environment variables. |
 | `MONDAY_PROJECT_GROUP` | `Projects` | Group name that holds project rows. |
 | `MONDAY_IGNORE_TITLES` | `Rename,test` | Row names to skip. Comma separated. |
 | `MONDAY_PILLAR_MAP` | none | JSON map from a monday pillar folder name to a tracker pillar id. |

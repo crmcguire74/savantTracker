@@ -490,6 +490,57 @@ describe('merge into tracker state', () => {
     expect(result.summary.pillarsCreated).toBe(0)
   })
 
+  it('renames a linked pillar and initiative when monday renames the folders', () => {
+    const first = mergeMonday(existingState(), { boards: [board([mapped(OWL)])] }, { now: NOW })
+    const renamedBoard = {
+      ...board([mapped(OWL)]),
+      pillar: { id: '1', name: 'Grow the Advisory Franchise' },
+      initiative: { id: '2', name: 'Growth Intelligence' },
+    }
+    const second = mergeMonday(first.state, { boards: [renamedBoard] }, { now: NOW })
+    expect(second.state.pillars[0].title).toBe('Grow the Advisory Franchise')
+    expect(second.state.initiatives[0].title).toBe('Growth Intelligence')
+    expect(second.summary.pillarsRenamed).toBe(1)
+    expect(second.summary.initiativesRenamed).toBe(1)
+    expect(second.changed).toBe(true)
+    expect(second.logEntries.map((entry) => entry.field)).toEqual(
+      expect.arrayContaining(['Pillar renamed', 'Initiative renamed']),
+    )
+    const third = mergeMonday(second.state, { boards: [renamedBoard] }, { now: NOW })
+    expect(third.summary.pillarsRenamed + third.summary.initiativesRenamed).toBe(0)
+  })
+
+  it('does not treat a change of only the "Pillar 1:" prefix as a rename', () => {
+    const first = mergeMonday(existingState(), { boards: [board([mapped(OWL)])] }, { now: NOW })
+    expect(first.state.pillars[0].title).toBe('Pillar 1: Accelerate Advisory Organic Growth')
+    const second = mergeMonday(first.state, { boards: [board([mapped(OWL)])] }, { now: NOW })
+    expect(second.summary.pillarsRenamed).toBe(0)
+  })
+
+  it('renames a pillar when monday adds or changes its "Pillar N" number', () => {
+    const first = mergeMonday(existingState(), { boards: [board([mapped(OWL)])] }, { now: NOW })
+    const renumbered = { ...board([mapped(OWL)]), pillar: { id: '1', name: 'Pillar 3: Accelerate Advisory Organic Growth' } }
+    const second = mergeMonday(first.state, { boards: [renumbered] }, { now: NOW })
+    expect(second.state.pillars[0].title).toBe('Pillar 3: Accelerate Advisory Organic Growth')
+    expect(second.summary.pillarsRenamed).toBe(1)
+    const third = mergeMonday(second.state, { boards: [renumbered] }, { now: NOW })
+    expect(third.summary.pillarsRenamed).toBe(0)
+  })
+
+  it('creates a pillar and initiative that are new on monday', () => {
+    const first = mergeMonday(existingState(), { boards: [board([mapped(OWL)])] }, { now: NOW })
+    const added = {
+      pillar: { id: '50', name: 'Brand New Pillar' },
+      initiative: { id: '51', name: 'Brand New Initiative' },
+      board: { id: '501', name: 'Brand New Initiative' },
+      projects: [mapped(COACH)],
+    }
+    const next = mergeMonday(first.state, { boards: [board([mapped(OWL)]), added] }, { now: NOW })
+    expect(next.summary.pillarsCreated).toBe(1)
+    expect(next.summary.initiativesCreated).toBe(1)
+    expect(next.state.pillars.map((pillar) => pillar.title)).toContain('Brand New Pillar')
+  })
+
   it('overwrites synced fields but keeps what only the tracker holds', () => {
     const state = { ...existingState(), projects: [trackerProject()] }
     const project = mergeMonday(state, { boards: [board([mapped(OWL)])] }, { now: NOW }).state.projects[0]

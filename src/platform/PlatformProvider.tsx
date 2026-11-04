@@ -7,6 +7,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { canRunReport, canUseFeature, normalizePolicy, type FeatureKey } from '../auth/access'
 import { isAdmin } from '../auth/roles'
+import { runtimeInfo } from '../auth/runtime'
+import { mondayItemUrl } from '../data/ownership'
 import type { ReportId } from '../reports/catalog'
 import { useIdentity } from '../hooks/useIdentity'
 import { useMe } from '../hooks/useMe'
@@ -127,6 +129,8 @@ export function PlatformProvider(props: { registry: Registry; children: ReactNod
     identity,
     identitySource,
     canWrite,
+    mondayLive: runtimeInfo().mondayLive,
+    mondayLink: (project) => mondayItemUrl(project, runtimeInfo().mondayUrl),
     setName,
     roles,
     isAdmin: admin,

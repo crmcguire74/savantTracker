@@ -15,6 +15,7 @@ import {
 } from '../storage'
 import { normalizePolicy, type AccessPolicy } from '../auth/access'
 import { LOG_LIMIT } from '../constants'
+import { toPillarOrder, type PillarOrder } from '../lib/pillarOrder'
 import type { LogEntry, Settings, TrackerState } from '../types'
 import { APP_FILE_ID, createAppFile, parseAppFile, upgradeState, type AppFile } from './appfile'
 import rawSnapshot from './snapshot.json'
@@ -27,6 +28,8 @@ export const DOC_KEYS = {
   access: 'tracker.access',
   /** Last monday sync, written by the server. Everyone reads it for the "monday data as of" line. */
   sync: 'tracker.sync',
+  /** Pillar order chosen by an admin. Admin-only writes, enforced by the API. Absent means monday order. */
+  pillarOrder: 'tracker.pillarorder',
 } as const
 
 /** The part of the sync record every user may see. */
@@ -157,6 +160,20 @@ export class TrackerRepository {
   async saveAccess(policy: AccessPolicy): Promise<void> {
     const written = await this.#storage.put(DOC_KEYS.access, policy)
     this.#versions.set(DOC_KEYS.access, written.version)
+  }
+
+  /** The admin's pillar order, or null when none is set (monday order applies). */
+  async readPillarOrder(): Promise<PillarOrder | null> {
+    return toPillarOrder((await this.#storage.get<unknown>(DOC_KEYS.pillarOrder))?.value)
+  }
+
+  /** Last write wins: a handful of admins, rarely at once. An empty list removes the override. */
+  async savePillarOrder(order: PillarOrder): Promise<void> {
+    await this.#storage.put(DOC_KEYS.pillarOrder, order)
+  }
+
+  subscribePillarOrder(listener: (order: PillarOrder | null) => void): Unsubscribe {
+    return this.#storage.subscribe<unknown>(DOC_KEYS.pillarOrder, (doc) => listener(toPillarOrder(doc?.value)))
   }
 
   async readSyncInfo(): Promise<SyncInfo | null> {

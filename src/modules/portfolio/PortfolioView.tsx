@@ -8,7 +8,7 @@
 // Filter chips apply in every layout. In the ledger the pillar chip selects a
 // pillar; any other filter swaps the accordion for a flat list of matches.
 
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import { EmptyState, FilterChips, PageHeader, ProjectList, RagCountRow, Segmented, StackedBar, StatTile, StatusTag, Tag, pillarTitle, usePlatform, Icon, byStatusThenTitle, groupByInitiative, hasFilters, initiativeHeat, needsAttention, pillarLabel, portfolioStats, summarizePillar, countByRag, initiativeRollup, isStale, needsDecision, projectsForInitiative, type FeatureKey, type Initiative, type Pillar, type Project } from '@sdk'
 import { PillarPace } from './PaceView'
 import type { PortfolioLayout } from './routes'
@@ -56,8 +56,22 @@ export function PortfolioView(props: { layout: PortfolioLayout; pillar?: string;
 // ── ledger ────────────────────────────────────────────────────────────────
 
 function Ledger(props: { pillarId?: string; initiativeId?: string }) {
-  const { tracker, canWrite, navigate, filters, setFilters, matches, ask } = usePlatform()
+  const { tracker, canWrite, mondayLive, isAdmin, navigate, filters, setFilters, matches, ask } = usePlatform()
   const { state, actions } = tracker
+  const canAddStructure = canWrite && !mondayLive
+  const customOrder = tracker.pillarOrder
+  const [reordering, setReordering] = useState(false)
+  const [dragId, setDragId] = useState<string | null>(null)
+
+  // Moves one pillar to a position and saves the whole order. Admins only (the API checks too).
+  const movePillar = (id: string, to: number) => {
+    const ids = state.pillars.map((pillar) => pillar.id)
+    const from = ids.indexOf(id)
+    if (from < 0 || to < 0 || to >= ids.length || from === to) return
+    const next = ids.filter((candidate) => candidate !== id)
+    next.splice(to, 0, id)
+    void actions.savePillarOrder(next)
+  }
   const [addingPillar, setAddingPillar] = useState(false)
   const [editingPillar, setEditingPillar] = useState(false)
 
@@ -106,7 +120,12 @@ function Ledger(props: { pillarId?: string; initiativeId?: string }) {
       <aside className="card pillar-list" aria-label="Pillars">
         <div className="pillar-list-head">
           <span className="section-label">Pillars</span>
-          {canWrite && (
+          {isAdmin && state.pillars.length > 1 && (
+            <button type="button" className="btn btn-quiet sm" aria-pressed={reordering} onClick={() => setReordering((value) => !value)}>
+              {reordering ? 'Done' : 'Reorder'}
+            </button>
+          )}
+          {canAddStructure && (
             <button type="button" className="icon-btn sm" aria-label="Add pillar" title="Add pillar" onClick={() => setAddingPillar((v) => !v)}>
               <Icon.Plus size={16} />
             </button>
@@ -121,16 +140,34 @@ function Ledger(props: { pillarId?: string; initiativeId?: string }) {
             onCancel={() => setAddingPillar(false)}
           />
         )}
+        {customOrder && (
+          <div className="muted small" style={{ padding: '4px 12px' }}>
+            Custom order{customOrder.updatedByName ? ` set by ${customOrder.updatedByName}` : ''}.
+            {isAdmin && (
+              <>
+                {' '}
+                <button type="button" className="btn btn-quiet sm" onClick={() => void actions.clearPillarOrder()}>
+                  Use monday order
+                </button>
+              </>
+            )}
+          </div>
+        )}
+        {isAdmin && reordering && (
+          <div className="muted small" style={{ padding: '4px 12px' }}>
+            Drag a pillar, or use the arrows. The order applies to everyone.
+          </div>
+        )}
         {state.pillars.map((pillar, index) => {
           const label = pillarLabel(pillar, index)
           const summary = summarizePillar(state, pillar, index, tracker.settings.staleThresholdDays)
-          return (
+          const button = (
             <button
-              key={pillar.id}
               type="button"
               className={`pillar-item${pillar.id === selected?.id ? ' active' : ''}`}
               aria-current={pillar.id === selected?.id}
               onClick={() => selectPillar(pillar)}
+              style={reordering ? { flex: 1, minWidth: 0 } : undefined}
             >
               <span className="pillar-eyebrow">{label.eyebrow}</span>
               <span className="pillar-name">{label.title}</span>
@@ -140,14 +177,43 @@ function Ledger(props: { pillarId?: string; initiativeId?: string }) {
               </span>
             </button>
           )
+          if (!(isAdmin && reordering)) return <Fragment key={pillar.id}>{button}</Fragment>
+          return (
+            <div
+              key={pillar.id}
+              draggable
+              onDragStart={(event) => {
+                event.dataTransfer.effectAllowed = 'move'
+                setDragId(pillar.id)
+              }}
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={(event) => {
+                event.preventDefault()
+                if (dragId) movePillar(dragId, index)
+                setDragId(null)
+              }}
+              onDragEnd={() => setDragId(null)}
+              style={{ display: 'flex', gap: 4, alignItems: 'stretch', opacity: dragId === pillar.id ? 0.5 : 1, cursor: 'grab' }}
+            >
+              {button}
+              <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 2 }}>
+                <button type="button" className="icon-btn sm" aria-label={`Move ${label.title} up`} title="Move up" disabled={index === 0} onClick={() => movePillar(pillar.id, index - 1)}>
+                  ↑
+                </button>
+                <button type="button" className="icon-btn sm" aria-label={`Move ${label.title} down`} title="Move down" disabled={index === state.pillars.length - 1} onClick={() => movePillar(pillar.id, index + 1)}>
+                  ↓
+                </button>
+              </div>
+            </div>
+          )
         })}
-        {state.pillars.length === 0 && <div className="list-empty">No pillars yet.{canWrite ? ' Add the first one with +.' : ''}</div>}
+        {state.pillars.length === 0 && <div className="list-empty">No pillars yet.{canAddStructure ? ' Add the first one with +.' : mondayLive ? ' They come from monday.com.' : ''}</div>}
       </aside>
 
       <section className="pillar-detail" aria-label={selected ? pillarTitle(selected.title) : 'Pillar'}>
         {!selected ? (
           <EmptyState title="No pillars yet">
-            {canWrite ? 'Create a pillar to start organizing initiatives and projects.' : 'An editor has not set up the portfolio yet.'}
+            {canAddStructure ? 'Create a pillar to start organizing initiatives and projects.' : mondayLive ? 'Pillars come from monday.com. Run a sync from Admin.' : 'An editor has not set up the portfolio yet.'}
           </EmptyState>
         ) : editingPillar ? (
           <EditPillarForm
@@ -173,8 +239,9 @@ function Ledger(props: { pillarId?: string; initiativeId?: string }) {
 }
 
 function PillarDetail(props: { pillar: Pillar; index: number; focusInitiative?: string; onEdit: () => void; onDelete: () => void }) {
-  const { tracker, canWrite } = usePlatform()
+  const { tracker, canWrite, mondayLive } = usePlatform()
   const { state, actions } = tracker
+  const pillarManaged = mondayLive && Boolean(props.pillar.mondayId)
   const initiatives = state.initiatives.filter((initiative) => initiative.pillarId === props.pillar.id)
   const projectCount = initiatives.reduce((total, initiative) => total + projectsForInitiative(state, initiative.id).length, 0)
   const [expanded, setExpanded] = useState<Record<string, boolean>>(() =>
@@ -204,15 +271,23 @@ function PillarDetail(props: { pillar: Pillar; index: number; focusInitiative?: 
         </div>
         {canWrite && (
           <div className="row-actions">
-            <button type="button" className="btn btn-ghost sm" onClick={() => setAdding((v) => !v)}>
-              <Icon.Plus size={15} /> Initiative
-            </button>
-            <button type="button" className="icon-btn sm" aria-label="Edit pillar" title="Edit pillar" onClick={props.onEdit}>
-              <Icon.Edit size={16} />
-            </button>
-            <button type="button" className="icon-btn sm danger" aria-label="Delete pillar" title="Delete pillar" onClick={props.onDelete}>
-              <Icon.Trash size={16} />
-            </button>
+            {!mondayLive && (
+              <button type="button" className="btn btn-ghost sm" onClick={() => setAdding((v) => !v)}>
+                <Icon.Plus size={15} /> Initiative
+              </button>
+            )}
+            {pillarManaged ? (
+              <span className="muted small">Managed in monday.com</span>
+            ) : (
+              <>
+                <button type="button" className="icon-btn sm" aria-label="Edit pillar" title="Edit pillar" onClick={props.onEdit}>
+                  <Icon.Edit size={16} />
+                </button>
+                <button type="button" className="icon-btn sm danger" aria-label="Delete pillar" title="Delete pillar" onClick={props.onDelete}>
+                  <Icon.Trash size={16} />
+                </button>
+              </>
+            )}
           </div>
         )}
       </div>
@@ -250,9 +325,10 @@ function PillarDetail(props: { pillar: Pillar; index: number; focusInitiative?: 
 }
 
 function InitiativeRow(props: { initiative: Initiative; expanded: boolean; onToggle: () => void }) {
-  const { tracker, canWrite, ask } = usePlatform()
+  const { tracker, canWrite, mondayLive, ask } = usePlatform()
   const { state, actions } = tracker
   const { initiative } = props
+  const initiativeManaged = mondayLive && Boolean(initiative.mondayId)
   const stats = initiativeRollup(state, initiative.id)
   const projects = projectsForInitiative(state, initiative.id).slice().sort(byStatusThenTitle)
   const [editing, setEditing] = useState(false)
@@ -324,16 +400,24 @@ function InitiativeRow(props: { initiative: Initiative; expanded: boolean; onTog
           )}
           {canWrite && !addingProject && (
             <div className="initiative-foot">
-              <button type="button" className="btn btn-ghost sm" onClick={() => setAddingProject(true)}>
-                <Icon.Plus size={15} /> Add project
-              </button>
+              {!mondayLive && (
+                <button type="button" className="btn btn-ghost sm" onClick={() => setAddingProject(true)}>
+                  <Icon.Plus size={15} /> Add project
+                </button>
+              )}
               <span className="spacer" />
-              <button type="button" className="btn btn-quiet sm" onClick={() => setEditing(true)}>
-                <Icon.Edit size={15} /> Edit initiative
-              </button>
-              <button type="button" className="btn btn-quiet sm danger" onClick={remove}>
-                <Icon.Trash size={15} /> Delete
-              </button>
+              {initiativeManaged ? (
+                <span className="muted small">Managed in monday.com. Add projects there.</span>
+              ) : (
+                <>
+                  <button type="button" className="btn btn-quiet sm" onClick={() => setEditing(true)}>
+                    <Icon.Edit size={15} /> Edit initiative
+                  </button>
+                  <button type="button" className="btn btn-quiet sm danger" onClick={remove}>
+                    <Icon.Trash size={15} /> Delete
+                  </button>
+                </>
+              )}
             </div>
           )}
         </div>

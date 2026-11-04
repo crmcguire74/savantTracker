@@ -18,18 +18,20 @@ export interface RuntimeInfo {
   auth: AuthMode
   /** The server holds a monday token and pulls live. */
   mondayLive: boolean
+  /** Base address of the firm's monday account, for "Open in monday" links. Empty when not set. */
+  mondayUrl: string
   /** True once the probe has finished (or been skipped). */
   probed: boolean
 }
 
-let info: RuntimeInfo = { auth: 'local', mondayLive: false, probed: false }
+let info: RuntimeInfo = { auth: 'local', mondayLive: false, mondayUrl: '', probed: false }
 
 export const runtimeInfo = (): RuntimeInfo => ({ ...info, auth: authMode() })
 
 /** For tests. */
 export function resetRuntime(): void {
   setDetectedAuthMode(null)
-  info = { auth: 'local', mondayLive: false, probed: false }
+  info = { auth: 'local', mondayLive: false, mondayUrl: '', probed: false }
 }
 
 export async function probeRuntime(options: {
@@ -41,7 +43,7 @@ export async function probeRuntime(options: {
 }): Promise<RuntimeInfo> {
   const base = (options.baseUrl ?? '/api').replace(/\/$/, '')
   if (options.driver !== 'rest') {
-    info = { auth: 'local', mondayLive: false, probed: true }
+    info = { auth: 'local', mondayLive: false, mondayUrl: '', probed: true }
     return runtimeInfo()
   }
 
@@ -52,13 +54,13 @@ export async function probeRuntime(options: {
     if (!impl) throw new Error('no fetch')
     const response = await impl(`${base}/me`, { credentials: 'same-origin', signal: controller?.signal })
     if (!response.ok) throw new Error(String(response.status))
-    const me = (await response.json()) as { local?: boolean; mondayLive?: boolean }
+    const me = (await response.json()) as { local?: boolean; mondayLive?: boolean; mondayUrl?: string }
     const auth: AuthMode = me.local === false ? 'entra' : 'local'
     setDetectedAuthMode(auth)
-    info = { auth, mondayLive: me.mondayLive === true, probed: true }
+    info = { auth, mondayLive: me.mondayLive === true, mondayUrl: typeof me.mondayUrl === 'string' ? me.mondayUrl : '', probed: true }
   } catch {
     setDetectedAuthMode(null)
-    info = { auth: 'local', mondayLive: false, probed: true }
+    info = { auth: 'local', mondayLive: false, mondayUrl: '', probed: true }
   } finally {
     if (timer) clearTimeout(timer)
   }

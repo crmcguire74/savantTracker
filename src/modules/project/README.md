@@ -8,6 +8,8 @@ One project as a status report: phase stepper, decision and issue cards, owners,
 | Rail | No. Lights up Portfolio (`activeNav`) |
 | Access | Every role may read a project (`requires: null`); writes need `canWrite` |
 
+While the monday.com sync is live, a linked project cannot be deleted here, and an **Open in monday** button appears when the account address is configured (`mondayLink` from `usePlatform()`).
+
 An unknown or missing id renders "This project no longer exists" with a link back to the portfolio.
 
 ## Files

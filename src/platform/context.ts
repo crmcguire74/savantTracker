@@ -32,6 +32,10 @@ export interface PlatformApi {
   identity: Identity
   identitySource: 'entra' | 'local'
   canWrite: boolean
+  /** The server pulls from monday live, so monday owns the structure and the synced fields. */
+  mondayLive: boolean
+  /** Link to a project's item on monday, or '' when the account address or the ids are not known. */
+  mondayLink: (project: Pick<Project, 'mondayId' | 'mondayBoardId'>) => string
   setName: (name: string) => void
   roles: Role[]
   isAdmin: boolean

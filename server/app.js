@@ -17,6 +17,7 @@ import compression from 'compression'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { readIdentity, requireAdmin, requireEditor, requireReader } from './auth.js'
+import { lockViolations } from './monday/lock.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 
@@ -24,7 +25,7 @@ const here = dirname(fileURLToPath(import.meta.url))
 // may change it. Matches DOC_KEYS.access in src/data/repository.ts.
 // The sync status and the backups are written by the server and read back by admins, so they are
 // admin-only too: an editor must not be able to plant a backup that a restore would then trust.
-const ADMIN_DOCUMENTS = new Set(['tracker.access', 'tracker.sync', 'tracker.syncconfig'])
+const ADMIN_DOCUMENTS = new Set(['tracker.access', 'tracker.sync', 'tracker.syncconfig', 'tracker.pillarorder'])
 const isAdminDocument = (key) => ADMIN_DOCUMENTS.has(key) || key.startsWith('tracker.backup.')
 
 const requireWriter = (request, response, next) =>
@@ -83,6 +84,8 @@ export function createApp({ store, sync, staticRoot = join(here, '..', 'dist'), 
       // true when the server pulls from monday with its own token. monday then owns the synced
       // fields, so the app stops offering to edit them.
       mondayLive: Boolean(sync?.live),
+      // Base address of the firm's monday account (MONDAY_ACCOUNT_URL), for "Open in monday" links.
+      mondayUrl: String(process.env.MONDAY_ACCOUNT_URL || '').replace(/\/+$/, ''),
     })
   })
 
@@ -163,8 +166,24 @@ export function createApp({ store, sync, staticRoot = join(here, '..', 'dist'), 
     }
   })
 
+  // While the server pulls live from monday, monday owns the synced fields and the structure.
+  // The browser declines those edits already; this holds when a stale tab or another client does not.
+  const STATE_KEY = 'tracker.state'
+  const lockRefusal = (problems) => ({
+    error: 'monday.com owns this data. Make the change in monday.com and the next sync brings it in.',
+    details: problems.slice(0, 5),
+  })
+
   app.put('/api/documents/:key', requireWriter, async (request, response) => {
     try {
+      if (sync?.live && request.params.key === STATE_KEY) {
+        const current = await store.readDocument(STATE_KEY)
+        const problems = lockViolations(current?.doc?.value, request.body?.value)
+        if (problems.length > 0) {
+          response.status(403).json(lockRefusal(problems))
+          return
+        }
+      }
       response.json(await store.writeDocument(request.params.key, request.body?.value, ifMatchVersion(request)))
     } catch (error) {
       if (isConflict(error)) {
@@ -177,6 +196,10 @@ export function createApp({ store, sync, staticRoot = join(here, '..', 'dist'), 
 
   app.delete('/api/documents/:key', requireWriter, async (request, response) => {
     try {
+      if (sync?.live && request.params.key === STATE_KEY) {
+        response.status(403).json({ error: 'monday.com owns this data. The tracker data cannot be deleted while the sync is live.' })
+        return
+      }
       await store.deleteDocument(request.params.key, ifMatchVersion(request))
       response.status(204).end()
     } catch (error) {

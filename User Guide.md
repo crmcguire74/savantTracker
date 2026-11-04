@@ -104,7 +104,15 @@ Portfolio is the landing page. Pick a layout at the top right:
 
 When any filter is on, the ledger shows a flat list of every matching project across all pillars.
 
+### Change the order of the pillars (admins)
+
+By default pillars follow monday.com: names that start "Pillar 1:", "Pillar 2:" sort by number, then the rest in the order monday created them. The best fix for a wrong order is to number the folders in monday.com.
+
+To set a different order here, open the Pillars card and click **Reorder**. Drag a pillar to a new spot, or use the up and down arrows, then click **Done**. Everyone sees the new order, and the card shows "Custom order". Click **Use monday order** to remove it. A pillar that is new in monday.com goes after the ones you placed.
+
 ### Add, edit or delete a pillar (editors)
+
+> **When the tracker is connected to monday.com**, pillars, initiatives and projects come from monday.com. The add, edit and delete buttons for them are hidden, and the page shows "Managed in monday.com". Create or rename them in monday.com and the next sync brings the change in. Items made in the tracker before the connection stay editable until an admin removes them with the sync's cleanup step.
 
 1. In the Pillars card, click **+** to add one.
 2. To edit or delete the selected pillar, use the pencil or trash icons next to its title.
@@ -123,6 +131,8 @@ When any filter is on, the ledger shows a flat list of every matching project ac
 
 1. In the ledger, expand the initiative.
 2. Click **+ Add project**, enter the title and owners, and click Add.
+
+When the tracker is connected to monday.com, add projects in monday.com instead. On a project's page, **Open in monday** takes you to its item there. The button shows once your admin has set the monday.com account address.
 
 ### Read a project
 
@@ -169,7 +179,7 @@ Type in the search box at the top to jump straight to a project, an initiative o
 
 ## 10. Admin, exports and the change log
 
-**Admin** is the PMO's upkeep page. It shows how many decisions are waiting and how many projects are stale, plus the monday.com sync card. Admins press **Open sync** to preview and apply a sync, either live from monday.com or from a capture file. In the same dialog, **Automatic pulls** sets how often the app checks monday.com for everyone (off, or every 5 minutes up to once a day). A check that finds nothing new changes nothing, and automatic pulls never remove records. Fields that come from monday.com are read-only in the tracker, so change them in monday.com and they appear here at the next pull. See `MONDAY-INTEGRATION.md`. Below that are three lists:
+**Admin** is the PMO's upkeep page. It shows how many decisions are waiting and how many projects are stale, plus the monday.com sync card. Admins press **Open sync** to preview and apply a sync, either live from monday.com or from a capture file. In the same dialog, **Automatic pulls** sets how often the app checks monday.com for everyone (off, or every 5 minutes up to once a day). A check that finds nothing new changes nothing, and automatic pulls never remove records. Fields that come from monday.com are read-only in the tracker, so change them in monday.com and they appear here at the next pull. The same goes for pillar and initiative names: rename them in monday.com and the tracker follows. New pillars and initiatives appear once they hold a project board. The server refuses these edits too, so an old browser tab cannot overwrite them. See `MONDAY-INTEGRATION.md`. Below that are three lists:
 
 - **Stale projects**, longest without an update first. Use **Stale for** to show only projects quiet for 30, 60 or 90+ days, and the PM picker to see one PM's projects or the ones with no PM.
 - **Decisions needed**, the running list of decisions waiting on leadership, longest-waiting first.

@@ -46,7 +46,9 @@ const SUMMARY_LABELS: Array<[string, string]> = [
   ['fieldsChanged', 'Fields changed'],
   ['linked', 'Linked to monday'],
   ['initiativesCreated', 'New initiatives'],
+  ['initiativesRenamed', 'Renamed initiatives'],
   ['pillarsCreated', 'New pillars'],
+  ['pillarsRenamed', 'Renamed pillars'],
 ]
 
 const messageOf = (error: unknown): string => (error instanceof Error ? error.message : 'Something went wrong.')
