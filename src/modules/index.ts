@@ -9,6 +9,7 @@ import type { ModuleManifest } from '@sdk'
 import { manifest as access } from './access/manifest'
 import { manifest as admin } from './admin/manifest'
 import { manifest as board } from './board/manifest'
+import { manifest as help } from './help/manifest'
 import { manifest as onepager } from './onepager/manifest'
 import { manifest as portfolio } from './portfolio/manifest'
 import { manifest as project } from './project/manifest'
@@ -17,4 +18,4 @@ import { manifest as timeline } from './timeline/manifest'
 import { manifest as work } from './work/manifest'
 import { manifest as workload } from './workload/manifest'
 
-export const MODULES: readonly ModuleManifest[] = [portfolio, project, onepager, board, timeline, work, workload, admin, access, settings]
+export const MODULES: readonly ModuleManifest[] = [portfolio, project, onepager, board, timeline, work, workload, admin, access, settings, help]

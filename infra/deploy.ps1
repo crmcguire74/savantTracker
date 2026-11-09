@@ -20,7 +20,7 @@ param([switch]$SkipTests)
 $ErrorActionPreference = 'Stop'
 
 if (-not $env:RESOURCE_GROUP -or -not $env:WEBAPP) {
-  throw 'Set $env:RESOURCE_GROUP and $env:WEBAPP first. See DEPLOYMENT-RUNBOOK.md, Step 7.2.'
+  throw 'Set $env:RESOURCE_GROUP and $env:WEBAPP first. See docs/DEPLOYMENT-RUNBOOK.md, Step 7.2.'
 }
 
 function Assert-Ok([string]$what) {
@@ -96,4 +96,4 @@ Write-Host ''
 Write-Host 'Upload accepted. Azure now restarts the app. That takes 1 to 2 minutes.'
 Write-Host 'Watch it come up (look for "Site startup probe succeeded"). Press Ctrl+C when it does:'
 Write-Host "  az webapp log tail -g $env:RESOURCE_GROUP -n $env:WEBAPP"
-Write-Host "Then open https://$env:WEBAPP.azurewebsites.net and run the checks in DEPLOYMENT-RUNBOOK.md, Step 7.7."
+Write-Host "Then open https://$env:WEBAPP.azurewebsites.net and run the checks in docs/DEPLOYMENT-RUNBOOK.md, Step 7.7."

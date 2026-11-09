@@ -16,7 +16,7 @@
 # resource group (Owner, or Contributor plus User Access Administrator).
 #
 # You need the monday API token first. It belongs to a monday SERVICE ACCOUNT,
-# not to a person. See MONDAY-INTEGRATION.md, Part 1.
+# not to a person. See README.md, monday.com integration, Configure monday.com.
 #
 # Usage:
 #   export RESOURCE_GROUP=rg-savant-tracker
@@ -234,7 +234,7 @@ Next:
        - "No monday token is set"         the Key Vault reference did not resolve. In the portal,
                                           open the web app, Environment variables, and look at the
                                           status next to MONDAY_API_TOKEN.
-  3. Then follow MONDAY-INTEGRATION.md, Part 3, for the first sync.
+  3. Then run the first sync (README.md, monday.com integration, Using the sync).
 
 To replace the token later:  ./infra/monday-setup.sh --rotate-token
 ============================================================================

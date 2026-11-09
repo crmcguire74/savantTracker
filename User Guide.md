@@ -1,324 +1,258 @@
 # User Guide
 
-## Executive Summary
+How to use the Savant Strategic Initiatives Tracker (WiseTrack). Written for the people who use it every week, not for developers. Developers and administrators: see the [README](README.md).
 
-The Savant Strategic Initiatives Tracker is a simple, structured way to monitor strategic work across pillars, initiatives, and projects. It gives teams one place to review project health, owners, issues, decisions, progress, and stale items without juggling separate spreadsheets or disconnected updates.
+You can also read most of this inside the tracker. Open **Help** in the left menu for workflows by role, frequently asked questions and a glossary.
 
-In everyday use, the app helps business owners, delivery managers, and leadership teams quickly see what is on track, what needs attention, and what decisions are still waiting. It is built to be easy to use: choose a pillar, review the initiatives and projects under it, update status, and keep an audit trail of changes so everyone knows what changed and who changed it.
+---
 
 ## 1. What the tracker is for
 
-The tracker organizes work into three layers:
+The tracker is one place to see how the firm's strategic work is going. It shows what is on track, what needs attention, who owns what, and which decisions are waiting.
 
-- Pillars: major strategy or portfolio areas
-- Initiatives: programs or workstreams inside a pillar
-- Projects: individual execution items that belong to an initiative
+Work is organized in three layers:
 
-Each project can show:
+| Layer | What it is | Example use |
+| --- | --- | --- |
+| **Pillar** | A major strategic theme | "Pillar 1: Client Experience" |
+| **Initiative** | A program or workstream inside a pillar | A multi-quarter effort |
+| **Project** | One delivery effort inside an initiative. This is what gets updated | A single deliverable with an owner and dates |
 
-- business owner
-- execution owner
-- project manager
-- scope
-- dates and milestones
-- plan links
-- key risks
-- decisions needed and decision outcomes
-- progress percentage
-- RAG status
-- issue log
-- last updated timestamp and editor
+Each project shows its status, trend, phase, progress, owners, dates, next milestone, key risk, decision and issues.
 
-This makes it useful both for delivery tracking and for leadership review.
+**Where the data comes from.** The firm's project boards in monday.com feed the tracker. Project managers keep updating monday.com, and the tracker follows. The tracker adds the things monday.com does not hold: issues, decision outcomes and plan links. See [section 8](#8-the-tracker-and-mondaycom).
 
-## 2. How to open the app
+## 2. Signing in and finding your way
 
-### Local browser mode
+Open the tracker address your administrator gave you. Sign in with your normal Savant (Microsoft) account, the same way you sign in to Outlook or Teams. There is no separate password.
 
-From the project folder:
+If you see a **no role** page, you have not been added to a tracker group yet. Ask the person who manages tracker access, then sign out and sign back in.
 
-```bash
-npm install
-npm run dev
-```
+### The screen
 
-Then open the local Vite URL shown in the terminal, usually:
+- **Left menu.** Portfolio, Board, Timeline, My work, Workload, Admin, Access, Settings and Help. You see only the pages your role may open. On a phone the menu moves to the bottom.
+- **Top bar.**
+  - **monday data as of ...** shows when the tracker last pulled from monday.com. It turns amber when the data is more than a day old or the last pull failed. It hides on narrow windows.
+  - **Three colored numbers** count your projects by status. A green dot is On track, amber is At risk, red is Off track. Click one to show only those projects. On a narrow window the words hide and the colored dot and number remain.
+  - **Search** (press `/` anywhere).
+  - **Theme button** (light or dark) and your **account menu** (My work, change log, export, theme, sign out).
+- **Badges.** **View only** means your role cannot edit. **LOCAL** means you are on a test copy, not the real tracker.
+- **Filter chips.** On track, At risk, Off track, Stale and Decisions. They work on Portfolio, Board and Timeline and stay applied as you move between them. Click **Clear** to reset.
 
-```text
-http://localhost:5173
-```
+Every page has its own link. Bookmark a pillar, a board layout or a project and send it to a colleague.
 
-### Local shared server mode
+## 3. Which role am I?
 
-If you want a shared demo or local server behavior similar to Azure:
+Your role decides what you see and what you can change. Roles come from Microsoft security groups, so a change in group changes your role at your next sign-in.
 
-```bash
-npm run start:local
-```
+| Role | Who | Can do |
+| --- | --- | --- |
+| **Viewer** | Anyone who needs to stay informed | Read Portfolio, Board and Timeline. Open projects. Search, filter and export the reports the role is allowed. |
+| **Executive** | Leadership | Everything a Viewer does, plus the Leadership brief, Pillar pace and Workload. Cannot edit. |
+| **Editor** | Project managers and the PMO | Everything an Executive does, plus My work and Admin. Updates projects, decisions and issues. |
+| **Admin** | Tracker administrators | Everything an Editor does, plus Access, the monday.com sync, backups and pillar order. |
 
-This runs the Express API locally and stores data in a file on the machine rather than in the browser-only storage.
+These are the defaults. An Admin can open or close individual views for a role on the Access page.
 
-### Azure production mode
+To change your role, ask the owner of the tracker security groups (for example `SG-Tracker-Editors`) to move you. Admins cannot change group membership from inside the tracker.
 
-Once deployed, open the App Service URL. You will sign in with your Microsoft account and only see the data you are permitted to access.
+## 4. Reading the portfolio
 
-### Install it as an app (optional)
+### Portfolio
 
-The tracker can run in its own window, with a Start menu or dock shortcut, like a desktop app:
+Portfolio is the home page. Pick a layout at the top right:
 
-- **Edge or Chrome**: click the install icon at the right end of the address bar, or choose **Install app** in your avatar menu or under Settings → App.
-- **iPhone or iPad (Safari)**: Share → **Add to Home Screen**.
+- **Ledger.** Pillars on the left, the selected pillar's initiatives on the right. Expand an initiative to see its projects, then click a project to open it.
+- **Heatmap.** One tile per initiative, colored by its worst project. Click a tile to open that initiative.
+- **Leadership brief** (Executive and above). Headline numbers, one card per pillar, and a **Needs leadership attention** list of off-track projects and projects waiting on a decision. The headline tiles double as filters. **Open one-pager** makes a printable page for a pillar.
+- **Pillar pace** (Executive and above). Compares how far along each pillar is with how much of its planned time has passed.
 
-It is still the same tracker with the same sign-in and data. Nothing is copied to your computer except a cache of the app itself. To remove it, uninstall it like any other app, or from the browser's Apps page.
+With any filter on, the ledger shows a flat list of every matching project.
 
-**Updates are automatic.** Opening the app always loads the latest version. If you keep it open while a new version is published, a message appears at the bottom of the screen: **"A new version is available · Reload."** Reload when it suits you; anything you have already saved is kept. Settings → App shows the version you are running and has a **Check for updates** button.
+### A project page
 
-**Sharing it with someone else.** An installed app cannot be copied or emailed. It is a shortcut to the tracker's web address. Send the link instead; they open it, sign in, and can install it themselves. For people without access to the Azure deployment, see SHARING-LOCALLY.md.
+Click any project, anywhere, to open its page. It shows:
 
-## 3. First-time use
-
-When the app opens:
-
-- In local mode you are asked for your name once. It is attached to every change you make and is kept in this browser.
-- In Azure mode your Microsoft identity is used automatically.
-- Viewers see a "View only" badge and can browse, search and filter, but not edit.
-- A **LOCAL** badge in the top bar means you are on a development or demo copy, not the production tracker.
-
-**Light or dark?** Use the sun/moon button in the top bar, or choose Light, Dark or Match system under your avatar menu or in Settings. The choice is remembered in this browser.
-
-## 4. Main screen layout
-
-- **Top bar**: the On track / At risk / Off track counts (click one to see those projects), the line **monday data as of 2:35 PM** (when the app last checked monday.com; it turns amber if that is over a day old or the last check failed; hidden on narrow screens), the search box (press `/` to jump to it), the theme toggle, and your avatar menu (My work, Change log, Export backup, theme, Settings).
-- **Left rail**: Portfolio, Board, Timeline, My work, Workload, Admin, Access (admins only), Settings. On a phone the rail moves to the bottom of the screen.
-- **Filter chips**: On track, At risk, Off track, Stale and Decisions. They work the same way on Portfolio, Board and Timeline, and stay applied as you move between those three. Click **Clear** to reset.
-
-Every page has its own link, so you can bookmark a pillar, a board layout or a project and send it to a colleague.
-
-## 5. Portfolio: pillars and initiatives
-
-Portfolio is the landing page. Pick a layout at the top right:
-
-- **Ledger**: pillars on the left, the selected pillar's initiatives on the right. Click an initiative to expand its projects, then click a project to open it.
-- **Heatmap**: every initiative as a tile, colored by its worst project. Click a tile to open that initiative in the ledger.
-- **Leadership brief**: headline numbers, one card per pillar, and a "Needs leadership attention" list of off-track projects and projects waiting on a decision. The headline tiles double as filters.
-
-When any filter is on, the ledger shows a flat list of every matching project across all pillars.
-
-### Change the order of the pillars (admins)
-
-By default pillars follow monday.com: names that start "Pillar 1:", "Pillar 2:" sort by number, then the rest in the order monday created them. The best fix for a wrong order is to number the folders in monday.com.
-
-To set a different order here, open the Pillars card and click **Reorder**. Drag a pillar to a new spot, or use the up and down arrows, then click **Done**. Everyone sees the new order, and the card shows "Custom order". Click **Use monday order** to remove it. A pillar that is new in monday.com goes after the ones you placed.
-
-### Add, edit or delete a pillar (editors)
-
-> **When the tracker is connected to monday.com**, pillars, initiatives and projects come from monday.com. The add, edit and delete buttons for them are hidden, and the page shows "Managed in monday.com". Create or rename them in monday.com and the next sync brings the change in. Items made in the tracker before the connection stay editable until an admin removes them with the sync's cleanup step.
-
-1. In the Pillars card, click **+** to add one.
-2. To edit or delete the selected pillar, use the pencil or trash icons next to its title.
-
-> Deleting a pillar also deletes the initiatives and projects below it. The change log cannot undo this.
-
-### Add, edit or delete an initiative (editors)
-
-1. Select the pillar and click **+ Initiative**.
-2. Fill in the name, owners and start/end quarters.
-3. To edit or delete it later, expand the initiative and use **Edit initiative** or **Delete** at the bottom.
-
-## 6. Working with projects
-
-### Create a project (editors)
-
-1. In the ledger, expand the initiative.
-2. Click **+ Add project**, enter the title and owners, and click Add.
-
-When the tracker is connected to monday.com, add projects in monday.com instead. On a project's page, **Open in monday** takes you to its item there. The button shows once your admin has set the monday.com account address.
-
-### Read a project
-
-Click any project, anywhere in the app, to open its page:
-
-- the status, trend, phase, stale and "decision waiting" tags, plus a link to the detailed plan when one is set
-- a **phase stepper** with progress
+- status, trend, phase, stale and "decision waiting" tags, and a link to the detailed plan when one is set
+- the **phase stepper** with progress
 - scope, next milestone and key risk
 - the **Decision** card: what was asked and what was decided
 - **Issues**
 - owners, schedule (including how many days the forecast has slipped) and recent changes
 
-The breadcrumb at the top returns you to the pillar or initiative.
+The breadcrumb at the top returns you to the pillar or initiative. **Open in monday** takes you to the project's item in monday.com.
 
-### Update a project (editors)
+### Board and Timeline
 
-- **Quick changes on the page**: click a step in the phase stepper to move the phase, use **Record the decision** or **Request a decision**, and **Resolve** or add issues.
-- **Everything else**: click **Update status**. The drawer has the status buttons, trend, phase, progress, next milestone, risk and decision fields, owners, schedule dates, scope and plan link. Changes save as you leave each field. **Delete project** is at the bottom.
-- **On the Board**: drag a card to another column to change its phase (By phase) or status (By status).
+- **Board** shows project cards in columns **By phase** or **By status**. Cards show progress and tags for status, stale, decision and open issues.
+- **Timeline** shows twelve months, grouped by pillar. A bar runs from start date to forecast end. A diamond marks the next milestone. The vertical line is today. Use the arrows to move by a quarter and **Today** to come back. Projects with no dates are counted under the chart.
 
-If someone else changed the same field while you were editing, you are asked which value to keep. The other value can still be recovered from the change log.
+### Search
 
-## 7. Board and Timeline
+Press `/` and type part of a project, an initiative or a person. Choose a result to jump to it, or choose **Filter all views by "..."** to apply the text as a filter everywhere. Search matches titles, all three owner fields, scope and initiative names.
 
-- **Board** shows project cards in columns **By phase** or **By status**. Each card shows progress plus tags for status or phase, stale, decision and open issues. Filters narrow the columns in place.
-- **Timeline** shows twelve months, grouped by pillar. A bar runs from the start date to the forecast end (or the original end when there is no forecast), a diamond marks the next milestone, and the vertical line is today. Use the arrows to move by a quarter, and **Today** to return. Projects with no dates are counted below the chart.
+### My work and Workload
 
-## 8. My work and Workload
+- **My work** (Editor and Admin) lists the decisions, open issues and milestones on projects where you are business owner, delivery owner or project manager. The tracker matches your sign-in name to the owner fields. If it cannot, it asks you to pick your name once. Click **Not you?** to pick again.
+- **Workload** (Executive and above) shows everyone named on projects: their projects by status and role and their open issues. Sort by size, off-track count, open issues or name. Click a person to see their work. **PM heat map** colors each project manager's portfolio.
 
-**My work** lists the decisions, open issues and milestones on the projects you own as business owner, delivery owner or project manager. Use the Role switch to narrow it to one role.
+## 5. Workflows by role
 
-- Click an item to open its details. Then you can record the decision, change an issue's severity or resolve it, or update the milestone, without leaving the page.
-- **How the app knows who you are**: it matches your sign-in name (or local name) against the project owner fields. If it cannot find you, it asks you to pick your name once. If it picked the wrong person, click **Not you?**.
+### Viewer
 
-**Workload** shows everyone named in a project owner field, with their projects by status, by role, and their open issues. Sort by size, off-track count, open issues or name. Click a person to see their work. The page is titled with their name and has a **Back to my work** link, so it is always clear whose list you are looking at. You can also find a person from the search box.
+**See what needs attention**
+1. In the top bar, click the red number (Off track) or the amber number (At risk).
+2. Open a project from the list to read the key risk, the decision needed and the open issues.
+3. Click **Clear** to see everything again.
 
-## 9. Search and filters
+**Read one project**
+1. Press `/` and type part of the project name.
+2. Read the status tags, phase stepper, scope, next milestone and key risk.
+3. Scroll to **Decision**, **Issues** and recent changes.
 
-Type in the search box at the top to jump straight to a project, an initiative or a person. Choose **Filter all views by "…"** (or press Enter on it) to apply the text as a filter chip instead.
+**Check dates across the year**
+1. Open **Timeline**.
+2. Use the arrows to move by a quarter. **Today** returns you to now.
 
-- Search matches project titles, all three owner fields, scope and initiative names.
-- **Stale** means not updated for longer than the stale threshold, which is set in Settings.
-- **Decisions** means a decision has been requested but no outcome has been recorded yet.
+### Executive
 
-## 10. Admin, exports and the change log
+**Run the weekly leadership review**
+1. Open **Portfolio** and choose **Leadership brief**.
+2. Work through **Needs leadership attention** from the top.
+3. Click **Decisions** to list every decision waiting on leadership, longest wait first.
+4. Switch to **Pillar pace** to see which pillars are behind their plan.
 
-**Admin** is the PMO's upkeep page. It shows how many decisions are waiting and how many projects are stale, plus the monday.com sync card. Admins press **Open sync** to preview and apply a sync, either live from monday.com or from a capture file. In the same dialog, **Automatic pulls** sets how often the app checks monday.com for everyone (off, or every 5 minutes up to once a day). A check that finds nothing new changes nothing, and automatic pulls never remove records. Fields that come from monday.com are read-only in the tracker, so change them in monday.com and they appear here at the next pull. The same goes for pillar and initiative names: rename them in monday.com and the tracker follows. New pillars and initiatives appear once they hold a project board. The server refuses these edits too, so an old browser tab cannot overwrite them. See `MONDAY-INTEGRATION.md`. Below that are three lists:
+**Share a pillar on one page**
+1. In the Leadership brief, choose a pillar with the pillar filter.
+2. Click **Open one-pager**, then print it or save it as a PDF. The link back to the tracker still works in the PDF.
 
-- **Stale projects**, longest without an update first. Use **Stale for** to show only projects quiet for 30, 60 or 90+ days, and the PM picker to see one PM's projects or the ones with no PM.
-- **Decisions needed**, the running list of decisions waiting on leadership, longest-waiting first.
-- **Recent activity**, the latest edits.
+**See who carries what**
+1. Open **Workload** and sort by off-track count or open issues.
+2. Click a person to see their projects. Use the PM heat map for the portfolio-wide view.
 
-**Export**: open your avatar menu and choose **Export** to download any spreadsheet report your role can use (status register, status by PM, needs attention, decision log, change log) or a full backup.
+### Editor
 
-**Pillar one-pager**: on **Portfolio → Leadership brief**, click **Open one-pager**. If you've picked a pillar with the pillar filter, it opens just that pillar. Each page links back to its pillar in WiseTrack, and the link still works after you save it as a PDF.
+**Update my projects**
+1. Open **My work**. Resolve finished issues and replace milestones you have hit.
+2. Open a project that changed and click **Update status**. Set status, trend, phase, progress and next milestone. Changes save as you leave each field.
+3. On the project page you can also click a step in the phase stepper to move the phase.
 
-**Change log**: open it from a project page (that project's history first, with an "Everything" switch), from your avatar menu, or from Admin or Settings. Each entry shows what changed, who changed it, when, and the old and new values. Editors can click **Restore previous** to undo a field edit.
+**Request and record a decision**
+1. On the project page, click **Request a decision** and write the question. It appears under **Decisions needed** on Admin and under the **Decisions** filter.
+2. When leadership decides, open the project and click **Record the decision**.
 
-## 11. Importing and exporting tracker data
+**Log and close an issue**
+1. On the project page, add an issue and set its severity (Low, Medium or High).
+2. Change the severity as things develop. Click **Resolve** when it is fixed.
 
-The app allows full backup and restore via a JSON file. Both actions are in **Settings → Data**. Export is also in your avatar menu as **Export backup**.
+**Find stale work**
+1. Open **Admin**. **Stale projects** lists the longest quiet ones first.
+2. Use **Stale for** (30, 60 or 90+ days) and the PM picker to focus.
+3. Open each project and update it, or contact its owner.
 
-### Export a file
-
-1. Click **Export file**.
-2. Save the generated JSON file to a safe location.
-
-This is the best way to create:
-
-- backups
-- snapshots for handoff
-- copies between machines
-- restore points before bulk changes
-
-### Import a file (editors)
-
-1. Click **Import file**.
-2. Choose a valid tracker export JSON file.
-3. Confirm the warning prompt.
-4. A backup is downloaded automatically before the import replaces current data.
-
-> Importing a file replaces the current tracker state. Make sure you are intentionally replacing the data.
-
-## 12. Storage and local behavior
-
-The app supports multiple storage modes:
-
-- browser IndexedDB by default
-- memory for tests or broken browser storage situations
-- REST-based backend when connected to a service
-- Azure-managed Cosmos DB in production
-
-Settings → Data shows which one you are on. In local mode you can also switch drivers there (**Change storage**) or reset to the bundled snapshot. Neither option appears in the Azure deployment.
-
-If browser storage is blocked, the app degrades to memory mode and warns you that changes may be lost when the tab closes.
-
-## 13. Roles and permissions
-
-In Azure-backed deployments, access is controlled by app roles.
-
-- Viewer: can read everything, cannot edit
-- Editor: can create, update, and delete data
-
-Settings → Access shows the role you are signed in with. If you cannot access the tracker, ask an administrator to add your account to the correct Entra group or app role.
-
-## 14. Common tasks and quick workflows
-
-### Weekly leadership review
-
-1. Portfolio → **Leadership brief**.
-2. Work through "Needs leadership attention" from the top.
-3. Click **Decisions waiting** to filter, then open each project and record the outcome.
-
-### Update my projects
-
-1. **My work**.
-2. Resolve finished issues and replace milestones you have hit.
-3. Open any project that changed status and use **Update status**.
-
-### Find stale work
-
-1. Click the **Stale** chip on Portfolio or Board, or see "Stale projects" on the Admin page, where you can narrow by how long they have been quiet and by PM.
-2. Open each project, refresh its status, or ping its owner.
-
-### Fix a mistake
-
+**Undo a mistake**
 1. Open the project's **Change log**.
-2. Find the change.
-3. Click **Restore previous**.
+2. Find the edit and click **Restore previous**.
 
-### Prepare a backup
+If someone else changed the same field while you were editing, you are asked to keep yours or theirs. The other value stays in the change log.
 
-1. Settings → **Export file**.
-2. Keep the JSON in a shared storage location or a controlled archive.
+**Add or change structure.** Pillars, initiatives and projects that come from monday.com are managed there (see [section 8](#8-the-tracker-and-mondaycom)). For anything created in the tracker, use **+** in the Pillars card, **+ Initiative**, and **+ Add project**. Deleting a pillar also deletes its initiatives and projects, and the change log cannot undo that.
 
+### Admin
 
-## 15. Troubleshooting
+**Pull the latest from monday.com**
+1. Open **Admin** and click **Open sync**.
+2. Choose **monday.com (live)** and click **Preview**. Read the counts and warnings. Preview saves nothing.
+3. Click **Apply**.
 
-### “I cannot edit anything”
+**Set how often the tracker checks monday.com**
+1. In **Open sync**, find **Automatic pulls**.
+2. Choose Off, or 5 minutes up to once a day, then **Save**.
+3. A check that finds nothing new changes nothing, and automatic pulls never remove records. Everyone sees **monday data as of** in the top bar.
 
-Your account is likely in Viewer mode. Request Editor access from the system administrator.
+**Remove records monday.com no longer has** (rare)
+1. In **Open sync**, tick **Also remove records monday.com does not have**, then **Preview**.
+2. Read the **To remove** list and tick the box under it to confirm that exact list.
+3. Click **Apply**. A backup file downloads first. To undo, restore it from **Backups** in the same dialog or **Import file** in Settings.
 
-### “The app is running but data is missing”
+**Choose who sees what**
+1. Open **Access**. Each row is a view or report and each column is a role.
+2. Tick or untick a cell and click **Save access**. Admin always keeps everything.
 
-Check whether you opened the app in a different storage context or whether a previous import replaced the data. Export any current data first before resetting.
+**Change the pillar order**
+1. In Portfolio, open the **Pillars** card and click **Reorder**.
+2. Drag a pillar, or use the arrows, then click **Done**. **Use monday order** removes your override. Numbering the folders in monday.com ("Pillar 1:", "Pillar 2:") is the cleanest fix.
 
-### “A project shows as stale”
+**Take and restore a backup**
+1. **Settings, Data, Export file** saves the whole tracker as a JSON file.
+2. **Import file** restores one. A backup of the current data downloads first, and importing replaces what is there.
 
-This is expected if no changes were made for longer than the configured stale threshold. Update the project or adjust the stale setting.
+## 6. Reports, export and the change log
 
-### “I accidentally replaced data during import”
+- **Export.** Open your account menu and choose **Export** to download any spreadsheet report your role may use (status register, status by PM, needs attention, decision log, change log) or a full backup.
+- **Change log.** Open it from a project page (that project first, with an **Everything** switch), from your account menu, or from Admin or Settings. Each entry shows what changed, who changed it, when, and the old and new values. Editors can click **Restore previous**.
+- **Pillar one-pager.** Portfolio, Leadership brief, **Open one-pager**.
 
-Use the export file created before the import as the restore point. Re-import the backup file.
+## 7. Settings and installing the app
 
-## 16. Best practices
+- **Stale threshold.** A project is stale when nobody has updated it for longer than this: weekly, biweekly, monthly, quarterly or your own number of days. Settings shows how many projects each choice would flag.
+- **Theme.** Light, Dark or Match system. The sun and moon button in the top bar toggles it.
+- **Install as an app.** In Edge or Chrome click the install icon at the right of the address bar, or use **Settings, App**. On iPhone or iPad use Share, then **Add to Home Screen**. It is the same tracker with the same sign-in.
+- **Updates.** Opening the tracker always loads the latest version. If it is open when a new version is published, a message says **A new version is available · Reload**. Reload when it suits you. Anything you saved is kept.
+- **Sharing.** An installed app cannot be emailed. Send the tracker's web address instead.
 
-- Export a backup before large import or bulk data replacement.
-- Keep the stale threshold meaningful for your governance cycle.
-- Use issue logs for blockers and unresolved actions.
-- Keep project owners and decision fields current.
-- Use the change log as the operational audit trail for the tracker.
+## 8. The tracker and monday.com
 
-## 17. Quick reference
+monday.com owns most project information. The tracker pulls it in, and nothing flows back to monday.com.
 
-### Local development
+- **What monday.com supplies:** business owner, delivery owner, project manager, scope, RAG status, trend, phase, validation, progress, start date, original end date, forecast end date, key risk, dependencies, decision needed, next milestone and next milestone date. It also supplies the pillars, initiatives and projects themselves.
+- **What the tracker keeps:** issues, decision outcomes and plan links.
+- **Editing.** Those monday.com fields are read-only in the tracker. A refused edit says "comes from monday.com". Change it in monday.com and the next pull brings it in. Buttons to add, rename or delete linked pillars, initiatives and projects are hidden and say **Managed in monday.com**.
+- **How fresh is it?** The top bar shows **monday data as of** the last good pull. Pulls run automatically on the interval an admin chose, and an Admin can pull right away.
+- **Something looks wrong.** If a project is missing or a value is stale, check monday.com first. A blank value in monday.com never erases a value in the tracker. If the data is old, ask an Admin to pull.
+- **Test copies.** On a test copy (a **LOCAL** badge) nothing is locked and the data may come from a saved file.
 
-```bash
-npm install
-npm run dev
-```
+## 9. Questions and problems
 
-### Local shared server
+**I cannot edit anything.** Your role is Viewer or Executive, or the field comes from monday.com. The top bar shows **View only** when your role cannot edit. To get Editor, ask the group owner to add you to the Editors group.
 
-```bash
-npm run start:local
-```
+**I see "no role".** You are not in any tracker group. Ask for access, then sign out and in.
 
-### Production-style checks
+**My work is empty.** The tracker matches your name to the owner fields. Pick your name when asked, or use **Not you?**. If your name is spelled differently in monday.com, ask the PMO to align it.
 
-```bash
-npm run build
-npm test
-```
+**I cannot see Workload, Admin or Access.** Those views are limited by role. By default Workload is for Admin, Editor and Executive, Admin and My work for Admin and Editor, and Access for Admin only.
 
-## 18. Final note
+**A project shows as stale.** Nobody has updated it within the stale threshold. Update the project and the tag clears.
 
-The tracker is designed for strategic monitoring, project governance, and operational visibility. It is most effective when someone owns stewardship of the data and keeps it current, especially around stale items, decisions, and issue tracking.
+**I made a mistake.** Use the change log and **Restore previous**.
 
-For deployment and Azure configuration details, read [AZURE-DEPLOYMENT.md](AZURE-DEPLOYMENT.md). For architecture and system background, read [AZURE-OVERVIEW.md](AZURE-OVERVIEW.md).
+**The data looks old.** Check **monday data as of**. If it is amber, ask an Admin to pull from monday.com or to check the connection.
+
+**I replaced data by importing a file.** Re-import the backup file that downloaded just before. Import always saves a backup first.
+
+## 10. Best practices
+
+- Keep owners, status and next milestone current in monday.com. That is where updates start.
+- Record decisions in the tracker when they are made, so the list of waiting decisions stays true.
+- Log blockers as issues, with a severity, and resolve them when done.
+- Export a backup before any large import or restore.
+- Keep the stale threshold meaningful for your review cycle.
+- Use the change log as the audit trail.
+
+## 11. Terms
+
+The full glossary is in **Help, Glossary** inside the tracker. The short version:
+
+| Term | Meaning |
+| --- | --- |
+| Pillar, initiative, project | The three layers of work, top to bottom |
+| RAG status | Red, amber, green health. On track, At risk, Off track |
+| Trend | Improving, Flat or Declining |
+| Phase | Discovery, Planning, Execution, Review, Launch, Stabilize, Closed. Multi-Phase is for release-based work |
+| Stale | Not updated within the stale threshold |
+| Decision needed | A question leadership has not answered yet |
+| Issue | A current problem, with a severity of Low, Medium or High |
+| Slip | How many days the forecast end is later than the original end |
+| Change log | The record of every edit, with restore |
+| Role | Admin, Editor, Executive or Viewer |
+| Managed in monday.com | A field or record that comes from monday.com. Change it there |

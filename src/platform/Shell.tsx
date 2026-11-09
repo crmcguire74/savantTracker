@@ -154,8 +154,15 @@ export function TopBar() {
 
       <div className="topbar-counts" aria-label="Portfolio status">
         {RAG_KEYS.map((key) => (
-          <button key={key} type="button" className="topbar-count" onClick={() => showStatus(key)} title={`Show ${RAG[key].label.toLowerCase()} projects`}>
-            <Dot status={key} />
+          <button
+            key={key}
+            type="button"
+            className="topbar-count"
+            onClick={() => showStatus(key)}
+            title={`${counts[key]} ${RAG[key].label.toLowerCase()}. Show these projects`}
+            aria-label={`${counts[key]} ${RAG[key].label.toLowerCase()} projects. Show them`}
+          >
+            <Dot status={key} size={10} />
             <strong>{counts[key]}</strong>
             <span>{RAG[key].label}</span>
           </button>

@@ -2867,9 +2867,16 @@ span.sev-select {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     row-gap: 12px;
   }
-  .brand-sub,
-  .topbar-counts {
+  .brand-sub {
     display: none;
+  }
+  /* Narrow: the label is gone but each number keeps its colored dot. */
+  .topbar-counts {
+    gap: 0;
+  }
+  .topbar-count {
+    gap: 4px;
+    padding: 6px 6px;
   }
 }
 
@@ -5551,5 +5558,168 @@ button.pace-row:focus-visible::before {
 @media (max-width: 900px) {
   .sync-fresh {
     display: none;
+  }
+}
+
+/* ── Help module ───────────────────────────────────────────────────── */
+.help-page {
+  max-width: 980px;
+}
+.help-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 16px;
+}
+.help-steps {
+  margin: 8px 0 0;
+  padding-left: 22px;
+  display: grid;
+  gap: 8px;
+  line-height: 1.5;
+}
+.help-step-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  white-space: nowrap;
+  color: var(--accent);
+}
+.help-layers {
+  list-style: none;
+  margin: 8px 0 16px;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.help-layers li {
+  display: grid;
+  gap: 2px;
+  padding: 8px 10px;
+  border-left: 3px solid var(--accent);
+  background: var(--surface-hover);
+  border-radius: 0 8px 8px 0;
+}
+.help-layers span {
+  color: var(--text-muted);
+  font-size: 13.5px;
+}
+.help-next {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.help-roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.help-role {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 14px;
+}
+.help-role.active {
+  color: var(--text);
+  border-color: var(--accent);
+  background: var(--surface-hover);
+  font-weight: 600;
+}
+.help-you {
+  font-size: 11px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+}
+.help-role-head,
+.help-workflow {
+  margin-bottom: 14px;
+}
+.help-can {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.help-can ul {
+  margin: 4px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 4px;
+  line-height: 1.45;
+}
+.help-sub {
+  margin: 10px 0 0;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.help-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  margin-bottom: 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  max-width: 420px;
+}
+.help-search input {
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+}
+.help-faq {
+  display: grid;
+  gap: 8px;
+}
+.help-q {
+  padding: 0;
+}
+.help-q summary {
+  cursor: pointer;
+  padding: 12px 16px;
+  font-weight: 600;
+}
+.help-q p {
+  margin: 0;
+  padding: 0 16px 14px;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+.help-glossary {
+  margin: 0;
+  display: grid;
+  gap: 12px;
+}
+.help-term dt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+.help-term dd {
+  margin: 2px 0 0;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+@media (max-width: 760px) {
+  .help-grid,
+  .help-can {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

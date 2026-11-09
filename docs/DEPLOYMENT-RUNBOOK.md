@@ -9,7 +9,7 @@ Step by step. Do the steps in order. Every step says:
 
 Explanations are at the end, in the Appendix. You do not need them to follow the steps.
 
-Last reviewed: 3 November 2026.
+Last reviewed: 9 November 2026. The architecture, roles and configuration are described in the [README](../README.md). This runbook is only the exact steps.
 
 ---
 
@@ -46,7 +46,7 @@ Send to Frank (Azure administrator). Copy and paste:
 
 > Frank, I am ready to deploy the Savant Strategic Initiatives Tracker to Azure. I need:
 >
-> 1. Does the Azure environment for this tracker already exist (resource group, App Service, Cosmos DB)? If not, can you create it with `infra/provision.sh`? The steps are in DEPLOYMENT-RUNBOOK.md, Step 3.
+> 1. Does the Azure environment for this tracker already exist (resource group, App Service, Cosmos DB)? If not, can you create it with `infra/provision.sh`? The steps are in docs/DEPLOYMENT-RUNBOOK.md, Step 3.
 > 2. The three names once it exists: resource group, web app, Cosmos DB account.
 > 3. Contributor on that resource group for me, so I can deploy.
 > 4. The Cosmos DB data role for me (Step 3.6).
@@ -326,7 +326,9 @@ az cosmosdb sql role assignment create \
 
 **WHO:** identity administrator or Frank. **WHERE:** Cloud Shell.
 
-The first deployment shows `sign-in: required (App Service authentication)` in its startup log, so sign-in may already be on. Check before changing anything:
+**Checked on 9 November 2026: sign-in is already set up for `app-owlplan`.** The web app's Authentication is enabled and requires sign-in. The registration "Savant Strategic Initiatives Tracker" (client id `b82a674c-6616-45f5-9aeb-76d91a95b347`) has all four roles and the correct redirect URI. The four `SG-Tracker-*` groups are assigned to their roles, and **Assignment required** is on. The client secret expires 5 November 2028. **Do not re-run `entra-app.sh`** unless a check below fails, because it replaces the working secret.
+
+Check again before changing anything:
 
 ```bash
 az webapp auth show -g SWM-OWLPLAN-EASTUS2 -n app-owlplan --query "{enabled:platform.enabled, required:globalValidation.requireAuthentication}" -o json
@@ -891,3 +893,328 @@ That chat is the first deployment of this same tracker. The method and the names
 | Service connection | The permission an ADO pipeline uses to act in Azure |
 | Self-hosted agent | A machine you run that executes pipeline jobs inside your network |
 | Point-in-time restore | The database backup you can wind back up to 7 days |
+
+---
+
+## Azure for people who know Firebase and Netlify
+
+| You know | Azure calls it | One line |
+|---|---|---|
+| Firebase project | **Resource group** | A folder that holds all the pieces of one app |
+| Netlify site, but it runs your Node server too | **App Service** (the "web app") | Runs `server/index.js` and serves the React build |
+| Firestore | **Cosmos DB** | Your data. A deploy never touches it |
+| Firebase Auth | **Entra ID** | Microsoft sign-in. Everyone already has an account |
+| Custom claims or user roles | **App roles** (Admin, Editor, Executive, Viewer) | Assigned to people in the Azure portal, not in code |
+| Firebase secrets, Netlify env vars | **App settings** and **Key Vault** | Env vars for the app. Key Vault holds the monday token |
+| `firebase deploy` | `az webapp deploy` | One command that uploads a zip |
+| Netlify auto-deploy from Git | **ADO Pipeline** | Optional. Not needed to start |
+| Firebase console | **Azure portal** | https://portal.azure.com |
+
+The big difference from Firebase: Azure splits permissions across several people. You can deploy code. Some things only an admin can do. Those steps are marked **ASK FRANK** (Azure admin) or **ASK IDENTITY** (the Entra team).
+
+The sign-in already works without extra code. Azure checks the Microsoft login before a request reaches your app, and passes in who the person is and their role.
+
+---
+
+---
+
+# Hand-off sheets
+
+Copy these into an email or ticket for the person who does the work.
+
+## Replace the monday.com token (for the Azure administrator)
+
+Who does this: the Azure administrator, with the release owner on a call.
+Where: Azure portal, then Azure Cloud Shell. Nothing is installed on your computer.
+Why: The tracker reads monday.com with a token stored in an Azure Key Vault. The release owner created a new token. This replaces the old one.
+
+You need two things:
+1. The file `monday-setup.sh` (attached to the email).
+2. The release owner on a call, ready to read or paste the new token.
+
+Do not write the token in an email, Teams chat, or ticket.
+
+---
+
+### Step 1. Open Cloud Shell
+
+1. Go to https://portal.azure.com and sign in.
+2. Click the `>_` icon at the top of the page (next to the search bar).
+3. If asked, choose **Bash**.
+
+You should see a black or dark panel at the bottom with a prompt that ends in `$`.
+
+### Step 2. Pick the right subscription
+
+Copy this line, paste it into Cloud Shell, press Enter:
+
+```
+az account set --subscription "c27a3bfa-07bb-42e3-b309-4372a9123682"
+```
+
+You should see no error. No output is normal.
+
+### Step 3. Upload the script
+
+1. In the Cloud Shell toolbar, click **Manage files**, then **Upload**.
+2. Choose `monday-setup.sh` from your computer.
+
+Then paste this and press Enter:
+
+```
+chmod +x monday-setup.sh
+ls -l monday-setup.sh
+```
+
+You should see the file listed with `-rwx` at the start.
+
+### Step 4. Set the names
+
+Paste these lines one at a time. Press Enter after each:
+
+```
+export RESOURCE_GROUP=SWM-OWLPLAN-EASTUS2
+export WEBAPP=app-owlplan
+```
+
+Now find the Key Vault name. Paste:
+
+```
+az keyvault list -g SWM-OWLPLAN-EASTUS2 -o table
+```
+
+You should see a table with one vault. Copy the value under **Name**. Use it in this line, replacing `VAULT-NAME`:
+
+```
+export KEYVAULT=VAULT-NAME
+```
+
+If the table is empty, stop and tell Chris. The vault is in a different resource group, or you lack access.
+
+### Step 5. Run it
+
+Paste:
+
+```
+./monday-setup.sh --rotate-token
+```
+
+The script prints `==> Opening the vault to this session`, then asks:
+
+```
+Paste the monday API token (hidden, then Enter):
+```
+
+### Step 6. Enter the token
+
+1. Chris gives you the token on the call. He reads it to you, or shares it through the password manager. Never by email or chat.
+2. Paste it at the prompt. Nothing shows on the screen as you paste. That is normal.
+3. Press Enter.
+
+You should see:
+
+```
+==> Closing the vault again
+Token replaced. The app restarted. Press Test connection on the Admin screen.
+```
+
+The app restarts for 1 to 2 minutes. That is normal.
+
+### Step 7. Tell Chris it is done
+
+Chris tests it in the tracker (Admin, monday sync, Test connection). Stay on the call until he says it works.
+
+When finished, close the Cloud Shell panel.
+
+---
+
+### If something goes wrong
+
+| What you see | What it means | What to do |
+|---|---|---|
+| `Set RESOURCE_GROUP first` | Step 4 was skipped | Run the two `export` lines again |
+| `(ResourceNotFound)` or `could not be found` for the vault | Wrong vault name | Redo the vault list in Step 4, and set `KEYVAULT` again |
+| `AuthorizationFailed` or `Forbidden` | You lack permission on the vault | Ask Chris. You need Key Vault Secrets Officer on the vault and Contributor on the resource group |
+| `waiting for the role assignment to take effect (n/8)` | Azure is slow to apply a permission | Wait. It retries by itself for about 3 minutes |
+| `Could not write the secret` | Permission or network problem after the wait | Run the same command again. If it fails twice, send Chris the full text |
+| `No token entered. Nothing changed.` | You pressed Enter with nothing pasted | Run Step 5 again |
+
+If the script stops partway, send Chris the exact text on the screen. Do not paste the token with it.
+
+### What you changed
+
+- One secret in the Key Vault (`monday-api-token`) has a new value.
+- The web app `app-owlplan` restarted.
+- The vault is private again when the script ends.
+
+Nothing else changes. The database and the code are untouched.
+
+---
+
+## Rebuild sign-in from scratch (only if the checks in Step 4.0 fail)
+
+Sign-in for `app-owlplan` is already set up. Use this only if a check fails or the registration is lost.
+
+### Way 1: run the script (fastest, about 5 minutes)
+
+The repo has `infra/entra-app.sh`. It does Parts A and B and creates the secret. You still do Part C in the portal.
+
+1. Go to https://portal.azure.com and sign in.
+2. Click the `>_` icon in the top bar. If asked, choose **Bash**. If asked to create storage, choose yes.
+3. Click **Manage files**, then **Upload**. Upload the `infra` folder as a zip named `infra.zip` (Chris sends it, or take it from the repo).
+4. In the Cloud Shell window, type each line and press Enter after each:
+
+```bash
+unzip -o infra.zip
+chmod +x infra/*.sh
+az account set --subscription "c27a3bfa-07bb-42e3-b309-4372a9123682"
+export RESOURCE_GROUP="SWM-OWLPLAN-EASTUS2"
+export WEBAPP="app-owlplan"
+./infra/entra-app.sh
+```
+
+5. Wait for the line `Sign-in is configured.`
+
+**You should see:** a summary with the Application (client) ID, Tenant ID and a **Secret expires** date. Copy the summary into a ticket. Put the expiry date in a shared calendar with a reminder one month earlier. When the secret expires, sign-in stops and the error does not explain why.
+
+**If it fails with "Insufficient privileges to complete the operation":** your account lacks the Application Administrator role. Use Way 2, or ask the right person to run it.
+
+The script is safe to run again. If the registration exists, it keeps it and keeps existing role ids. Each run creates a new client secret and replaces the old one.
+
+Then go to Part C.
+
+---
+
+### Way 2: do it by hand in the portals
+
+Portal labels shift between releases, so a label may differ slightly. The values to enter do not change.
+
+### Part A. Create the app registration (Entra admin center)
+
+1. Go to https://entra.microsoft.com and sign in.
+2. In the left menu, click **Entra ID**, then **App registrations**. (Older portals: **Identity > Applications > App registrations**.)
+3. Click **New registration**.
+4. Fill in:
+   - **Name:** `Savant Strategic Initiatives Tracker`
+   - **Supported account types:** choose **Accounts in this organizational directory only (Savant only - Single tenant)**
+   - **Redirect URI:** in the first box choose **Web**. In the second box type `https://app-owlplan.azurewebsites.net/.auth/login/aad/callback`
+5. Click **Register**.
+6. On the page that opens, copy the **Application (client) ID** and the **Directory (tenant) ID**. Write them down. Chris needs the client ID.
+
+**Turn on ID tokens**
+
+7. In the left menu of the registration, click **Authentication**.
+8. Under **Implicit grant and hybrid flows**, tick **ID tokens (used for implicit and hybrid flows)**.
+9. Click **Save**.
+
+**Create the four app roles**
+
+10. In the left menu, click **App roles**, then **Create app role**.
+11. Create the roles below, one at a time. For each, set **Allowed member types** to **Users/Groups**, tick **Do you want to enable this app role?**, and click **Apply**.
+
+| Display name | Value | Description |
+|---|---|---|
+| Tracker Admin | `Tracker.Admin` | Can edit everything and decide which roles see which views and reports. |
+| Tracker Editor | `Tracker.Editor` | Can view and edit every project, initiative and pillar in the tracker. |
+| Tracker Executive | `Tracker.Executive` | Leadership. Can view the tracker and executive reports but cannot change anything. |
+| Tracker Viewer | `Tracker.Viewer` | Can view the tracker but cannot change anything. |
+
+The **Value** must match exactly, including capital letters and the dot. The app reads the Value.
+
+**Create the client secret**
+
+12. In the left menu, click **Certificates & secrets**, then **New client secret**.
+13. **Description:** `Tracker web app sign-in`. **Expires:** choose the longest option (24 months).
+14. Click **Add**.
+15. **Copy the Value now.** Entra shows it only once. Paste it into a password manager or hand it to the Azure administrator in person. Do not email it or put it in chat.
+16. Put the expiry date in a shared calendar with a reminder one month earlier.
+
+**Require assignment**
+
+17. Go to **Entra ID > Enterprise applications**. Search for `Savant Strategic Initiatives Tracker` and open it. (If it is missing, go back to the app registration, click **Overview**, and under **Managed application in local directory** click the link.)
+18. In the left menu, click **Properties**.
+19. Set **Assignment required?** to **Yes**.
+20. Click **Save**.
+
+This is what blocks anyone not assigned to a role.
+
+### Part B. Turn on authentication in the web app (Azure portal)
+
+Needs Contributor on the web app.
+
+1. Go to https://portal.azure.com. In the search bar type the web app name and open it.
+2. In the left menu, under **Settings**, click **Authentication**.
+3. Click **Add identity provider**.
+4. **Identity provider:** choose **Microsoft**.
+5. **App registration type:** choose **Pick an existing app registration in this directory**.
+6. **Name or app id:** type `Savant Strategic Initiatives Tracker` and pick it.
+7. **Client secret:** paste the secret Value from Part A step 15. The portal stores it as an app setting.
+8. **Issuer URL:** `https://login.microsoftonline.com/<tenant id>/v2.0`
+9. **Allowed token audiences:** add two lines, `api://<client id>` and `<client id>`.
+10. **Restrict access:** choose **Require authentication**.
+11. **Unauthenticated requests:** choose **HTTP 302 Found redirect: recommended for websites**.
+12. **Token store:** tick it.
+13. Click **Add**.
+
+**You should see:** the Authentication page lists Microsoft as an identity provider and shows "Require authentication".
+
+Also check the web app setting named `MICROSOFT_PROVIDER_AUTHENTICATION_SECRET` exists: left menu **Settings > Environment variables > App settings**. The script uses that name. If the portal named the secret setting differently, leave it as the portal named it.
+
+---
+
+### Part C. Groups and role assignments (Entra admin center)
+
+Do this after Way 1 or after Parts A and B.
+
+### Create four groups
+
+1. Go to https://entra.microsoft.com. Click **Entra ID > Groups > All groups > New group**.
+2. Create each group:
+
+| Group name | Members |
+|---|---|
+| `SG-Tracker-Admins` | Christopher McGuire, plus any other admins Chris names |
+| `SG-Tracker-Editors` | People Chris lists |
+| `SG-Tracker-Executives` | People Chris lists |
+| `SG-Tracker-Viewers` | People Chris lists |
+
+For each: **Group type:** Security. **Membership type:** Assigned. Add an owner (Chris). Add members. Click **Create**.
+
+### Assign each group to its role
+
+1. Go to **Entra ID > Enterprise applications**. Open `Savant Strategic Initiatives Tracker`.
+2. In the left menu, click **Users and groups**.
+3. Click **Add user/group**.
+4. Under **Users and groups**, click **None Selected**. Search for `SG-Tracker-Admins`. Tick it. Click **Select**.
+5. Under **Select a role**, click **None Selected**. Click **Tracker Admin**. Click **Select**.
+6. Click **Assign**.
+7. Repeat steps 3 to 6 for the other three groups:
+   - `SG-Tracker-Editors` with **Tracker Editor**
+   - `SG-Tracker-Executives` with **Tracker Executive**
+   - `SG-Tracker-Viewers` with **Tracker Viewer**
+
+**You should see:** four rows in Users and groups, each group next to its role.
+
+Role assignment to a group can take a few minutes to reach a person's next sign-in. People may need to sign out and back in.
+
+---
+
+### Test it
+
+1. Open a private browser window. Go to `https://app-owlplan.azurewebsites.net`. If the site is on a private network, connect to the VPN first.
+2. You are sent to a Microsoft sign-in page. Sign in as Chris (an Admin).
+3. The tracker opens. In the account menu (top right), Chris sees his name and the role Admin.
+4. Test a person who is **not** in any group. They must see a Microsoft error such as `AADSTS50105: ... your administrator has configured the application to block users unless they are specifically granted access`. That error proves "Assignment required" works.
+5. Test one Viewer. They see the tracker with a view-only banner and no Add buttons.
+
+### If something goes wrong
+
+| You see | Cause | Fix |
+|---|---|---|
+| `Insufficient privileges to complete the operation` | You lack Application Administrator | Ask someone who has it |
+| `AADSTS50011: The redirect URI ... does not match` | Wrong redirect address | Entra > App registrations > the tracker > Authentication. The Web redirect URI must be exactly `https://app-owlplan.azurewebsites.net/.auth/login/aad/callback` |
+| `AADSTS7000215: Invalid client secret` | Wrong or expired secret | Create a new secret (Part A steps 12 to 15), paste it in the web app: Authentication > Edit the Microsoft provider |
+| `AADSTS50105` for someone who should have access | Not assigned | Part C |
+| Signed in, but the tracker says "no role" | Assigned after their last sign-in, or no group membership | Sign out, sign in again. Check group membership |
+| Sign-in loops | Redirect URI or issuer URL wrong | Recheck Part A step 4 and Part B step 8 |
+| Everyone is view-only | People assigned the Viewer role, or assigned with no role | Check the Role column in Users and groups |

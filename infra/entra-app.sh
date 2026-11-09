@@ -14,7 +14,7 @@
 #
 # After this runs, nobody can reach the site without a Savant account AND a
 # role assignment. Assigning people to roles is the last step and is done in
-# the portal, covered in AZURE-DEPLOYMENT.md.
+# the portal, covered in docs/DEPLOYMENT-RUNBOOK.md (Rebuild sign-in).
 #
 # ---------------------------------------------------------------------------
 set -euo pipefail
@@ -138,7 +138,7 @@ az webapp auth microsoft update \
   --client-id "$APP_ID" \
   --client-secret-setting-name "MICROSOFT_PROVIDER_AUTHENTICATION_SECRET" \
   --issuer "https://login.microsoftonline.com/${TENANT_ID}/v2.0" \
-  --allowed-audiences "api://${APP_ID}" "$APP_ID" \
+  --allowed-audiences "api://${APP_ID},${APP_ID}" \
   --tenant-id "$TENANT_ID" \
   --yes --output none
 
