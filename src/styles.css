@@ -2833,7 +2833,7 @@ span.sev-select {
   .plist-row {
     grid-template-columns: 12px minmax(0, 1fr) minmax(0, 170px) 96px 120px 64px;
   }
-  .topbar-count span {
+  .topbar-count-label {
     display: none;
   }
 }

@@ -164,7 +164,7 @@ export function TopBar() {
           >
             <Dot status={key} size={10} />
             <strong>{counts[key]}</strong>
-            <span>{RAG[key].label}</span>
+            <span className="topbar-count-label">{RAG[key].label}</span>
           </button>
         ))}
       </div>
