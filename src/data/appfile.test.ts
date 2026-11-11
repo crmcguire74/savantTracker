@@ -9,8 +9,8 @@ describe('bundled migration snapshot', () => {
     const file = bundledSnapshot()
     expect(file.state.pillars).toHaveLength(6)
     expect(file.state.initiatives).toHaveLength(35)
-    expect(file.state.projects).toHaveLength(27)
-    expect(file.log).toHaveLength(210)
+    expect(file.state.projects).toHaveLength(30)
+    expect(file.log).toHaveLength(243)
   })
 
   it('has no orphaned initiatives or projects', () => {
@@ -26,12 +26,12 @@ describe('bundled migration snapshot', () => {
     const file = bundledSnapshot()
     expect(file.state.projects.every((p) => typeof p.decisionOutcome === 'string')).toBe(true)
     expect(file.state.projects.every((p) => Array.isArray(p.issues))).toBe(true)
-    expect(file.state.projects.filter((p) => p.updatedByName !== '')).toHaveLength(27)
+    expect(file.state.projects.filter((p) => p.updatedByName !== '')).toHaveLength(30)
   })
 
   it('matches the RAG counts of the monday data', () => {
     const counts = countByRag(bundledSnapshot().state.projects)
-    expect(counts).toEqual({ green: 14, amber: 12, red: 1 })
+    expect(counts).toEqual({ green: 12, amber: 14, red: 4 })
   })
 })
 

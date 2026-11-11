@@ -44,7 +44,7 @@ describe('the assembled app', () => {
   it('lists rail entries in order and hides the ones a role may not open', async () => {
     app = await mountModule(portfolio, { with: MODULES, shell: true, role: 'viewer' })
     const labels = [...app.container.querySelectorAll('.rail-label')].map((label) => label.textContent)
-    expect(labels).toEqual(['Portfolio', 'Board', 'Timeline', 'Settings'])
+    expect(labels).toEqual(['Portfolio', 'Board', 'Timeline', 'Settings', 'Help'])
   })
 
   it('shows the no-access page for a module outside the role', async () => {

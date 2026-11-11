@@ -1,7 +1,7 @@
 {
   "format": "monday-capture",
   "version": 1,
-  "capturedAt": "2026-11-02T00:00:00.000Z",
+  "capturedAt": "2026-11-11T16:00:00Z",
   "workspaceId": "17893919",
   "folders": [
     {
@@ -591,9 +591,9 @@
         {
           "id": "13271079004",
           "name": "WiseOS MVP Portfolio",
-          "updated_at": "2026-10-30T22:01:39Z",
+          "updated_at": "2026-11-06T14:55:53Z",
           "group": {
-            "id": "g",
+            "id": "topics",
             "title": "Projects"
           },
           "column_values": [
@@ -608,6 +608,11 @@
               "text": "At risk"
             },
             {
+              "id": "c_scope",
+              "type": "text",
+              "text": "In R4, the MVP portfolio workstream is focused on making WiseOS secure, reliable and ready to send updates back to Salesforce. The biggest piece is closing the security gaps found in the recent audit; most are already fixed and in testing, and the last few network and access fixes are underway. In parallel, the team is laying the groundwork for WiseOS to write meeting notes and follow-up tasks into Salesforce, starting with research and a test run in a Salesforce sandbox. Supporting work includes automating releases so updates reach advisors without manual steps, strengthening the data feeds behind the screens, and finishing the admin tools the team uses to spot and fix errors."
+            },
+            {
               "id": "c_businessOwner",
               "type": "text",
               "text": "Daran Becker"
@@ -618,6 +623,11 @@
               "text": "Elite Workflow"
             },
             {
+              "id": "c_trending",
+              "type": "text",
+              "text": "Improving"
+            },
+            {
               "id": "c_phase",
               "type": "text",
               "text": "Multi-Phase (Release Based)"
@@ -626,6 +636,11 @@
               "id": "c_validation",
               "type": "text",
               "text": "In Progress"
+            },
+            {
+              "id": "c_progress",
+              "type": "text",
+              "text": "75"
             },
             {
               "id": "c_startDate",
@@ -640,22 +655,7 @@
             {
               "id": "c_forecastEndDate",
               "type": "text",
-              "text": "2026-11-17"
-            },
-            {
-              "id": "c_trending",
-              "type": "text",
-              "text": "Improving"
-            },
-            {
-              "id": "c_progress",
-              "type": "text",
-              "text": "50"
-            },
-            {
-              "id": "c_scope",
-              "type": "text",
-              "text": "In R4, the MVP portfolio workstream is focused on making WiseOS secure, reliable and ready to send updates back to Salesforce. The biggest piece is closing the security gaps found in the recent audit; most are already fixed and in testing, and the last few network and access fixes are underway. In parallel, the team is laying the groundwork for WiseOS to write meeting notes and follow-up tasks into Salesforce, starting with research and a test run in a Salesforce sandbox. Supporting work includes automating releases so updates reach advisors without manual steps, strengthening the data feeds behind the screens, and finishing the admin tools the team uses to spot and fix errors."
+              "text": "2026-11-19"
             },
             {
               "id": "c_keyRisk",
@@ -680,16 +680,16 @@
             {
               "id": "c_nextMilestoneDate",
               "type": "text",
-              "text": "2026-11-17"
+              "text": "2026-11-19"
             }
           ]
         },
         {
           "id": "13312274398",
           "name": "Apollo - WiseAdvisor",
-          "updated_at": "2026-10-30T22:02:50Z",
+          "updated_at": "2026-11-06T14:54:43Z",
           "group": {
-            "id": "g",
+            "id": "topics",
             "title": "Projects"
           },
           "column_values": [
@@ -704,6 +704,11 @@
               "text": "At risk"
             },
             {
+              "id": "c_scope",
+              "type": "text",
+              "text": "In R4, wiseAdvisor improves the advisor’s task list. Advisors will see an overdue count at a glance, a full task page they can sort and filter by type, who each task is for, and their own profile from the menu. Almost all of this is built and in testing. The last piece, making sure tasks for household members reach the whole client team, is in progress."
+            },
+            {
               "id": "c_businessOwner",
               "type": "text",
               "text": "Daran Becker"
@@ -714,6 +719,11 @@
               "text": "Elite Workflow"
             },
             {
+              "id": "c_trending",
+              "type": "text",
+              "text": "Improving"
+            },
+            {
               "id": "c_phase",
               "type": "text",
               "text": "Multi-Phase (Release Based)"
@@ -722,6 +732,11 @@
               "id": "c_validation",
               "type": "text",
               "text": "In Progress"
+            },
+            {
+              "id": "c_progress",
+              "type": "text",
+              "text": "25"
             },
             {
               "id": "c_startDate",
@@ -736,22 +751,7 @@
             {
               "id": "c_forecastEndDate",
               "type": "text",
-              "text": "2026-11-17"
-            },
-            {
-              "id": "c_trending",
-              "type": "text",
-              "text": "Improving"
-            },
-            {
-              "id": "c_progress",
-              "type": "text",
-              "text": "25"
-            },
-            {
-              "id": "c_scope",
-              "type": "text",
-              "text": "In R4, wiseAdvisor improves the advisor’s task list. Advisors will see an overdue count at a glance, a full task page they can sort and filter by type, who each task is for, and their own profile from the menu. Almost all of this is built and in testing. The last piece, making sure tasks for household members reach the whole client team, is in progress."
+              "text": "2026-11-19"
             },
             {
               "id": "c_keyRisk",
@@ -783,9 +783,9 @@
         {
           "id": "13312261373",
           "name": "Apollo - WiseClient360",
-          "updated_at": "2026-10-30T22:03:00Z",
+          "updated_at": "2026-11-06T14:55:58Z",
           "group": {
-            "id": "g",
+            "id": "topics",
             "title": "Projects"
           },
           "column_values": [
@@ -800,6 +800,11 @@
               "text": "At risk"
             },
             {
+              "id": "c_scope",
+              "type": "text",
+              "text": "In R4, wiseClient360 gives advisors a clearer picture of each household. Both spouses will show with ages and dates of birth, family members can be opened, and Portfolio tab accounts will be grouped the way Tamarac groups them. Several fixes are in testing, including sorting clients by last name and no longer listing clients’ children as prospects. Still in progress are the fee schedule and annual revenue on the client overview, early discovery on pulling Fidelity and Schwab data, and a fix to “last interaction” so it counts emails and calls, which is currently blocked."
+            },
+            {
               "id": "c_businessOwner",
               "type": "text",
               "text": "Daran Becker"
@@ -810,6 +815,11 @@
               "text": "Elite Workflow"
             },
             {
+              "id": "c_trending",
+              "type": "text",
+              "text": "Improving"
+            },
+            {
               "id": "c_phase",
               "type": "text",
               "text": "Multi-Phase (Release Based)"
@@ -818,6 +828,11 @@
               "id": "c_validation",
               "type": "text",
               "text": "In Progress"
+            },
+            {
+              "id": "c_progress",
+              "type": "text",
+              "text": "50"
             },
             {
               "id": "c_startDate",
@@ -832,22 +847,7 @@
             {
               "id": "c_forecastEndDate",
               "type": "text",
-              "text": "2026-11-17"
-            },
-            {
-              "id": "c_trending",
-              "type": "text",
-              "text": "Improving"
-            },
-            {
-              "id": "c_progress",
-              "type": "text",
-              "text": "50"
-            },
-            {
-              "id": "c_scope",
-              "type": "text",
-              "text": "In R4, wiseClient360 gives advisors a clearer picture of each household. Both spouses will show with ages and dates of birth, family members can be opened, and Portfolio tab accounts will be grouped the way Tamarac groups them. Several fixes are in testing, including sorting clients by last name and no longer listing clients’ children as prospects. Still in progress are the fee schedule and annual revenue on the client overview, early discovery on pulling Fidelity and Schwab data, and a fix to “last interaction” so it counts emails and calls, which is currently blocked."
+              "text": "2026-11-19"
             },
             {
               "id": "c_keyRisk",
@@ -872,16 +872,16 @@
             {
               "id": "c_nextMilestoneDate",
               "type": "text",
-              "text": "2026-11-17"
+              "text": "2026-11-19"
             }
           ]
         },
         {
           "id": "13349597084",
           "name": "Apollo — wiseMeet",
-          "updated_at": "2026-10-30T22:03:08Z",
+          "updated_at": "2026-11-06T14:56:00Z",
           "group": {
-            "id": "g",
+            "id": "topics",
             "title": "Projects"
           },
           "column_values": [
@@ -896,6 +896,11 @@
               "text": "At risk"
             },
             {
+              "id": "c_scope",
+              "type": "text",
+              "text": "In R4, wiseMeet makes meeting prep and recaps more complete and easier to act on. Advisors will see Outlook details on each meeting, a Join button, the client’s open Salesforce tasks, upcoming birthdays, account balances and follow-ups from past meetings. They’ll also be able to check off and edit recap action items. Most of this is built and in testing; the remaining pieces are prep templates for each meeting type and a firm-wide agenda structure, both waiting on a move to a new AI model."
+            },
+            {
               "id": "c_businessOwner",
               "type": "text",
               "text": "Daran Becker"
@@ -906,6 +911,11 @@
               "text": "Elite Workflow"
             },
             {
+              "id": "c_trending",
+              "type": "text",
+              "text": "Improving"
+            },
+            {
               "id": "c_phase",
               "type": "text",
               "text": "Multi-Phase (Release Based)"
@@ -914,6 +924,11 @@
               "id": "c_validation",
               "type": "text",
               "text": "In Progress"
+            },
+            {
+              "id": "c_progress",
+              "type": "text",
+              "text": "75"
             },
             {
               "id": "c_startDate",
@@ -928,22 +943,7 @@
             {
               "id": "c_forecastEndDate",
               "type": "text",
-              "text": "2026-11-17"
-            },
-            {
-              "id": "c_trending",
-              "type": "text",
-              "text": "Improving"
-            },
-            {
-              "id": "c_progress",
-              "type": "text",
-              "text": "75"
-            },
-            {
-              "id": "c_scope",
-              "type": "text",
-              "text": "In R4, wiseMeet makes meeting prep and recaps more complete and easier to act on. Advisors will see Outlook details on each meeting, a Join button, the client’s open Salesforce tasks, upcoming birthdays, account balances and follow-ups from past meetings. They’ll also be able to check off and edit recap action items. Most of this is built and in testing; the remaining pieces are prep templates for each meeting type and a firm-wide agenda structure, both waiting on a move to a new AI model."
+              "text": "2026-11-19"
             },
             {
               "id": "c_keyRisk",
@@ -968,16 +968,16 @@
             {
               "id": "c_nextMilestoneDate",
               "type": "text",
-              "text": "2026-11-17"
+              "text": "2026-11-19"
             }
           ]
         },
         {
           "id": "13349613060",
           "name": "Apollo — wiseCoach",
-          "updated_at": "2026-10-30T22:04:42Z",
+          "updated_at": "2026-11-06T14:56:02Z",
           "group": {
-            "id": "g",
+            "id": "topics",
             "title": "Projects"
           },
           "column_values": [
@@ -992,6 +992,11 @@
               "text": "At risk"
             },
             {
+              "id": "c_scope",
+              "type": "text",
+              "text": "In R4, wiseCoach makes coaching numbers more accurate and flexible. Advisors can pick their own date range, and shared books will now count correctly on Home and in WiseCoach; both are built and in testing. Referral suggestions tailored to an advisor’s level and client asset bands are planned but waiting on a business decision about the rules."
+            },
+            {
               "id": "c_businessOwner",
               "type": "text",
               "text": "Dom Anzevino"
@@ -1002,6 +1007,11 @@
               "text": "Elite Workflow"
             },
             {
+              "id": "c_trending",
+              "type": "text",
+              "text": "Improving"
+            },
+            {
               "id": "c_phase",
               "type": "text",
               "text": "Multi-Phase (Release Based)"
@@ -1010,6 +1020,11 @@
               "id": "c_validation",
               "type": "text",
               "text": "In Progress"
+            },
+            {
+              "id": "c_progress",
+              "type": "text",
+              "text": "75"
             },
             {
               "id": "c_startDate",
@@ -1024,22 +1039,7 @@
             {
               "id": "c_forecastEndDate",
               "type": "text",
-              "text": "2026-11-17"
-            },
-            {
-              "id": "c_trending",
-              "type": "text",
-              "text": "Declining"
-            },
-            {
-              "id": "c_progress",
-              "type": "text",
-              "text": "75"
-            },
-            {
-              "id": "c_scope",
-              "type": "text",
-              "text": "In R4, wiseCoach makes coaching numbers more accurate and flexible. Advisors can pick their own date range, and shared books will now count correctly on Home and in WiseCoach; both are built and in testing. Referral suggestions tailored to an advisor’s level and client asset bands are planned but waiting on a business decision about the rules."
+              "text": "2026-11-19"
             },
             {
               "id": "c_keyRisk",
@@ -1064,16 +1064,16 @@
             {
               "id": "c_nextMilestoneDate",
               "type": "text",
-              "text": "2026-11-17"
+              "text": "2026-11-19"
             }
           ]
         },
         {
           "id": "13349613149",
           "name": "Apollo - wiseCompensation",
-          "updated_at": "2026-10-30T22:04:52Z",
+          "updated_at": "2026-11-06T14:56:04Z",
           "group": {
-            "id": "g",
+            "id": "topics",
             "title": "Projects"
           },
           "column_values": [
@@ -1088,6 +1088,11 @@
               "text": "At risk"
             },
             {
+              "id": "c_scope",
+              "type": "text",
+              "text": "No planned scope for R4 for Apollo"
+            },
+            {
               "id": "c_businessOwner",
               "type": "text",
               "text": "Dom Anzevino"
@@ -1098,6 +1103,11 @@
               "text": "BridgeNext"
             },
             {
+              "id": "c_trending",
+              "type": "text",
+              "text": "Declining"
+            },
+            {
               "id": "c_phase",
               "type": "text",
               "text": "Multi-Phase (Release Based)"
@@ -1106,6 +1116,11 @@
               "id": "c_validation",
               "type": "text",
               "text": "In Progress"
+            },
+            {
+              "id": "c_progress",
+              "type": "text",
+              "text": "25"
             },
             {
               "id": "c_startDate",
@@ -1121,21 +1136,6 @@
               "id": "c_forecastEndDate",
               "type": "text",
               "text": "2026-12-15"
-            },
-            {
-              "id": "c_trending",
-              "type": "text",
-              "text": "Improving"
-            },
-            {
-              "id": "c_progress",
-              "type": "text",
-              "text": "25"
-            },
-            {
-              "id": "c_scope",
-              "type": "text",
-              "text": "No planned scope for R4 for Apollo"
             },
             {
               "id": "c_keyRisk",
@@ -1160,16 +1160,16 @@
             {
               "id": "c_nextMilestoneDate",
               "type": "text",
-              "text": "2026-11-17"
+              "text": "2026-11-19"
             }
           ]
         },
         {
           "id": "13349600333",
           "name": "Apollo - wisePlan",
-          "updated_at": "2026-10-30T22:03:59Z",
+          "updated_at": "2026-11-06T14:56:14Z",
           "group": {
-            "id": "g",
+            "id": "topics",
             "title": "Projects"
           },
           "column_values": [
@@ -1184,6 +1184,11 @@
               "text": "At risk"
             },
             {
+              "id": "c_scope",
+              "type": "text",
+              "text": "UX/UI and discovery"
+            },
+            {
               "id": "c_businessOwner",
               "type": "text",
               "text": "Daran Becker"
@@ -1194,6 +1199,11 @@
               "text": "TBD"
             },
             {
+              "id": "c_trending",
+              "type": "text",
+              "text": "Flat"
+            },
+            {
               "id": "c_phase",
               "type": "text",
               "text": "Multi-Phase (Release Based)"
@@ -1202,6 +1212,11 @@
               "id": "c_validation",
               "type": "text",
               "text": "Not Started"
+            },
+            {
+              "id": "c_progress",
+              "type": "text",
+              "text": "10"
             },
             {
               "id": "c_startDate",
@@ -1216,22 +1231,7 @@
             {
               "id": "c_forecastEndDate",
               "type": "text",
-              "text": "2026-11-17"
-            },
-            {
-              "id": "c_trending",
-              "type": "text",
-              "text": "Flat"
-            },
-            {
-              "id": "c_progress",
-              "type": "text",
-              "text": "10"
-            },
-            {
-              "id": "c_scope",
-              "type": "text",
-              "text": "UX/UI and discovery"
+              "text": "2026-11-19"
             },
             {
               "id": "c_keyRisk",
@@ -1256,19 +1256,9 @@
             {
               "id": "c_nextMilestoneDate",
               "type": "text",
-              "text": "2026-11-07"
+              "text": "2026-11-09"
             }
           ]
-        },
-        {
-          "id": "184351556481",
-          "name": "Rename",
-          "updated_at": "2026-10-27T00:00:00Z",
-          "group": {
-            "id": "g",
-            "title": "Projects"
-          },
-          "column_values": []
         }
       ]
     },
@@ -1368,10 +1358,40 @@
           "name": "OwlWise",
           "updated_at": "2026-10-22T16:12:29Z",
           "group": {
-            "id": "g",
+            "id": "topics",
             "title": "Projects"
           },
           "column_values": [
+            {
+              "id": "c_projectManager",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_rag",
+              "type": "text",
+              "text": "Project Health"
+            },
+            {
+              "id": "c_scope",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_businessOwner",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_executionOwner",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_trending",
+              "type": "text",
+              "text": ""
+            },
             {
               "id": "c_phase",
               "type": "text",
@@ -1381,18 +1401,53 @@
               "id": "c_validation",
               "type": "text",
               "text": "N/A"
+            },
+            {
+              "id": "c_startDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_originalEndDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_forecastEndDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_keyRisk",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_decisionNeeded",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_nextMilestone",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_nextMilestoneDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_progress",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_dependencies",
+              "type": "text",
+              "text": ""
             }
           ]
-        },
-        {
-          "id": "184351571581",
-          "name": "Rename",
-          "updated_at": "2026-10-27T00:00:00Z",
-          "group": {
-            "id": "g",
-            "title": "Projects"
-          },
-          "column_values": []
         }
       ]
     },
@@ -1492,10 +1547,40 @@
           "name": "New-client source vs. target report",
           "updated_at": "2026-10-14T22:01:31Z",
           "group": {
-            "id": "g",
+            "id": "topics",
             "title": "Projects"
           },
           "column_values": [
+            {
+              "id": "c_projectManager",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_rag",
+              "type": "text",
+              "text": "Project Health"
+            },
+            {
+              "id": "c_scope",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_businessOwner",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_executionOwner",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_trending",
+              "type": "text",
+              "text": ""
+            },
             {
               "id": "c_phase",
               "type": "text",
@@ -1505,18 +1590,149 @@
               "id": "c_validation",
               "type": "text",
               "text": "N/A"
+            },
+            {
+              "id": "c_startDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_originalEndDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_forecastEndDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_keyRisk",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_decisionNeeded",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_nextMilestone",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_nextMilestoneDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_progress",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_dependencies",
+              "type": "text",
+              "text": ""
             }
           ]
         },
         {
-          "id": "184351579831",
-          "name": "Rename",
-          "updated_at": "2026-10-27T00:00:00Z",
+          "id": "13467915667",
+          "name": "WiseAnalytics Report Development",
+          "updated_at": "2026-11-05T15:56:26Z",
           "group": {
-            "id": "g",
+            "id": "topics",
             "title": "Projects"
           },
-          "column_values": []
+          "column_values": [
+            {
+              "id": "c_projectManager",
+              "type": "text",
+              "text": "Kellie McPoyle"
+            },
+            {
+              "id": "c_rag",
+              "type": "text",
+              "text": "At risk"
+            },
+            {
+              "id": "c_scope",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_businessOwner",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_executionOwner",
+              "type": "text",
+              "text": "Kellie McPoyle"
+            },
+            {
+              "id": "c_trending",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_phase",
+              "type": "text",
+              "text": "N/A"
+            },
+            {
+              "id": "c_validation",
+              "type": "text",
+              "text": "N/A"
+            },
+            {
+              "id": "c_startDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_originalEndDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_forecastEndDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_keyRisk",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_decisionNeeded",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_nextMilestone",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_nextMilestoneDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_progress",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_dependencies",
+              "type": "text",
+              "text": ""
+            }
+          ]
         }
       ]
     },
@@ -1612,14 +1828,44 @@
       ],
       "items": [
         {
-          "id": "13373399588",
+          "id": "13447425837",
           "name": "DAP Compensation",
-          "updated_at": "2026-10-23T21:37:07Z",
+          "updated_at": "2026-11-02T21:51:33Z",
           "group": {
-            "id": "g",
+            "id": "topics",
             "title": "Projects"
           },
           "column_values": [
+            {
+              "id": "c_projectManager",
+              "type": "text",
+              "text": "Bindu Bharadwaj"
+            },
+            {
+              "id": "c_rag",
+              "type": "text",
+              "text": "On track"
+            },
+            {
+              "id": "c_scope",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_businessOwner",
+              "type": "text",
+              "text": "Daran"
+            },
+            {
+              "id": "c_executionOwner",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_trending",
+              "type": "text",
+              "text": "Improving"
+            },
             {
               "id": "c_phase",
               "type": "text",
@@ -1629,60 +1875,93 @@
               "id": "c_validation",
               "type": "text",
               "text": "N/A"
-            }
-          ]
-        },
-        {
-          "id": "13373419795",
-          "name": "DAP API Mesh",
-          "updated_at": "2026-10-23T21:37:15Z",
-          "group": {
-            "id": "g",
-            "title": "Projects"
-          },
-          "column_values": [
-            {
-              "id": "c_phase",
-              "type": "text",
-              "text": "N/A"
             },
             {
-              "id": "c_validation",
+              "id": "c_startDate",
               "type": "text",
-              "text": "N/A"
-            }
-          ]
-        },
-        {
-          "id": "13373479588",
-          "name": "DAP ACQ Integration",
-          "updated_at": "2026-10-23T21:37:11Z",
-          "group": {
-            "id": "g",
-            "title": "Projects"
-          },
-          "column_values": [
-            {
-              "id": "c_phase",
-              "type": "text",
-              "text": "N/A"
+              "text": ""
             },
             {
-              "id": "c_validation",
+              "id": "c_originalEndDate",
               "type": "text",
-              "text": "N/A"
+              "text": ""
+            },
+            {
+              "id": "c_forecastEndDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_keyRisk",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_decisionNeeded",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_nextMilestone",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_nextMilestoneDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_progress",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_dependencies",
+              "type": "text",
+              "text": ""
             }
           ]
         },
         {
-          "id": "13373429431",
+          "id": "13447546815",
           "name": "DAP Core Enhancements",
-          "updated_at": "2026-10-23T21:37:51Z",
+          "updated_at": "2026-11-02T21:51:38Z",
           "group": {
-            "id": "g",
+            "id": "topics",
             "title": "Projects"
           },
           "column_values": [
+            {
+              "id": "c_projectManager",
+              "type": "text",
+              "text": "Bindu Bharadwaj"
+            },
+            {
+              "id": "c_rag",
+              "type": "text",
+              "text": "Off track"
+            },
+            {
+              "id": "c_scope",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_businessOwner",
+              "type": "text",
+              "text": "Daran"
+            },
+            {
+              "id": "c_executionOwner",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_trending",
+              "type": "text",
+              "text": "Improving"
+            },
             {
               "id": "c_phase",
               "type": "text",
@@ -1692,18 +1971,93 @@
               "id": "c_validation",
               "type": "text",
               "text": "N/A"
+            },
+            {
+              "id": "c_startDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_originalEndDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_forecastEndDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_keyRisk",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_decisionNeeded",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_nextMilestone",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_nextMilestoneDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_progress",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_dependencies",
+              "type": "text",
+              "text": ""
             }
           ]
         },
         {
-          "id": "13373472100",
+          "id": "13447538092",
           "name": "DAP Platinum",
-          "updated_at": "2026-10-23T21:38:43Z",
+          "updated_at": "2026-11-02T21:51:41Z",
           "group": {
-            "id": "g",
+            "id": "topics",
             "title": "Projects"
           },
           "column_values": [
+            {
+              "id": "c_projectManager",
+              "type": "text",
+              "text": "Bindu Bharadwaj"
+            },
+            {
+              "id": "c_rag",
+              "type": "text",
+              "text": "On track"
+            },
+            {
+              "id": "c_scope",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_businessOwner",
+              "type": "text",
+              "text": "Daran"
+            },
+            {
+              "id": "c_executionOwner",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_trending",
+              "type": "text",
+              "text": "Improving"
+            },
             {
               "id": "c_phase",
               "type": "text",
@@ -1713,18 +2067,341 @@
               "id": "c_validation",
               "type": "text",
               "text": "N/A"
+            },
+            {
+              "id": "c_startDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_originalEndDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_forecastEndDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_keyRisk",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_decisionNeeded",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_nextMilestone",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_nextMilestoneDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_progress",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_dependencies",
+              "type": "text",
+              "text": ""
             }
           ]
         },
         {
-          "id": "184351588501",
-          "name": "Rename",
-          "updated_at": "2026-10-27T00:00:00Z",
+          "id": "13447587137",
+          "name": "DAP Dev Ops",
+          "updated_at": "2026-11-02T21:51:43Z",
           "group": {
-            "id": "g",
+            "id": "topics",
             "title": "Projects"
           },
-          "column_values": []
+          "column_values": [
+            {
+              "id": "c_projectManager",
+              "type": "text",
+              "text": "Bindu Bharadwaj"
+            },
+            {
+              "id": "c_rag",
+              "type": "text",
+              "text": "On track"
+            },
+            {
+              "id": "c_scope",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_businessOwner",
+              "type": "text",
+              "text": "Daran"
+            },
+            {
+              "id": "c_executionOwner",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_trending",
+              "type": "text",
+              "text": "Improving"
+            },
+            {
+              "id": "c_phase",
+              "type": "text",
+              "text": "N/A"
+            },
+            {
+              "id": "c_validation",
+              "type": "text",
+              "text": "N/A"
+            },
+            {
+              "id": "c_startDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_originalEndDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_forecastEndDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_keyRisk",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_decisionNeeded",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_nextMilestone",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_nextMilestoneDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_progress",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_dependencies",
+              "type": "text",
+              "text": ""
+            }
+          ]
+        },
+        {
+          "id": "13447570095",
+          "name": "DAP ACQ Integration",
+          "updated_at": "2026-11-02T21:51:46Z",
+          "group": {
+            "id": "topics",
+            "title": "Projects"
+          },
+          "column_values": [
+            {
+              "id": "c_projectManager",
+              "type": "text",
+              "text": "Bindu Bharadwaj"
+            },
+            {
+              "id": "c_rag",
+              "type": "text",
+              "text": "At risk"
+            },
+            {
+              "id": "c_scope",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_businessOwner",
+              "type": "text",
+              "text": "Tony"
+            },
+            {
+              "id": "c_executionOwner",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_trending",
+              "type": "text",
+              "text": "Improving"
+            },
+            {
+              "id": "c_phase",
+              "type": "text",
+              "text": "N/A"
+            },
+            {
+              "id": "c_validation",
+              "type": "text",
+              "text": "N/A"
+            },
+            {
+              "id": "c_startDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_originalEndDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_forecastEndDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_keyRisk",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_decisionNeeded",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_nextMilestone",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_nextMilestoneDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_progress",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_dependencies",
+              "type": "text",
+              "text": ""
+            }
+          ]
+        },
+        {
+          "id": "13447555914",
+          "name": "DAP API Mesh",
+          "updated_at": "2026-11-02T21:51:49Z",
+          "group": {
+            "id": "topics",
+            "title": "Projects"
+          },
+          "column_values": [
+            {
+              "id": "c_projectManager",
+              "type": "text",
+              "text": "Bindu Bharadwaj"
+            },
+            {
+              "id": "c_rag",
+              "type": "text",
+              "text": "Off track"
+            },
+            {
+              "id": "c_scope",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_businessOwner",
+              "type": "text",
+              "text": "Daran"
+            },
+            {
+              "id": "c_executionOwner",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_trending",
+              "type": "text",
+              "text": "Improving"
+            },
+            {
+              "id": "c_phase",
+              "type": "text",
+              "text": "N/A"
+            },
+            {
+              "id": "c_validation",
+              "type": "text",
+              "text": "N/A"
+            },
+            {
+              "id": "c_startDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_originalEndDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_forecastEndDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_keyRisk",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_decisionNeeded",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_nextMilestone",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_nextMilestoneDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_progress",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_dependencies",
+              "type": "text",
+              "text": ""
+            }
+          ]
         }
       ]
     },
@@ -1820,14 +2497,140 @@
       ],
       "items": [
         {
+          "id": "13525040143",
+          "name": "WiseOnboarding",
+          "updated_at": "2026-11-11T15:22:23Z",
+          "group": {
+            "id": "topics",
+            "title": "Projects"
+          },
+          "column_values": [
+            {
+              "id": "c_projectManager",
+              "type": "text",
+              "text": "Caroline Chvala"
+            },
+            {
+              "id": "c_rag",
+              "type": "text",
+              "text": "On track"
+            },
+            {
+              "id": "c_scope",
+              "type": "text",
+              "text": "Design and deliver a new WiseOS module to give clients and advisors a single, consistent onboarding experience with centralized data."
+            },
+            {
+              "id": "c_businessOwner",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_executionOwner",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_trending",
+              "type": "text",
+              "text": "Flat"
+            },
+            {
+              "id": "c_phase",
+              "type": "text",
+              "text": "Discovery"
+            },
+            {
+              "id": "c_validation",
+              "type": "text",
+              "text": "N/A"
+            },
+            {
+              "id": "c_startDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_originalEndDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_forecastEndDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_keyRisk",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_decisionNeeded",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_nextMilestone",
+              "type": "text",
+              "text": "Discovery exit: scope, goals, and stakeholders aligned and documented."
+            },
+            {
+              "id": "c_nextMilestoneDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_progress",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_dependencies",
+              "type": "text",
+              "text": ""
+            }
+          ]
+        },
+        {
           "id": "13271361517",
           "name": "Nova - Onboarding and Closed Accounts",
           "updated_at": "2026-10-14T22:02:52Z",
           "group": {
-            "id": "g",
+            "id": "topics",
             "title": "Projects"
           },
           "column_values": [
+            {
+              "id": "c_projectManager",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_rag",
+              "type": "text",
+              "text": "Project Health"
+            },
+            {
+              "id": "c_scope",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_businessOwner",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_executionOwner",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_trending",
+              "type": "text",
+              "text": ""
+            },
             {
               "id": "c_phase",
               "type": "text",
@@ -1837,18 +2640,53 @@
               "id": "c_validation",
               "type": "text",
               "text": "N/A"
+            },
+            {
+              "id": "c_startDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_originalEndDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_forecastEndDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_keyRisk",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_decisionNeeded",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_nextMilestone",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_nextMilestoneDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_progress",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_dependencies",
+              "type": "text",
+              "text": ""
             }
           ]
-        },
-        {
-          "id": "184351603361",
-          "name": "Rename",
-          "updated_at": "2026-10-27T00:00:00Z",
-          "group": {
-            "id": "g",
-            "title": "Projects"
-          },
-          "column_values": []
         }
       ]
     },
@@ -1948,10 +2786,40 @@
           "name": "SABA Collaboration/Referral Visibility Tracker",
           "updated_at": "2026-10-14T22:03:35Z",
           "group": {
-            "id": "g",
+            "id": "topics",
             "title": "Projects"
           },
           "column_values": [
+            {
+              "id": "c_projectManager",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_rag",
+              "type": "text",
+              "text": "Project Health"
+            },
+            {
+              "id": "c_scope",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_businessOwner",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_executionOwner",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_trending",
+              "type": "text",
+              "text": ""
+            },
             {
               "id": "c_phase",
               "type": "text",
@@ -1961,18 +2829,53 @@
               "id": "c_validation",
               "type": "text",
               "text": "N/A"
+            },
+            {
+              "id": "c_startDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_originalEndDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_forecastEndDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_keyRisk",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_decisionNeeded",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_nextMilestone",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_nextMilestoneDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_progress",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_dependencies",
+              "type": "text",
+              "text": ""
             }
           ]
-        },
-        {
-          "id": "184351625501",
-          "name": "Rename",
-          "updated_at": "2026-10-27T00:00:00Z",
-          "group": {
-            "id": "g",
-            "title": "Projects"
-          },
-          "column_values": []
         }
       ]
     },
@@ -2072,10 +2975,25 @@
           "name": "Standardized financial-planning model (eMoney)",
           "updated_at": "2026-10-16T22:59:06Z",
           "group": {
-            "id": "g",
+            "id": "topics",
             "title": "Projects"
           },
           "column_values": [
+            {
+              "id": "c_projectManager",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_rag",
+              "type": "text",
+              "text": "Project Health"
+            },
+            {
+              "id": "c_trending",
+              "type": "text",
+              "text": ""
+            },
             {
               "id": "c_phase",
               "type": "text",
@@ -2085,15 +3003,75 @@
               "id": "c_validation",
               "type": "text",
               "text": "N/A"
+            },
+            {
+              "id": "c_businessOwner",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_executionOwner",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_startDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_originalEndDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_forecastEndDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_keyRisk",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_decisionNeeded",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_nextMilestone",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_nextMilestoneDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_scope",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_progress",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_dependencies",
+              "type": "text",
+              "text": ""
             }
           ]
         },
         {
           "id": "13316210109",
           "name": "Migration to eMoney / advisor adoption",
-          "updated_at": "2026-10-30T20:51:35Z",
+          "updated_at": "2026-11-06T21:15:39Z",
           "group": {
-            "id": "g",
+            "id": "topics",
             "title": "Projects"
           },
           "column_values": [
@@ -2133,6 +3111,21 @@
               "text": "Jonathan Millican"
             },
             {
+              "id": "c_startDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_originalEndDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_forecastEndDate",
+              "type": "text",
+              "text": ""
+            },
+            {
               "id": "c_keyRisk",
               "type": "text",
               "text": "Base contract not signed. Revised eMoney proposal due 11/4 and weekly meetings are paused. Pilot advisors not yet confirmed."
@@ -2151,18 +3144,23 @@
               "id": "c_nextMilestoneDate",
               "type": "text",
               "text": "2026-11-04"
+            },
+            {
+              "id": "c_scope",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_progress",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_dependencies",
+              "type": "text",
+              "text": ""
             }
           ]
-        },
-        {
-          "id": "184358771061",
-          "name": "Rename",
-          "updated_at": "2026-10-27T00:00:00Z",
-          "group": {
-            "id": "g",
-            "title": "Projects"
-          },
-          "column_values": []
         }
       ]
     },
@@ -2258,14 +3256,100 @@
       ],
       "items": [
         {
-          "id": "184373444971",
+          "id": "13401840024",
           "name": "Rename",
-          "updated_at": "2026-10-27T00:00:00Z",
+          "updated_at": "2026-10-27T22:55:19Z",
           "group": {
-            "id": "g",
+            "id": "topics",
             "title": "Projects"
           },
-          "column_values": []
+          "column_values": [
+            {
+              "id": "c_projectManager",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_rag",
+              "type": "text",
+              "text": "Project Health"
+            },
+            {
+              "id": "c_scope",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_businessOwner",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_executionOwner",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_trending",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_phase",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_validation",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_startDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_originalEndDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_forecastEndDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_progress",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_dependencies",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_keyRisk",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_decisionNeeded",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_nextMilestone",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_nextMilestoneDate",
+              "type": "text",
+              "text": ""
+            }
+          ]
         }
       ]
     },
@@ -2361,14 +3445,100 @@
       ],
       "items": [
         {
-          "id": "184373447081",
+          "id": "13401855491",
           "name": "Rename",
-          "updated_at": "2026-10-27T00:00:00Z",
+          "updated_at": "2026-10-27T22:57:57Z",
           "group": {
-            "id": "g",
+            "id": "topics",
             "title": "Projects"
           },
-          "column_values": []
+          "column_values": [
+            {
+              "id": "c_projectManager",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_rag",
+              "type": "text",
+              "text": "Project Health"
+            },
+            {
+              "id": "c_scope",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_businessOwner",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_executionOwner",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_trending",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_phase",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_validation",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_startDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_originalEndDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_forecastEndDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_progress",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_dependencies",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_keyRisk",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_decisionNeeded",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_nextMilestone",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_nextMilestoneDate",
+              "type": "text",
+              "text": ""
+            }
+          ]
         }
       ]
     },
@@ -2468,7 +3638,7 @@
           "name": "Personal CFO Services",
           "updated_at": "2026-11-02T15:58:47Z",
           "group": {
-            "id": "g",
+            "id": "topics",
             "title": "Projects"
           },
           "column_values": [
@@ -2508,9 +3678,19 @@
               "text": "Mike Mesch (interim)"
             },
             {
-              "id": "c_progress",
+              "id": "c_startDate",
               "type": "text",
-              "text": "10"
+              "text": ""
+            },
+            {
+              "id": "c_originalEndDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_forecastEndDate",
+              "type": "text",
+              "text": ""
             },
             {
               "id": "c_keyRisk",
@@ -2536,15 +3716,25 @@
               "id": "c_scope",
               "type": "text",
               "text": "Defines and launches the Personal CFO service, which SABA delivers with a dedicated lead, for Family Office clients. Covers the service tiers, scope, accounting platform, pilot, and go live."
+            },
+            {
+              "id": "c_progress",
+              "type": "text",
+              "text": "10"
+            },
+            {
+              "id": "c_dependencies",
+              "type": "text",
+              "text": ""
             }
           ]
         },
         {
           "id": "13316113609",
           "name": "Family Office Business Plan",
-          "updated_at": "2026-11-02T15:59:27Z",
+          "updated_at": "2026-11-03T19:55:46Z",
           "group": {
-            "id": "g",
+            "id": "topics",
             "title": "Projects"
           },
           "column_values": [
@@ -2576,7 +3766,7 @@
             {
               "id": "c_businessOwner",
               "type": "text",
-              "text": "Kevin Hrdlicka"
+              "text": "Brent Brodeski"
             },
             {
               "id": "c_executionOwner",
@@ -2584,9 +3774,19 @@
               "text": "Padman Perumal"
             },
             {
-              "id": "c_progress",
+              "id": "c_startDate",
               "type": "text",
-              "text": "25"
+              "text": ""
+            },
+            {
+              "id": "c_originalEndDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_forecastEndDate",
+              "type": "text",
+              "text": ""
             },
             {
               "id": "c_keyRisk",
@@ -2612,6 +3812,112 @@
               "id": "c_scope",
               "type": "text",
               "text": "Defines what the Family Office is: which clients it serves, the service model and staffing, pricing, ownership and leadership, and the launch plan."
+            },
+            {
+              "id": "c_progress",
+              "type": "text",
+              "text": "25"
+            },
+            {
+              "id": "c_dependencies",
+              "type": "text",
+              "text": ""
+            }
+          ]
+        },
+        {
+          "id": "13316056171",
+          "name": "Expand Alternative Investments Platform Capabilities",
+          "updated_at": "2026-11-02T16:01:38Z",
+          "group": {
+            "id": "topics",
+            "title": "Projects"
+          },
+          "column_values": [
+            {
+              "id": "c_projectManager",
+              "type": "text",
+              "text": "Lexie Heusel"
+            },
+            {
+              "id": "c_rag",
+              "type": "text",
+              "text": "At risk"
+            },
+            {
+              "id": "c_trending",
+              "type": "text",
+              "text": "Flat"
+            },
+            {
+              "id": "c_phase",
+              "type": "text",
+              "text": "Planning"
+            },
+            {
+              "id": "c_validation",
+              "type": "text",
+              "text": "N/A"
+            },
+            {
+              "id": "c_businessOwner",
+              "type": "text",
+              "text": "Zach Ivey"
+            },
+            {
+              "id": "c_executionOwner",
+              "type": "text",
+              "text": "Bob Weisse"
+            },
+            {
+              "id": "c_startDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_originalEndDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_forecastEndDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_keyRisk",
+              "type": "text",
+              "text": "No operating model defined or provider chosen."
+            },
+            {
+              "id": "c_decisionNeeded",
+              "type": "text",
+              "text": "What operating model does Savant want for alternatives?"
+            },
+            {
+              "id": "c_nextMilestone",
+              "type": "text",
+              "text": "Platform recommendation ready for review (date proposed)"
+            },
+            {
+              "id": "c_nextMilestoneDate",
+              "type": "text",
+              "text": "2026-11-13"
+            },
+            {
+              "id": "c_scope",
+              "type": "text",
+              "text": "Decides how Savant offers alternative investments, including the operating model, the platform provider (Opto, Allocate or iCapital), and the fund approval path. Covers how fund data flows into Addepar and Tamarac."
+            },
+            {
+              "id": "c_progress",
+              "type": "text",
+              "text": "35"
+            },
+            {
+              "id": "c_dependencies",
+              "type": "text",
+              "text": ""
             }
           ]
         },
@@ -2620,7 +3926,7 @@
           "name": "P&C Insurance Capability",
           "updated_at": "2026-11-02T16:00:11Z",
           "group": {
-            "id": "g",
+            "id": "topics",
             "title": "Projects"
           },
           "column_values": [
@@ -2665,9 +3971,14 @@
               "text": "2026-10-01"
             },
             {
-              "id": "c_progress",
+              "id": "c_originalEndDate",
               "type": "text",
-              "text": "50"
+              "text": ""
+            },
+            {
+              "id": "c_forecastEndDate",
+              "type": "text",
+              "text": ""
             },
             {
               "id": "c_keyRisk",
@@ -2693,91 +4004,25 @@
               "id": "c_scope",
               "type": "text",
               "text": "Sets up a referral model so advisors can send clients’ property and casualty insurance needs to outside specialists. Covers provider selection, the referral and data-sharing agreement, advisor onboarding, and the ready date."
-            }
-          ]
-        },
-        {
-          "id": "13316056171",
-          "name": "Expand Alternative Investments Platform Capabilities",
-          "updated_at": "2026-11-02T16:01:38Z",
-          "group": {
-            "id": "g",
-            "title": "Projects"
-          },
-          "column_values": [
-            {
-              "id": "c_projectManager",
-              "type": "text",
-              "text": "Lexie Heusel"
-            },
-            {
-              "id": "c_rag",
-              "type": "text",
-              "text": "At risk"
-            },
-            {
-              "id": "c_trending",
-              "type": "text",
-              "text": "Flat"
-            },
-            {
-              "id": "c_phase",
-              "type": "text",
-              "text": "Planning"
-            },
-            {
-              "id": "c_validation",
-              "type": "text",
-              "text": "N/A"
-            },
-            {
-              "id": "c_businessOwner",
-              "type": "text",
-              "text": "Zach Ivey"
-            },
-            {
-              "id": "c_executionOwner",
-              "type": "text",
-              "text": "Bob Weisse"
             },
             {
               "id": "c_progress",
               "type": "text",
-              "text": "35"
+              "text": "50"
             },
             {
-              "id": "c_keyRisk",
+              "id": "c_dependencies",
               "type": "text",
-              "text": "No operating model defined or provider chosen."
-            },
-            {
-              "id": "c_decisionNeeded",
-              "type": "text",
-              "text": "What operating model does Savant want for alternatives?"
-            },
-            {
-              "id": "c_nextMilestone",
-              "type": "text",
-              "text": "Platform recommendation ready for review (date proposed)"
-            },
-            {
-              "id": "c_nextMilestoneDate",
-              "type": "text",
-              "text": "2026-11-13"
-            },
-            {
-              "id": "c_scope",
-              "type": "text",
-              "text": "Decides how Savant offers alternative investments, including the operating model, the platform provider (Opto, Allocate or iCapital), and the fund approval path. Covers how fund data flows into Addepar and Tamarac."
+              "text": ""
             }
           ]
         },
         {
           "id": "13316037914",
           "name": "Implement Total Balance Sheet Reporting (Addepar)",
-          "updated_at": "2026-11-02T16:03:07Z",
+          "updated_at": "2026-11-09T14:24:16Z",
           "group": {
-            "id": "g",
+            "id": "topics",
             "title": "Projects"
           },
           "column_values": [
@@ -2789,7 +4034,7 @@
             {
               "id": "c_rag",
               "type": "text",
-              "text": "On track"
+              "text": "Off track"
             },
             {
               "id": "c_trending",
@@ -2827,14 +4072,14 @@
               "text": "2027-04-30"
             },
             {
-              "id": "c_progress",
+              "id": "c_forecastEndDate",
               "type": "text",
-              "text": "60"
+              "text": ""
             },
             {
               "id": "c_keyRisk",
               "type": "text",
-              "text": "Pilot scope feels undefined, no firm-directed go-live date set. Running off of Addepar's proposed April 2027 go live."
+              "text": "Scope reset with Addepar underway (original SOW vs three household pilot). ADM structure and historical data decisions open. No firm-directed go live date; running off Addepar's April 2027 target."
             },
             {
               "id": "c_decisionNeeded",
@@ -2855,6 +4100,16 @@
               "id": "c_scope",
               "type": "text",
               "text": "Implements Addepar for total balance sheet reporting for Family Office clients. Phase 1 covers custodian data feeds, offline assets, ADM for alternatives, and a pilot with three households, ahead of an advisor go live targeted for April 2027."
+            },
+            {
+              "id": "c_progress",
+              "type": "text",
+              "text": "60"
+            },
+            {
+              "id": "c_dependencies",
+              "type": "text",
+              "text": ""
             }
           ]
         },
@@ -2863,10 +4118,25 @@
           "name": "Family Office Website Enhancements",
           "updated_at": "2026-10-16T22:47:48Z",
           "group": {
-            "id": "g",
+            "id": "topics",
             "title": "Projects"
           },
           "column_values": [
+            {
+              "id": "c_projectManager",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_rag",
+              "type": "text",
+              "text": "Project Health"
+            },
+            {
+              "id": "c_trending",
+              "type": "text",
+              "text": ""
+            },
             {
               "id": "c_phase",
               "type": "text",
@@ -2876,15 +4146,75 @@
               "id": "c_validation",
               "type": "text",
               "text": "N/A"
+            },
+            {
+              "id": "c_businessOwner",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_executionOwner",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_startDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_originalEndDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_forecastEndDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_keyRisk",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_decisionNeeded",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_nextMilestone",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_nextMilestoneDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_scope",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_progress",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_dependencies",
+              "type": "text",
+              "text": ""
             }
           ]
         },
         {
           "id": "13390007457",
           "name": "Estate Planning - Wealth.com",
-          "updated_at": "2026-11-02T16:03:29Z",
+          "updated_at": "2026-11-05T19:53:56Z",
           "group": {
-            "id": "g",
+            "id": "topics",
             "title": "Projects"
           },
           "column_values": [
@@ -2921,7 +4251,7 @@
             {
               "id": "c_executionOwner",
               "type": "text",
-              "text": "Mike Cyrs (TBC)"
+              "text": "Mike Cyrs"
             },
             {
               "id": "c_startDate",
@@ -2929,9 +4259,14 @@
               "text": "2026-11-05"
             },
             {
-              "id": "c_progress",
+              "id": "c_originalEndDate",
               "type": "text",
-              "text": "50"
+              "text": ""
+            },
+            {
+              "id": "c_forecastEndDate",
+              "type": "text",
+              "text": ""
             },
             {
               "id": "c_keyRisk",
@@ -2957,18 +4292,18 @@
               "id": "c_scope",
               "type": "text",
               "text": "Rolls out Wealth.com to the planning team for tax, estate planning, and wealth transfer, starting with the 11/5 implementation kickoff. Also covers the longer-term integration with WiseOS and WisePlan and how Wealth.com fits alongside eMoney."
+            },
+            {
+              "id": "c_progress",
+              "type": "text",
+              "text": "50"
+            },
+            {
+              "id": "c_dependencies",
+              "type": "text",
+              "text": ""
             }
           ]
-        },
-        {
-          "id": "184358749721",
-          "name": "Rename",
-          "updated_at": "2026-10-27T00:00:00Z",
-          "group": {
-            "id": "g",
-            "title": "Projects"
-          },
-          "column_values": []
         }
       ]
     },
@@ -3068,7 +4403,7 @@
           "name": "Evaluate External Partners",
           "updated_at": "2026-10-21T13:03:31Z",
           "group": {
-            "id": "g",
+            "id": "topics",
             "title": "Projects"
           },
           "column_values": [
@@ -3076,18 +4411,88 @@
               "id": "c_projectManager",
               "type": "text",
               "text": "Lexie Heusel"
+            },
+            {
+              "id": "c_rag",
+              "type": "text",
+              "text": "Project Health"
+            },
+            {
+              "id": "c_businessOwner",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_executionOwner",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_trending",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_phase",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_validation",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_startDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_originalEndDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_forecastEndDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_progress",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_scope",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_dependencies",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_keyRisk",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_decisionNeeded",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_nextMilestone",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_nextMilestoneDate",
+              "type": "text",
+              "text": ""
             }
           ]
-        },
-        {
-          "id": "184363992591",
-          "name": "Rename",
-          "updated_at": "2026-10-27T00:00:00Z",
-          "group": {
-            "id": "g",
-            "title": "Projects"
-          },
-          "column_values": []
         }
       ]
     },
@@ -3183,14 +4588,100 @@
       ],
       "items": [
         {
-          "id": "184373420151",
+          "id": "13401497228",
           "name": "Rename",
-          "updated_at": "2026-10-27T00:00:00Z",
+          "updated_at": "2026-10-27T22:06:06Z",
           "group": {
-            "id": "g",
+            "id": "topics",
             "title": "Projects"
           },
-          "column_values": []
+          "column_values": [
+            {
+              "id": "c_projectManager",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_rag",
+              "type": "text",
+              "text": "Project Health"
+            },
+            {
+              "id": "c_scope",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_businessOwner",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_executionOwner",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_trending",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_phase",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_validation",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_startDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_originalEndDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_forecastEndDate",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_progress",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_dependencies",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_keyRisk",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_decisionNeeded",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_nextMilestone",
+              "type": "text",
+              "text": ""
+            },
+            {
+              "id": "c_nextMilestoneDate",
+              "type": "text",
+              "text": ""
+            }
+          ]
         }
       ]
     },
@@ -3906,9 +5397,9 @@
         {
           "id": "13401460673",
           "name": "Project Owl 2.0",
-          "updated_at": "2026-10-30T19:36:13Z",
+          "updated_at": "2026-11-11T15:07:17Z",
           "group": {
-            "id": "g",
+            "id": "topics",
             "title": "Projects"
           },
           "column_values": [
@@ -3921,6 +5412,11 @@
               "id": "c_rag",
               "type": "text",
               "text": "On track"
+            },
+            {
+              "id": "c_scope",
+              "type": "text",
+              "text": "Wise Audience 1.0 (self-service list builder: office-radius prospect counts with clients/opt-outs removed, platform-ready exports to Quattro) and Epsilon Matchback 1.0 (Adstra→Epsilon matchback mapped to the Salesforce funnel), delivered as two tabs in the shared Snowflake Streamlit app."
             },
             {
               "id": "c_businessOwner",
@@ -3968,11 +5464,6 @@
               "text": "50"
             },
             {
-              "id": "c_scope",
-              "type": "text",
-              "text": "Wise Audience 1.0 (self-service list builder: office-radius prospect counts with clients/opt-outs removed, platform-ready exports to Quattro) and Epsilon Matchback 1.0 (Adstra→Epsilon matchback mapped to the Salesforce funnel), delivered as two tabs in the shared Snowflake Streamlit app."
-            },
-            {
               "id": "c_dependencies",
               "type": "text",
               "text": "Epsilon field selection from 87-field shortlist – Stephanie Kaminski – 10/30; Client-status definitions for suppression – Jackie, Raj, Nick – 10/30; Office radius decision – 11/3 leadership meeting – 11/3; Gap review of current matchback screen – Stephanie Kaminski, LaVonne Brown – 11/6; Matchback results Fabric→Snowflake – Prinu – 11/20; Scope sign-off – Padman (out until 11/5) – week of 11/9"
@@ -3998,16 +5489,6 @@
               "text": "2026-12-04"
             }
           ]
-        },
-        {
-          "id": "184373415091",
-          "name": "Rename",
-          "updated_at": "2026-10-27T00:00:00Z",
-          "group": {
-            "id": "g",
-            "title": "Projects"
-          },
-          "column_values": []
         }
       ]
     },
