@@ -22,7 +22,8 @@
 #   export RESOURCE_GROUP=rg-savant-tracker
 #   export WEBAPP=app-savant-tracker-ab12cd
 #   ./infra/monday-setup.sh                  first time: vault, token, settings
-#   ./infra/monday-setup.sh --rotate-token   replace the token (after the vault is locked down)
+#   ./infra/monday-setup.sh --rotate-token   replace the token in a vault this script already set up
+#                                            (a vault made by hand has no private endpoint, app role or app settings: run the plain script)
 #   ./infra/monday-setup.sh --add-nat        give the app a fixed outbound IP (see below)
 #   MODE=appsetting ./infra/monday-setup.sh  skip Key Vault, store the token as an app setting
 #
@@ -64,15 +65,31 @@ read_token() {
 # Writes the token to the vault through a private temp file, so it never
 # appears in the process list or the shell history.
 store_secret() {
-  local file
+  local file err tries=0
   file="$(umask 077; mktemp)"
   printf '%s' "$TOKEN" > "$file"
-  local tries=0
-  until az keyvault secret set --vault-name "$KEYVAULT" --name "$SECRET_NAME" \
-          --file "$file" --encoding utf-8 --output none 2>/dev/null; do
+  until err="$(az keyvault secret set --vault-name "$KEYVAULT" --name "$SECRET_NAME" \
+          --file "$file" --encoding utf-8 --output none 2>&1 >/dev/null)"; do
     tries=$((tries + 1))
-    [[ $tries -ge 8 ]] && { rm -f "$file"; echo "Could not write the secret. Role assignments can take a few minutes: wait, then re-run."; exit 1; }
-    echo "    waiting for the role assignment to take effect (${tries}/8)..."
+    if [[ $tries -ge 8 ]]; then
+      rm -f "$file"
+      echo
+      echo "Could not write the secret to vault '${KEYVAULT}'. Azure said:"
+      echo "$err" | tail -n 4 | sed 's/^/    /'
+      echo
+      case "$err" in
+        *ForbiddenByRbac*|*"not authorized"*|*"does not have"*|*AuthorizationFailed*)
+          echo "Cause: your account may not write secrets in this vault. Give it the role, wait 2 to 5 minutes, re-run:"
+          echo "  az role assignment create --assignee-object-id \$(az ad signed-in-user show --query id -o tsv) --assignee-principal-type User --role 'Key Vault Secrets Officer' --scope \$(az keyvault show -n ${KEYVAULT} --query id -o tsv)" ;;
+        *ForbiddenByFirewall*|*"Client address"*|*"network"*)
+          echo "Cause: the vault's firewall blocks this session. Check Networking on the vault, or run from the VPN." ;;
+        *"not found"*|*NotFound*|*"could not be found"*)
+          echo "Cause: no vault named '${KEYVAULT}'. List them: az keyvault list -g ${RESOURCE_GROUP} -o table" ;;
+        *) echo "Re-run after checking the message above." ;;
+      esac
+      exit 1
+    fi
+    echo "    cannot write yet, retrying (${tries}/8)..."
     sleep 20
   done
   rm -f "$file"
@@ -101,6 +118,10 @@ fi
 # --rotate-token: replace the secret in a vault that is already locked down
 # ---------------------------------------------------------------------------
 if [[ "${1:-}" == "--rotate-token" ]]; then
+  echo "==> Making sure your account can write secrets in the vault"
+  ROT_KV_ID=$(az keyvault show --resource-group "$RESOURCE_GROUP" --name "$KEYVAULT" --query id -o tsv)
+  az role assignment create --assignee-object-id "$(az ad signed-in-user show --query id -o tsv)" \
+    --assignee-principal-type User --role "Key Vault Secrets Officer" --scope "$ROT_KV_ID" --output none 2>/dev/null || true
   echo "==> Opening the vault to this session"
   az keyvault update --resource-group "$RESOURCE_GROUP" --name "$KEYVAULT" --public-network-access Enabled --output none
   read_token
