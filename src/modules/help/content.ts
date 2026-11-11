@@ -249,11 +249,13 @@ export const GUIDES: RoleGuide[] = [
       {
         id: 'admin-remove',
         title: 'Remove records monday.com no longer has',
-        when: 'A project was deleted or moved in monday.com.',
+        when: 'A project was deleted, renamed or re-created in monday.com. Until you remove the old record, the tracker shows both the old and the new one.',
         steps: [
+          { text: 'Pull first (Preview, then Apply). New and changed items come in. Items that left monday.com stay in the tracker, and Preview warns "no longer on its monday board".' },
+          { text: 'Before removing anything, open each project on the list. Issues, decision outcomes and plan links live only in the tracker. They move to a project with the same title. If the project was renamed in monday.com, the titles differ and they do not move, so copy them over first.' },
           { text: 'In Open sync, tick Also remove records monday.com does not have, then Preview.' },
-          { text: 'Read the list of records that would be removed. Tick the box under the list to confirm it.' },
-          { text: 'Click Apply. A backup file downloads first. To undo, use Import data in Settings with that file.' },
+          { text: 'Read the To remove list. Tick the box under it to confirm that exact list.' },
+          { text: 'Click Apply. A backup is saved first. To undo, restore it from Backups in the same dialog.' },
         ],
       },
       {
@@ -299,6 +301,11 @@ export const FAQ: Faq[] = [
     q: 'I changed something in monday.com. When does it show here?',
     a: 'At the next pull. Your administrator sets how often the tracker checks monday.com, and an Admin can pull right away from Admin, Open sync. The top bar shows "monday data as of" with the time of the last good pull.',
     tags: ['monday', 'sync', 'delay', 'refresh', 'fresh'],
+  },
+  {
+    q: 'A project was deleted or re-created in monday.com. Why do I see it twice?',
+    a: 'The sync adds and updates on its own but never deletes. A deleted item stays in the tracker, and a re-created one arrives as a new project, so both show for a while. An Admin removes the old one from Admin, Open sync, with Also remove records monday.com does not have. That step shows the list, needs a confirmation and saves a backup first. Issues, decision outcomes and plan links move to the project with the same title. If the project was renamed, they do not move.',
+    tags: ['monday', 'duplicate', 'deleted', 'removed', 'renamed', 'retire'],
   },
   {
     q: 'Does the tracker change anything in monday.com?',

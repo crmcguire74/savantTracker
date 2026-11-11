@@ -170,10 +170,13 @@ If someone else changed the same field while you were editing, you are asked to 
 2. Choose Off, or 5 minutes up to once a day, then **Save**.
 3. A check that finds nothing new changes nothing, and automatic pulls never remove records. Everyone sees **monday data as of** in the top bar.
 
-**Remove records monday.com no longer has** (rare)
-1. In **Open sync**, tick **Also remove records monday.com does not have**, then **Preview**.
-2. Read the **To remove** list and tick the box under it to confirm that exact list.
-3. Click **Apply**. A backup file downloads first. To undo, restore it from **Backups** in the same dialog or **Import file** in Settings.
+**Remove records monday.com no longer has** (when a project was deleted, renamed or re-created in monday.com)
+A pull adds new items and updates changed ones. It never deletes. A deleted item stays in the tracker, and a re-created item arrives as a new project, so you see both until you remove the old one.
+1. Pull first: **Preview**, then **Apply**. Warnings say "no longer on its monday board" for items that left.
+2. Open each project you expect to remove. Issues, decision outcomes and plan links live only in the tracker. They move to a project with the same title. If the project was renamed in monday.com, the titles differ and they do not move, so copy them over first.
+3. In **Open sync**, tick **Also remove records monday.com does not have**, then **Preview**.
+4. Read the **To remove** list and tick the box under it to confirm that exact list.
+5. Click **Apply**. A backup is saved first. To undo, restore it from **Backups** in the same dialog or **Import file** in Settings.
 
 **Choose who sees what**
 1. Open **Access**. Each row is a view or report and each column is a role.
@@ -209,6 +212,7 @@ monday.com owns most project information. The tracker pulls it in, and nothing f
 - **What the tracker keeps:** issues, decision outcomes and plan links.
 - **Editing.** Those monday.com fields are read-only in the tracker. A refused edit says "comes from monday.com". Change it in monday.com and the next pull brings it in. Buttons to add, rename or delete linked pillars, initiatives and projects are hidden and say **Managed in monday.com**.
 - **How fresh is it?** The top bar shows **monday data as of** the last good pull. Pulls run automatically on the interval an admin chose, and an Admin can pull right away.
+- **A project shows twice.** It was deleted or re-created in monday.com. Ask an Admin to remove the old record (section 5, Admin).
 - **Something looks wrong.** If a project is missing or a value is stale, check monday.com first. A blank value in monday.com never erases a value in the tracker. If the data is old, ask an Admin to pull.
 - **Test copies.** On a test copy (a **LOCAL** badge) nothing is locked and the data may come from a saved file.
 

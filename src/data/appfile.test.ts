@@ -107,13 +107,13 @@ describe('derived numbers', () => {
   it('filters by RAG', () => {
     const state = bundledSnapshot().state
     const red = searchProjects(state, { query: '', rag: 'red', staleOnly: false, decisionsOnly: false }, 30)
-    expect(red).toHaveLength(1)
+    expect(red).toHaveLength(4)
     expect(red.every((hit) => hit.project.rag === 'red')).toBe(true)
   })
 
   it('labels which owner field matched a search', () => {
     const state = bundledSnapshot().state
-    const hits = searchProjects(state, { query: 'kevin', rag: null, staleOnly: false, decisionsOnly: false }, 30)
+    const hits = searchProjects(state, { query: 'lexie', rag: null, staleOnly: false, decisionsOnly: false }, 30)
     expect(hits.length).toBeGreaterThan(0)
   })
 

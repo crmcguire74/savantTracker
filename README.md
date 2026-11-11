@@ -622,7 +622,7 @@ Regenerate it in monday.com, then have someone with Azure access run `./infra/mo
 3. Source: **monday.com (live)**. Click **Preview**. Read the counts and warnings. Preview saves nothing.
 4. Click **Apply**. Check the change log for "monday sync" lines.
 
-**Remove records monday.com does not have** (once, after the first sync): tick the option, Preview, read **To remove**, tick the box under the list, Apply. The approval code is tied to that exact list. A full backup is saved first. Issues, plan links and decision outcomes on a removed project move to a project with the same title, if one exists. Restore from **Backups** in the same dialog.
+**Remove records monday.com does not have** (after the first sync, and any time items are deleted, renamed or re-created in monday): a pull adds and updates but never deletes. A deleted item stays in the tracker with the warning "no longer on its monday board". A re-created item has a new monday ID, so it arrives as a new project and the old one remains until removed, which shows the project twice. To clean up: Preview with the option ticked, read **To remove**, tick the box under the list, Apply. The approval code is tied to that exact list, and a full backup is saved first. Issues, plan links and decision outcomes on a removed project move to the project with the same title, if one exists. A rename in monday changes the title, so those do not move: copy them over before you remove. Restore from **Backups** in the same dialog.
 
 **Capture files** are a manual fallback and the way to test without a token. Choose **A capture file** or the bundled sample in the dialog. `npm run monday:capture` makes one from live monday.com. A capture holds real project data, so keep it internal (it is ignored by git).
 
