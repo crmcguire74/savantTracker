@@ -142,6 +142,44 @@ export function createApp({ store, sync, staticRoot = join(here, '..', 'dist'), 
   app.get('/api/admin/sync/backups', asAdmin, syncRoute((svc) => svc.listBackups()))
   app.post('/api/admin/sync/restore', asAdmin, syncRoute((svc, body) => svc.restoreBackup(body)))
 
+  // Structure write-back. Creating pillars, initiatives and projects is for admins; editing the
+  // names, the pillar an initiative sits in, and the fields only the tracker keeps is for editors
+  // too. While monday is live a change goes to monday first, then to the tracker (writeback.js).
+  //   POST  /api/structure/pillars            { title, owner }
+  //   PATCH /api/structure/pillars/:id        { title?, owner? }
+  //   POST  /api/structure/initiatives        { pillarId, title, scope, businessOwner, executionOwner, startQuarter, endQuarter }
+  //   PATCH /api/structure/initiatives/:id    { title?, pillarId?, scope?, businessOwner?, executionOwner?, startQuarter?, endQuarter? }
+  //   POST  /api/structure/projects           { initiativeId, title, businessOwner, executionOwner }
+  const structureRoute = (handler) => async (request, response) => {
+    if (!sync?.structure) {
+      response.status(501).json({ error: 'Structure changes through the server are not available here.' })
+      return
+    }
+    try {
+      response.json(await handler(sync.structure, request.body ?? {}, readIdentity(request), request.params))
+    } catch (error) {
+      if (error?.name === 'StructureError') {
+        response.status(error.status ?? 400).json({ error: error.message })
+        return
+      }
+      if (error?.name === 'MondayError') {
+        response.status(502).json({ error: `monday.com refused the change: ${error.message}` })
+        return
+      }
+      if (isConflict(error)) {
+        response.status(409).json({ error: 'The tracker changed while saving. Try again.' })
+        return
+      }
+      fail(response, error)
+    }
+  }
+  const asEditor = [requireReader, requireEditor]
+  app.post('/api/structure/pillars', asAdmin, structureRoute((svc, body, who) => svc.createPillar(body, who)))
+  app.patch('/api/structure/pillars/:id', asEditor, structureRoute((svc, body, who, params) => svc.updatePillar(params.id, body, who)))
+  app.post('/api/structure/initiatives', asAdmin, structureRoute((svc, body, who) => svc.createInitiative(body, who)))
+  app.patch('/api/structure/initiatives/:id', asEditor, structureRoute((svc, body, who, params) => svc.updateInitiative(params.id, body, who)))
+  app.post('/api/structure/projects', asAdmin, structureRoute((svc, body, who) => svc.createProject(body, who)))
+
   app.use('/api/documents', requireReader)
   app.use('/api/stream', requireReader)
 

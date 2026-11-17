@@ -52,7 +52,7 @@ export const QUICK_START: Step[] = [
   { text: 'Click any project to open its page. You see its status, phase, owners, dates, decision, issues and recent changes.' },
   { text: 'Press / anywhere to search for a project, an initiative or a person.' },
   { text: 'Use Board to see projects by phase or status, and Timeline to see them across twelve months.', link: { module: 'board', label: 'Open Board' } },
-  { text: 'Not sure what a word means? The Glossary tab explains every term the tracker uses.' },
+  { text: 'Not sure what a word means? The Glossary tab explains every term the tracker uses. The User Guide tab has the full guide to read, download or print.' },
 ]
 
 export const GUIDES: RoleGuide[] = [
@@ -151,11 +151,13 @@ export const GUIDES: RoleGuide[] = [
     can: [
       'Everything an Executive sees, plus My work and Admin.',
       'Update project status, trend, phase, progress, dates, risk, decisions and issues.',
-      'Add, edit and delete projects, initiatives and pillars that live in the tracker.',
+      'Edit pillar names and owners, and initiative names, scope statements, owners, quarters and pillar. Name and pillar changes also go to monday.com.',
+      'Delete projects, initiatives and pillars that were made in the tracker and are not linked to monday.com.',
       'Restore an earlier value from the change log, and import or export data.',
     ],
     cannot: [
-      'Change fields that come from monday.com while the sync is live. Change them in monday.com.',
+      'Change project fields that come from monday.com while the sync is live. Change them in monday.com.',
+      'Add pillars, initiatives or projects. Only an Admin can.',
       'Change who can see which views. Only an Admin can.',
     ],
     workflows: [
@@ -196,7 +198,19 @@ export const GUIDES: RoleGuide[] = [
         steps: [
           { text: 'Open Admin. Stale projects lists the longest quiet ones first.', link: { module: 'admin', label: 'Open Admin' } },
           { text: 'Use Stale for to focus on 30, 60 or 90 days. Use the PM picker to see one person\'s projects.' },
+          { text: 'On Portfolio, Board or Timeline, open the Stale chip and pick 7, 14, 30, 60 or 90 days, or Custom days… for your own number.', link: { module: 'board', label: 'Open Board' } },
           { text: 'Open a project and update it. It leaves the list once it has a fresh update.' },
+        ],
+      },
+      {
+        id: 'editor-structure',
+        title: 'Edit a pillar or an initiative',
+        when: 'A name, owner, quarter, scope statement or pillar is wrong or has changed.',
+        steps: [
+          { text: 'Open Portfolio (Ledger) and select the pillar.', link: { module: 'portfolio', label: 'Open Portfolio' } },
+          { text: 'To change the pillar name or owner, click the pencil beside the pillar name.' },
+          { text: 'To change an initiative, expand it and click Edit initiative. Change the name, pillar, scope statement, business owner, delivery owner, start quarter or end quarter.' },
+          { text: 'Click Save. On a record linked to monday.com, a new name or pillar changes monday.com first. Owners, quarters and the scope statement are kept in the tracker.' },
         ],
       },
       {
@@ -217,14 +231,27 @@ export const GUIDES: RoleGuide[] = [
     can: [
       'Everything an Editor does.',
       'Open Access to choose which roles see which views and reports.',
+      'Add pillars, initiatives and projects. While monday.com is connected they are created there too.',
       'Run the monday.com sync, set automatic pulls and take backups.',
       'Reorder pillars, and restore or import a backup file.',
     ],
     cannot: [
       'Add people to roles. That is done in Microsoft Entra, by adding people to the SG-Tracker groups.',
-      'Change monday.com data. The sync only reads from monday.com.',
+      'Change project fields in monday.com from the tracker. Only new records, names and an initiative\'s pillar are sent to monday.com.',
     ],
     workflows: [
+      {
+        id: 'admin-create',
+        title: 'Add a pillar, initiative or project',
+        when: 'New strategic work starts and should be tracked.',
+        steps: [
+          { text: 'Open Portfolio (Ledger). Use + in the Pillars card, + Initiative beside a pillar name, or + Add project inside an initiative.', link: { module: 'portfolio', label: 'Open Portfolio' } },
+          { text: 'Enter the name and any details, then click Add. The form shows Saving… until monday.com and the tracker both have it.' },
+          { text: 'A pillar becomes a folder in monday.com, an initiative a folder with its own project board, and a project an item in the Projects group of that board.' },
+          { text: 'If monday.com already has that name in the same place, the tracker links to it instead of making a copy. If the tracker already has it, you are told.' },
+          { text: 'Fill in project status and dates in monday.com. The next pull brings them in.' },
+        ],
+      },
       {
         id: 'admin-sync',
         title: 'Pull the latest from monday.com',
@@ -294,8 +321,28 @@ export const FAQ: Faq[] = [
   },
   {
     q: 'Why does a field say it comes from monday.com?',
-    a: 'While the monday.com sync is live, monday.com owns most project fields, and the names of pillars and initiatives. Change them in monday.com and the next pull brings them here. The tracker keeps issues, decision outcomes and plan links. It also keeps projects created inside the tracker.',
+    a: 'While the monday.com sync is live, monday.com owns most project fields. Change them in monday.com and the next pull brings them here. In Update project those fields are greyed out, and the phase stepper and Request a decision are off. The tracker keeps issues, decision outcomes and plan links, the pillar owner, and each initiative\'s scope statement, owners and quarters. Pillar and initiative names can be edited here; the change goes to monday.com first.',
     tags: ['monday', 'locked', 'read only', 'managed'],
+  },
+  {
+    q: 'A decision or risk disappeared from a project. Why?',
+    a: 'Someone cleared that field in monday.com, usually because it was resolved. The next pull clears it here too. The project\'s change log shows the old value on a "monday sync" line. RAG status, trend and progress never clear this way: if they are blank in monday.com, the tracker keeps the last value.',
+    tags: ['decision', 'cleared', 'blank', 'empty', 'monday', 'missing'],
+  },
+  {
+    q: 'If I add an initiative here, will monday.com get a duplicate?',
+    a: 'No. The tracker creates it in monday.com first and saves it already linked, so the next pull recognises it. If monday.com already has the same name in the same place, the tracker links to that one instead of creating another. If the tracker already has it, the add is refused.',
+    tags: ['duplicate', 'create', 'add', 'monday', 'initiative', 'pillar', 'project'],
+  },
+  {
+    q: 'Where is the scope statement stored?',
+    a: 'In the tracker\'s own database, for everyone. monday.com has no place for an initiative\'s scope statement, owners or quarters, so they are not sent there.',
+    tags: ['scope', 'owner', 'quarter', 'initiative', 'stored', 'database'],
+  },
+  {
+    q: 'Can I get the User Guide as a file?',
+    a: 'Yes. Open Help, User Guide. Download it as a web page (opens in any browser) or as Markdown, or click Print or save as PDF.',
+    tags: ['user guide', 'download', 'pdf', 'print', 'manual'],
   },
   {
     q: 'I changed something in monday.com. When does it show here?',
@@ -314,8 +361,8 @@ export const FAQ: Faq[] = [
   },
   {
     q: 'Why is a project marked Stale?',
-    a: 'Nobody has updated it for longer than the stale threshold. The threshold is a setting (weekly, biweekly, monthly, quarterly or your own number of days). Update the project and the tag clears.',
-    tags: ['stale', 'threshold', 'update'],
+    a: 'Nobody has updated it for longer than the stale threshold. The threshold is a setting (weekly, biweekly, monthly, every two months, quarterly or your own number of days). Update the project and the tag clears. To look at a different age without changing the setting, use the Stale chip: 7, 14, 30, 60 or 90 days, or Custom days….',
+    tags: ['stale', 'threshold', 'update', 'filter', 'days'],
   },
   {
     q: 'My work is empty or shows the wrong projects. Why?',
@@ -401,18 +448,21 @@ export const GLOSSARY: Term[] = [
   { term: 'Plan link', meaning: 'A link from a project to its detailed plan.' },
   { term: 'Stale', meaning: 'Not updated for longer than the stale threshold.' },
   { term: 'Stale threshold', meaning: 'The number of quiet days after which a project counts as stale. It is set in Settings.' },
+  { term: 'Stale filter', meaning: 'The Stale chip above Portfolio, Board and Timeline. Pick 7, 14, 30, 60 or 90 days, the default threshold, or your own number of days. It changes only your view.' },
+  { term: 'Scope statement', meaning: 'What an initiative sets out to deliver. Editors and Admins set it in Edit initiative. Kept in the tracker.' },
   { term: 'Workload', meaning: 'A view of everyone named on projects: their projects by status, their role on each, and their open issues.' },
   { term: 'PM heat map', meaning: 'A Workload layout that colors each project manager\'s portfolio by status.' },
   { term: 'My work', meaning: 'The decisions, issues and milestones on projects you own.' },
   { term: 'Change log', meaning: 'A record of every edit: what changed, who changed it, when, and the old and new values. Editors can restore an earlier value.' },
   { term: 'Role', meaning: 'What you may do and see: Admin, Editor, Executive or Viewer. Roles come from Microsoft Entra groups.' },
-  { term: 'Admin', meaning: 'Can do everything, and decides which roles see which views on the Access page.' },
-  { term: 'Editor', meaning: 'Project managers and the PMO. Can update projects, initiatives and pillars.' },
+  { term: 'Admin', meaning: 'Can do everything, including adding pillars, initiatives and projects, and decides which roles see which views on the Access page.' },
+  { term: 'Editor', meaning: 'Project managers and the PMO. Can update projects and edit pillar and initiative details.' },
   { term: 'Executive', meaning: 'Leadership. Reads everything, including executive reports. Cannot edit.' },
   { term: 'Viewer', meaning: 'Reads the portfolio. Cannot edit.' },
   { term: 'Access', meaning: 'The admin page where each role is granted or denied each view and report.' },
-  { term: 'monday.com sync', meaning: 'A one-way pull from monday.com into the tracker. monday.com is the source of truth for the fields it supplies.' },
-  { term: 'Managed in monday.com', meaning: 'A record or field that comes from monday.com. Change it there. The next pull brings the change here.' },
+  { term: 'monday.com sync', meaning: 'A pull from monday.com into the tracker. monday.com is the source of truth for the fields it supplies. New pillars, initiatives and projects, and pillar and initiative names, also go from the tracker to monday.com.' },
+  { term: 'Managed in monday.com', meaning: 'A project field that comes from monday.com. Change it there. The next pull brings the change here.' },
+  { term: 'Linked to monday.com', meaning: 'A pillar, initiative or project that also exists in monday.com. A new name, or a new pillar for an initiative, is sent there first.' },
   { term: 'Preview', meaning: 'A sync step that reads monday.com and shows what would change. It saves nothing.' },
   { term: 'Apply', meaning: 'The sync step that saves what Preview showed.' },
   { term: 'Automatic pulls', meaning: 'A schedule that checks monday.com for changes. If nothing changed, nothing is written. It never removes records.' },

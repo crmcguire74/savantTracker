@@ -13,6 +13,7 @@ import { FIELD_LABELS } from '../constants'
 import { TrackerRepository, bundledSnapshot, type SyncInfo } from '../data/repository'
 import { decideDatasetOffer, readMarker, writeMarker, type DatasetOffer } from '../data/dataset'
 import { createMondaySync, type MondaySyncApi } from '../data/mondaySync'
+import { createStructureApi, type StructureApi } from '../data/structureApi'
 import { ownedByMonday, ownedMessage, structureLocked, structureMessage } from '../data/ownership'
 import type { AppFile } from '../data/appfile'
 import { downloadAppFile, loadAppFile } from '../lib/file-io'
@@ -56,8 +57,16 @@ export interface NewProjectInput {
   executionOwner: string
 }
 
+/** Fields an editor may change on an initiative. Name and pillar also change monday when linked. */
+export type InitiativePatch = Partial<Pick<Initiative, 'title' | 'pillarId' | 'scope' | 'businessOwner' | 'executionOwner' | 'startQuarter' | 'endQuarter'>>
+
+/** Fields an editor may change on a pillar. The name also changes monday when linked. */
+export type PillarPatch = Partial<Pick<Pillar, 'title' | 'owner'>>
+
 export interface NewInitiativeInput {
   title: string
+  /** Scope statement. Optional; kept in the tracker only. */
+  scope?: string
   businessOwner: string
   executionOwner: string
   startQuarter: string
@@ -321,43 +330,105 @@ export function useTracker(identity: Identity, canWrite = true, canAdmin = false
   )
 
   // ── structure ─────────────────────────────────────────────────────────
+  // Creating pillars, initiatives and projects is for admins. Editing names, owners, quarters, the
+  // scope statement and an initiative's pillar is for admins and editors.
+  // While monday is live the server writes monday first and the tracker second (structureApi.ts),
+  // so the next pull finds the record already linked and adds no copy. In test mode, and for records
+  // the tracker made before monday was connected, the change is saved here as before.
+  const structureApi: StructureApi = useMemo(() => createStructureApi({ apiBase: apiBaseUrl(), headers: apiHeaders }), [])
+
+  /** Pulls the state the server just wrote, so the screen shows it before the live stream does. */
+  const reloadState = useCallback(async () => {
+    const fresh = await repository.readState()
+    if (fresh) {
+      setState(fresh)
+      stateRef.current = fresh
+    }
+  }, [repository])
+
+  const failNotice = useCallback(
+    (error: unknown) => flash({ tone: 'error', message: error instanceof Error ? error.message : 'monday.com did not accept the change.' }, 9000),
+    [flash],
+  )
+
+  const requireAdmin = useCallback(
+    (what: string): boolean => {
+      if (canAdminRef.current) return true
+      flash({ tone: 'info', message: `Only a tracker admin can add ${what}.` })
+      return false
+    },
+    [flash],
+  )
+
+  const structureLog = useCallback(
+    (field: string, oldValue: string, newValue: string) =>
+      appendLog({ projectId: '', projectTitle: '(structure)', field, fieldKey: '', oldValue, newValue }),
+    [appendLog],
+  )
+
+  const createdNotice = useCallback(
+    (what: string, title: string, created: { linkedExisting: boolean; warnings?: string[] }) => {
+      const base = created.linkedExisting
+        ? `${what} “${title}” already existed in monday.com, so the tracker linked to it instead of making a copy.`
+        : `${what} “${title}” was created in monday.com and the tracker.`
+      flash({ tone: 'success', message: [base, ...(created.warnings ?? [])].join(' ') }, created.warnings?.length ? 9000 : 4500)
+    },
+    [flash],
+  )
+
   const addPillar = useCallback(
-    async (title: string, owner: string) => {
-      if (!title.trim()) return
+    async (title: string, owner: string): Promise<string | undefined> => {
+      if (!title.trim() || !requireAdmin('pillars')) return undefined
       if (runtimeInfo().mondayLive) {
-        flash({ tone: 'info', message: structureMessage('Pillars') })
-        return
+        try {
+          const created = await structureApi.createPillar({ title: title.trim(), owner: owner.trim() })
+          await reloadState()
+          createdNotice('Pillar', title.trim(), created)
+          return created.id
+        } catch (error) {
+          failNotice(error)
+          return undefined
+        }
       }
       const base = stateRef.current
       const pillar: Pillar = { id: uid('obj'), title: title.trim(), owner: owner.trim() }
-      if (await persist({ ...base, pillars: [...base.pillars, pillar] })) {
-        await appendLog({
-          projectId: '',
-          projectTitle: '(structure)',
-          field: 'Pillar added',
-          fieldKey: '',
-          oldValue: '',
-          newValue: pillar.title,
-        })
-      }
+      if (!(await persist({ ...base, pillars: [...base.pillars, pillar] }))) return undefined
+      await structureLog('Pillar added', '', pillar.title)
       return pillar.id
     },
-    [persist, appendLog, flash],
+    [persist, structureLog, requireAdmin, structureApi, reloadState, createdNotice, failNotice],
   )
 
   const updatePillar = useCallback(
-    async (id: string, patch: Partial<Pillar>) => {
+    async (id: string, patch: PillarPatch): Promise<boolean> => {
       const base = stateRef.current
-      if (structureLocked(base.pillars.find((pillar) => pillar.id === id), runtimeInfo().mondayLive)) {
-        flash({ tone: 'info', message: structureMessage('Pillars') })
-        return
+      const before = base.pillars.find((pillar) => pillar.id === id)
+      if (!before) return false
+      if (!canWriteRef.current) {
+        flash({ tone: 'error', message: 'You have view-only access to this tracker.' })
+        return false
       }
-      await persist({
-        ...base,
-        pillars: base.pillars.map((pillar) => (pillar.id === id ? { ...pillar, ...patch } : pillar)),
-      })
+      if (patch.title !== undefined && !patch.title.trim()) {
+        flash({ tone: 'error', message: 'A pillar needs a name.' })
+        return false
+      }
+      if (runtimeInfo().mondayLive && before.mondayId) {
+        try {
+          await structureApi.updatePillar(id, patch)
+          await reloadState()
+          return true
+        } catch (error) {
+          failNotice(error)
+          return false
+        }
+      }
+      const after = { ...before, ...patch }
+      if (!(await persist({ ...base, pillars: base.pillars.map((pillar) => (pillar.id === id ? after : pillar)) }))) return false
+      if (before.title !== after.title) await structureLog('Pillar renamed', before.title, after.title)
+      if (before.owner !== after.owner) await structureLog(`Pillar owner (${after.title})`, before.owner, after.owner)
+      return true
     },
-    [persist, flash],
+    [persist, structureLog, structureApi, reloadState, failNotice, flash],
   )
 
   const deletePillar = useCallback(
@@ -392,52 +463,77 @@ export function useTracker(identity: Identity, canWrite = true, canAdmin = false
   )
 
   const addInitiative = useCallback(
-    async (pillarId: string, input: NewInitiativeInput) => {
-      if (!input.title.trim() || !pillarId) return undefined
-      if (runtimeInfo().mondayLive) {
-        flash({ tone: 'info', message: structureMessage('Initiatives') })
-        return undefined
-      }
-      const base = stateRef.current
-      const initiative: Initiative = {
-        id: uid('init'),
-        pillarId,
+    async (pillarId: string, input: NewInitiativeInput): Promise<string | undefined> => {
+      if (!input.title.trim() || !pillarId || !requireAdmin('initiatives')) return undefined
+      const fields = {
         title: input.title.trim(),
+        scope: (input.scope ?? '').trim(),
         businessOwner: input.businessOwner.trim(),
         executionOwner: input.executionOwner.trim(),
         startQuarter: input.startQuarter.trim(),
         endQuarter: input.endQuarter.trim(),
       }
-      if (await persist({ ...base, initiatives: [...base.initiatives, initiative] })) {
-        await appendLog({
-          projectId: '',
-          projectTitle: '(structure)',
-          field: 'Initiative added',
-          fieldKey: '',
-          oldValue: '',
-          newValue: initiative.title,
-        })
+      if (runtimeInfo().mondayLive) {
+        try {
+          const created = await structureApi.createInitiative({ pillarId, ...fields })
+          await reloadState()
+          createdNotice('Initiative', fields.title, created)
+          return created.id
+        } catch (error) {
+          failNotice(error)
+          return undefined
+        }
       }
+      const base = stateRef.current
+      const initiative: Initiative = { id: uid('init'), pillarId, ...fields }
+      if (!(await persist({ ...base, initiatives: [...base.initiatives, initiative] }))) return undefined
+      await structureLog('Initiative added', '', initiative.title)
       return initiative.id
     },
-    [persist, appendLog, flash],
+    [persist, structureLog, requireAdmin, structureApi, reloadState, createdNotice, failNotice],
   )
 
   const updateInitiative = useCallback(
-    async (id: string, patch: Partial<Initiative>) => {
+    async (id: string, patch: InitiativePatch): Promise<boolean> => {
       const base = stateRef.current
-      if (structureLocked(base.initiatives.find((initiative) => initiative.id === id), runtimeInfo().mondayLive)) {
-        flash({ tone: 'info', message: structureMessage('Initiatives') })
-        return
+      const before = base.initiatives.find((initiative) => initiative.id === id)
+      if (!before) return false
+      if (!canWriteRef.current) {
+        flash({ tone: 'error', message: 'You have view-only access to this tracker.' })
+        return false
       }
-      await persist({
-        ...base,
-        initiatives: base.initiatives.map((initiative) =>
-          initiative.id === id ? { ...initiative, ...patch } : initiative,
-        ),
-      })
+      if (patch.title !== undefined && !patch.title.trim()) {
+        flash({ tone: 'error', message: 'An initiative needs a name.' })
+        return false
+      }
+      if (runtimeInfo().mondayLive && before.mondayId) {
+        try {
+          await structureApi.updateInitiative(id, patch)
+          await reloadState()
+          return true
+        } catch (error) {
+          failNotice(error)
+          return false
+        }
+      }
+      const after: Initiative = { ...before, ...patch }
+      if (!(await persist({ ...base, initiatives: base.initiatives.map((initiative) => (initiative.id === id ? after : initiative)) }))) return false
+      const pillarName = (pid: string) => base.pillars.find((pillar) => pillar.id === pid)?.title ?? pid
+      if (before.title !== after.title) await structureLog('Initiative renamed', before.title, after.title)
+      if (before.pillarId !== after.pillarId) await structureLog(`Initiative pillar (${after.title})`, pillarName(before.pillarId), pillarName(after.pillarId))
+      const labels: Array<[keyof Initiative, string]> = [
+        ['scope', 'Scope statement'],
+        ['businessOwner', 'Business owner'],
+        ['executionOwner', 'Delivery owner'],
+        ['startQuarter', 'Start quarter'],
+        ['endQuarter', 'End quarter'],
+      ]
+      for (const [field, label] of labels) {
+        if ((before[field] ?? '') !== (after[field] ?? '')) await structureLog(`${label} (${after.title})`, String(before[field] ?? ''), String(after[field] ?? ''))
+      }
+      return true
     },
-    [persist, flash],
+    [persist, structureLog, structureApi, reloadState, failNotice, flash],
   )
 
   const deleteInitiative = useCallback(
@@ -468,11 +564,23 @@ export function useTracker(identity: Identity, canWrite = true, canAdmin = false
   )
 
   const addProject = useCallback(
-    async (initiativeId: string, input: NewProjectInput) => {
-      if (!input.title.trim()) return
+    async (initiativeId: string, input: NewProjectInput): Promise<string | undefined> => {
+      if (!input.title.trim() || !requireAdmin('projects')) return undefined
       if (runtimeInfo().mondayLive) {
-        flash({ tone: 'info', message: structureMessage('Projects') })
-        return
+        try {
+          const created = await structureApi.createProject({
+            initiativeId,
+            title: input.title.trim(),
+            businessOwner: input.businessOwner.trim(),
+            executionOwner: input.executionOwner.trim(),
+          })
+          await reloadState()
+          createdNotice('Project', input.title.trim(), created)
+          return created.id
+        } catch (error) {
+          failNotice(error)
+          return undefined
+        }
       }
       const base = stateRef.current
       const project: Project = {
@@ -503,18 +611,18 @@ export function useTracker(identity: Identity, canWrite = true, canAdmin = false
         updatedByName: identityRef.current.name,
         issues: [],
       }
-      if (await persist({ ...base, projects: [...base.projects, project] })) {
-        await appendLog({
-          projectId: project.id,
-          projectTitle: project.title,
-          field: 'Project added',
-          fieldKey: '',
-          oldValue: '',
-          newValue: project.title,
-        })
-      }
+      if (!(await persist({ ...base, projects: [...base.projects, project] }))) return undefined
+      await appendLog({
+        projectId: project.id,
+        projectTitle: project.title,
+        field: 'Project added',
+        fieldKey: '',
+        oldValue: '',
+        newValue: project.title,
+      })
+      return project.id
     },
-    [persist, appendLog, flash],
+    [persist, appendLog, requireAdmin, structureApi, reloadState, createdNotice, failNotice],
   )
 
   const deleteProject = useCallback(

@@ -74,8 +74,12 @@ export interface Initiative {
   executionOwner: string
   startQuarter: string
   endQuarter: string
+  /** Scope statement: what the initiative sets out to deliver. Kept in the tracker only (monday has no field for it). */
+  scope?: string
   /** monday.com folder id. Set by the monday sync. */
   mondayId?: string
+  /** monday.com project register board in that folder. Set when the tracker creates the initiative. */
+  mondayBoardId?: string
 }
 
 export interface Pillar {

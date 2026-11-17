@@ -142,7 +142,9 @@ function normalizeInitiative(raw: unknown, index: number): Initiative {
     executionOwner: str(source.executionOwner),
     startQuarter: str(source.startQuarter),
     endQuarter: str(source.endQuarter),
+    ...(str(source.scope) ? { scope: str(source.scope) } : {}),
     ...mondayLink(source.mondayId),
+    ...(str(source.mondayBoardId) ? { mondayBoardId: str(source.mondayBoardId) } : {}),
   }
 }
 

@@ -1,6 +1,6 @@
 # Settings module
 
-Stale threshold, appearance (light, dark, match system), install and update of the app, import, export and reset of data, and (in local mode) your name and the storage driver.
+Stale threshold (weekly, biweekly, monthly, every two months, quarterly or custom), appearance (light, dark, match system), install and update of the app, import, export and reset of data, and (in local mode) your name and the storage driver.
 
 | | |
 | --- | --- |

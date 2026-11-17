@@ -36,6 +36,14 @@ export const FIELD_COLUMNS = Object.freeze({
 /** monday owns these. The tracker keeps issues, decisionOutcome and planLink. */
 export const SYNCED_FIELDS = Object.freeze(Object.keys(FIELD_COLUMNS))
 
+/**
+ * Fields a blank monday cell clears in the tracker. monday is the source of truth for every synced
+ * field, so clearing a cell there (a decision that was answered, a risk that went away) must clear
+ * it here too. RAG status, trend and progress always need a value in the tracker, so a blank there
+ * keeps the last value (and a blank RAG still raises the "no RAG status" warning).
+ */
+export const CLEARABLE_FIELDS = Object.freeze(SYNCED_FIELDS.filter((field) => !['rag', 'trending', 'progress'].includes(field)))
+
 /** A board counts as a project register only if it carries all of these. */
 export const REQUIRED_FIELDS = Object.freeze(['rag', 'businessOwner', 'executionOwner', 'progress'])
 
@@ -136,7 +144,7 @@ const PLACEHOLDER_LABELS = new Set(['project health'])
 
 const parseEnum = (table) => (raw) => table.get(norm(raw))
 
-// monday's "N/A" phase means "not set". null = leave the field alone, with no warning.
+// monday's "N/A" phase means "not set". null = treated as a blank cell (clears the phase), no warning.
 const parsePhase = (raw) => {
   const key = norm(raw)
   if (key === 'n a') return null
@@ -174,21 +182,30 @@ const cellText = (cell) => (cell ? (cell.text ?? cell.display_value ?? '') : '')
 
 /**
  * One monday item -> { mondayId, title, updatedAt, fields, warnings }.
- * `fields` holds only values monday actually has. A blank cell is absent,
- * so a blank never overwrites what someone typed into the tracker.
+ * `fields` holds the value of every column the board has for this item:
+ *   - a readable value is copied as parsed,
+ *   - a blank cell (or monday's "Project Health" / "N/A" placeholders) on a clearable field is ''
+ *     so the merge clears what the tracker held. That is how a cleared "Decision Needed" in monday
+ *     reaches the tracker.
+ *   - a blank RAG status, trend or progress is left out: the tracker keeps the last value.
+ * A cell monday did not return at all (an older capture, a column the item has no value object
+ * for) is left out too, so a missing cell never wipes data. An unreadable value is left out with a
+ * warning.
  */
 export function mapItem(item, columnIds) {
   const cells = new Map((item.column_values ?? []).map((cell) => [cell.id, cell]))
   const warnings = []
+  const clearable = new Set(CLEARABLE_FIELDS)
+  const blank = (field) => (clearable.has(field) ? [[field, '']] : [])
 
   const fields = Object.fromEntries(
     SYNCED_FIELDS.flatMap((field) => {
       const id = columnIds[field]
-      if (!id) return []
+      if (!id || !cells.has(id)) return []
       const raw = cellText(cells.get(id))
-      if (asText(raw) === '' || PLACEHOLDER_LABELS.has(norm(raw))) return []
+      if (asText(raw) === '' || PLACEHOLDER_LABELS.has(norm(raw))) return blank(field)
       const parsed = parserFor(field)(raw)
-      if (parsed === null) return []
+      if (parsed === null) return blank(field)
       if (parsed === undefined) {
         warnings.push(`"${item.name}": could not read ${FIELD_LABELS[field]} value "${asText(raw)}".`)
         return []

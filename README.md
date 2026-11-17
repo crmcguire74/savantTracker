@@ -5,7 +5,7 @@
 The Savant Strategic Initiatives Tracker is a portfolio and initiative management application for strategic pillars, initiatives and projects. It gives leadership and delivery teams one place to see health, ownership, risks, milestones, decisions and issues.
 
 - **What it is.** A React and TypeScript single-page app with a small Express API. Production runs on Azure App Service behind Microsoft Entra sign-in, with Azure Cosmos DB for data.
-- **Where the data comes from.** monday.com is the source of truth for project fields and for the pillar, initiative and project structure. The tracker pulls from monday.com on demand and on a schedule. Nothing flows back to monday.com.
+- **Where the data comes from.** monday.com is the source of truth for project fields and for the pillar, initiative and project structure. The tracker pulls from monday.com on demand and on a schedule. Two things flow back: an Admin can create pillars, initiatives and projects in the tracker, and Admins and Editors can rename pillars and initiatives or move an initiative to another pillar. Each of those changes is made in monday.com first, then saved in the tracker already linked, so the next pull never makes a duplicate. See [Write-back from WiseTrack](#write-back-from-wisetrack-create-and-edit).
 - **How it is built.** A **micro-UI module architecture**. A base framework (`src/platform`) provides the shell, storage, identity, access, routing and shared filters. Every page is a module (`src/modules/<id>`) that plugs in with one line, loads on first visit, and runs in its own sandbox. Modules reach the framework only through one import surface, the SDK (`@sdk`). Architecture tests fail the build if a module reaches anywhere else.
 - **Who uses it.** Four roles: Admin, Editor, Executive and Viewer, assigned through Microsoft Entra groups.
 - **Where to read next.** Using the tracker: [User Guide.md](User%20Guide.md), or the **Help** page inside the app. Releasing to Azure with exact steps for people new to Azure: [docs/DEPLOYMENT-RUNBOOK.md](docs/DEPLOYMENT-RUNBOOK.md).
@@ -73,13 +73,14 @@ The tracker models strategic initiative governance:
 - **Change log**: every field edit with the previous and new value. Editors can restore an earlier value.
 - **Import and export**: the whole tracker as one JSON app file, plus spreadsheet reports.
 - **Conflict handling**: field-level detection when two people edit the same project. The editor chooses mine or theirs.
-- **monday.com sync**: pulls project fields and structure from monday.com. See [monday.com integration](#mondaycom-integration).
+- **monday.com sync**: pulls project fields and structure from monday.com, and writes new pillars, initiatives and projects (and pillar and initiative renames and moves) back to it. See [monday.com integration](#mondaycom-integration).
+- **Initiative and pillar details**: Admins and Editors edit an initiative's name, scope statement, business owner, delivery owner, start and end quarter and pillar, and a pillar's name and owner. monday.com has no property for the scope statement, owners or quarters, so those live in the tracker database (Cosmos DB in Azure) and everyone sees them.
 
 ### Modules
 
 | Module | Route | Rail | What it does |
 | --- | --- | --- | --- |
-| [Portfolio](src/modules/portfolio/README.md) | `#/portfolio?layout=…&pillar=…&initiative=…` | 10 | Ledger, heat map, leadership brief, pillar pace. Add, edit and delete pillars, initiatives and projects. |
+| [Portfolio](src/modules/portfolio/README.md) | `#/portfolio?layout=…&pillar=…&initiative=…` | 10 | Ledger, heat map, leadership brief, pillar pace. Admins add pillars, initiatives and projects (written to monday.com when live). Admins and Editors edit pillar and initiative details. |
 | [Board](src/modules/board/README.md) | `#/board?layout=status` | 20 | Cards by phase or status. Drag to change. |
 | [Timeline](src/modules/timeline/README.md) | `#/timeline` | 30 | Twelve-month window with bars, milestones and a today line. |
 | [My work](src/modules/work/README.md) | `#/work?person=…` | 40 | Decisions, issues and milestones you own, with in-place actions. |
@@ -87,7 +88,7 @@ The tracker models strategic initiative governance:
 | [Admin](src/modules/admin/README.md) | `#/admin` | 60 | PMO upkeep: stale projects, decisions, recent activity, monday.com sync. |
 | [Access](src/modules/access/README.md) | `#/access` | 70 | Who sees which views and reports (admins only). |
 | [Settings](src/modules/settings/README.md) | `#/settings` | 80 | Stale threshold, theme, install and update, import and export. |
-| [Help](src/modules/help/README.md) | `#/help?tab=…&role=…` | 90 | Start here, workflows for each role, FAQ and glossary. Content lives in one data file. |
+| [Help](src/modules/help/README.md) | `#/help?tab=…&role=…` | 90 | Start here, workflows for each role, FAQ, glossary, and the full User Guide to read, download (web page or Markdown) or print. |
 | [Project](src/modules/project/README.md) | `#/project/<id>` | link | Status report and editor for one project. |
 | [One-pager](src/modules/onepager/README.md) | `#/onepager?pillar=…` | link | Printable pillar one-pager. |
 
@@ -99,7 +100,7 @@ The tracker models strategic initiative governance:
 
 A `LOCAL` badge appears whenever the app is not behind Entra sign-in. A `View only` badge appears for roles that cannot edit.
 
-**Filters are shared.** The status, stale and decision chips and the omnibox narrow every module with `usesFilters` (Portfolio, Board, Timeline) and stay applied as you move between them.
+**Filters are shared.** The status, stale and decision chips and the omnibox narrow every module with `usesFilters` (Portfolio, Board, Timeline) and stay applied as you move between them. The **Stale** chip is a picker: 7, 14, 30, 60 or 90 days, the Settings threshold (marked "default"), or **Custom days…** for any whole number from 1 to 730. The chosen age only narrows the views (`ViewFilters.staleDays`, 0 means "use the threshold"); the shared threshold in Settings still decides the stale counts and tags.
 
 **"My work" means you.** The signed-in name is matched against the free-text owner fields. Without a match, the page asks which owner you are and remembers it in that browser. People are derived, not stored: `lib/people.ts` pulls names out of owner prose and folds obvious duplicates.
 
@@ -118,7 +119,8 @@ Admin sees everything. For other roles, each view is a feature that modules decl
 | My work | yes | yes | no | no |
 | Admin page | yes | yes | no | no |
 | Access page | yes | no | no | no |
-| Edit projects, initiatives, pillars | yes | yes | no | no |
+| Edit projects, and pillar and initiative details (names, scope statement, owners, quarters, pillar) | yes | yes | no | no |
+| Create pillars, initiatives and projects | yes | no | no | no |
 | Run or schedule the monday sync, restore backups | yes | no | no | no |
 
 ---
@@ -235,7 +237,7 @@ Modules communicate **only** through shared data, shared filters and links. A mo
 
 ### The SDK
 
-[src/sdk/index.ts](src/sdk/index.ts) is the whole import surface for modules: the platform API, the contract types, the domain model and pure logic (`types`, `constants`, `lib/*`, `reports`), PWA helpers, and the shared UI kit (`ui/common`, `ui/atoms`, `ui/pace`, `Icon`). [src/sdk/testing.ts](src/sdk/testing.ts) (`@sdk/testing`) is the test harness.
+[src/sdk/index.ts](src/sdk/index.ts) is the whole import surface for modules: the platform API, the contract types, the domain model and pure logic (`types`, `constants`, `lib/*`, `reports`), PWA helpers, `loadUserGuide` (the User Guide text for Help), and the shared UI kit (`ui/common`, `ui/atoms`, `ui/pace`, `Icon`). [src/sdk/testing.ts](src/sdk/testing.ts) (`@sdk/testing`) is the test harness.
 
 The `@sdk` alias is defined in `tsconfig.json`, `vite.config.ts` and `vitest.config.ts`. Adding to the SDK is a platform decision: export the narrowest thing that works.
 
@@ -450,7 +452,7 @@ The import parser is tolerant: it accepts v1 files and legacy bare-state exports
 ### Core data model
 
 - **Pillar**: id, title, owner.
-- **Initiative**: id, pillarId, title, business and execution owners, start and end quarter.
+- **Initiative**: id, pillarId, title, `scope` (scope statement), business and execution owners, start and end quarter, `mondayId` (folder), `mondayBoardId` (project register, set when the tracker creates the initiative).
 - **Project**: id, initiativeId, title, `businessOwner`, `executionOwner`, `projectManager`, `scope`, `planLink`, `startDate`, `originalEndDate`, `forecastEndDate`, `nextMilestone`, `nextMilestoneDate`, `dependencies`, `keyRisk`, `decisionNeeded`, `decisionOutcome`, `rag`, `trending`, `phase`, `validation`, `progress`, `issues`.
 - **Issue**: id, title, severity, status.
 - **LogEntry**: timestamp, field, old and new value, editor.
@@ -466,6 +468,8 @@ The import parser is tolerant: it accepts v1 files and legacy bare-state exports
 | `PUT /api/documents/:key` | Write; honours `If-Match` for optimistic concurrency (409 on conflict) |
 | `DELETE /api/documents/:key` | Delete if the version matches |
 | `POST /api/admin/sync/schedule` | Admin: set the automatic pull interval (0, or 5 to 1440 minutes) |
+| `POST /api/structure/pillars`, `…/initiatives`, `…/projects` | Admin: create in monday.com, then in the tracker (live mode only; 501 otherwise) |
+| `PATCH /api/structure/pillars/:id`, `…/initiatives/:id` | Admin or Editor: edit details; a rename or move of a linked record changes monday.com first |
 | `GET /api/stream?keys=a,b` | One SSE stream per tab for live updates (falls back to polling) |
 | `GET /api/health` | Database connectivity |
 
@@ -540,7 +544,7 @@ Without a Cosmos endpoint the server runs in local mode with no real sign-in. Th
 
 ## monday.com integration
 
-monday.com is the source of truth for project fields. The tracker pulls them in. Nothing flows back to monday.com.
+monday.com is the source of truth for project fields and structure. The tracker pulls them in. The only things that flow back are structure changes made in the tracker: new pillars, initiatives and projects, pillar and initiative renames, and moving an initiative to another pillar ([Write-back](#write-back-from-wisetrack-create-and-edit)). Project fields are never written to monday.com.
 
 ### What syncs
 
@@ -557,7 +561,8 @@ monday.com owns these 17 fields on every linked project: Business Owner, Deliver
 
 Rules the sync follows:
 
-- A blank value in monday.com never erases a value in the tracker.
+- **A cleared cell in monday.com clears the tracker value.** When someone empties Decision Needed, Key Risk, Next Milestone, a date or any other text field because it is resolved, the next pull empties it here too and logs the old value, so it can be read back in the change log. Blank RAG Status, Trend and Project Progress are the exceptions: the tracker always needs a value there, so it keeps the last one (a blank RAG also raises the "no RAG status" warning). A phase of "N/A" clears the phase. A cell monday.com does not return at all (an older capture file) never clears anything. The rule lives in `CLEARABLE_FIELDS` and `mapItem` in `server/monday/mapping.js`.
+- Before Nov 16, 2026 a blank never erased a value, so a decision cleared in monday.com stayed in the tracker. The first pull after this change clears those leftovers; the change log lists each one.
 - Running it twice changes nothing the second time.
 - Rows named "Rename" or "test" are ignored (`MONDAY_IGNORE_TITLES`).
 - Boards are matched by column **title**, not column id. Renaming a monday column stops that field syncing. The preview warns "no column for …".
@@ -566,7 +571,53 @@ Rules the sync follows:
 
 ### Field lock
 
-While the server pulls live, the 17 synced fields on linked projects are read-only in the tracker, and so are linked pillars, initiatives and projects (no rename, move, delete, or add). The browser hides the buttons and says "Managed in monday.com". The server enforces it too: a write that changes a locked value gets a 403 with the reason (`server/monday/lock.js`, applied in `server/app.js`). The sync writes straight to the store, so it is not blocked. Records created in the tracker before the connection have no monday link and stay editable until an admin retires them. With no token (test mode) nothing is locked.
+While the server pulls live, the 17 synced fields on linked projects are read-only in the tracker. On a linked project the Update project drawer greys out the synced fields, the phase stepper and **Request a decision** are off, and the store still refuses any edit that gets past the screen. Linked pillars, initiatives and projects cannot be deleted in the tracker (delete them in monday.com, then retire). Pillar and initiative names, and an initiative's pillar, are not locked any more: the tracker sends those changes to monday.com first through the structure API (next section). The server enforces the rest: a document write that changes a locked value, renames or moves a linked record, or adds a record without going through the structure API gets a 403 with the reason (`server/monday/lock.js`, applied in `server/app.js`). The sync and the structure API write straight to the store, so they are not blocked. Records created in the tracker before the connection have no monday link and stay editable until an admin retires them. With no token (test mode) nothing is locked.
+
+### Write-back from WiseTrack (create and edit)
+
+**Who.** Admins create pillars, initiatives and projects. Admins and Editors edit a pillar's name and owner, and an initiative's name, scope statement, business owner, delivery owner, start quarter, end quarter and pillar.
+
+**What maps to monday.com.** We checked the live workspace (Nov 2026). Folders carry only a name and a parent, and the project register boards carry project columns only. So:
+
+| Tracker field | monday.com property | How the change reaches monday.com |
+| --- | --- | --- |
+| Pillar (name) | Top-level folder name | `update_folder(name)` |
+| Initiative (name) | Sub-folder name | `update_folder(name)` |
+| Initiative's pillar | Sub-folder's parent folder | `update_folder(parent_folder_id)`, which moves the folder and its boards |
+| Pillar owner | none | Stored in the tracker only |
+| Initiative scope statement, business owner, delivery owner, start quarter, end quarter | none | Stored in the tracker only |
+| New pillar | Top-level folder | `create_folder` |
+| New initiative | Sub-folder plus a project register board | `create_folder`, then `duplicate_board` (structure only) of an existing register, so every column title the sync reads, the status labels and the **Projects** group come with it |
+| New project (name, business owner, delivery owner) | Item in the register's **Projects** group; "Business Owner" and "Delivery Owner" text columns | `create_item` with those column values. Status, dates and the rest are filled in monday.com |
+
+Fields stored in the tracker only live in `tracker.state` in Cosmos DB, so every user sees them. The sync never overwrites them: it only touches a pillar's or initiative's name, pillar and monday link.
+
+**How it works** (`server/monday/writeback.js`, routes in `server/app.js`, browser client `src/data/structureApi.ts`, wired in `useTracker`):
+
+1. The browser calls the structure API only when the server is live and the record is linked (or is being created). In test mode, and for records the tracker made before monday.com was connected, the change is saved in the browser exactly as before.
+2. The server changes monday.com first. If monday.com refuses, nothing is saved anywhere and the form stays open with the reason.
+3. Then it saves the tracker record, already linked (`mondayId`, plus `mondayBoardId` for a new initiative or project), pinned to the version it read, and retries if someone saved in between. It writes change-log lines with the editor's name.
+
+**Duplicate and sync analysis.** These are the paths that could make a duplicate or confuse the sync, and what prevents each one:
+
+| Scenario | Without care | What the tracker does |
+| --- | --- | --- |
+| Admin creates an initiative in the tracker, then the next pull reads it from monday.com | The pull would see an unknown folder and add a second initiative | The record is written with its monday folder id, and its tracker id is the id the sync would give it (`init-monday-<folder>`). The pull matches it by link. Same for pillars (`obj-monday-…`) and projects (`proj-monday-…`) |
+| The name already exists in the tracker under the same parent | A second copy | Refused: "already exists". Names compare without case, punctuation or a "Pillar N:" prefix |
+| The name exists in monday.com but not in the tracker (someone made it there and no pull has run) | A second folder or item in monday.com | Linked instead of created. The toast says "already existed in monday.com, so the tracker linked to it". The next pull fills in its data |
+| A pull lands between the monday.com create and the tracker save | The pull adds the record, then the save adds it again | The save upserts by id and monday link, so it updates the record the pull made (and adds the scope statement, owners and quarters) |
+| monday.com succeeds and the tracker save fails | An orphan in monday.com | Not an orphan: the next pull brings it in, once |
+| An earlier create made the initiative folder but stopped before the register board | A folder the sync skips, and a retry that makes a second folder | A retry finds the folder by name, reuses it and adds the missing register |
+| A record the tracker made before the connection (no link) later appears in monday.com with the same name | Duplicate | The first pull links it by name under the same parent and fills in monday.com data (existing behaviour). A different name in monday.com shows twice until an admin retires the old one |
+| A project named "Rename" or "test" | The sync ignores it, so the tracker copy would look deleted | Refused with "a name the sync ignores" |
+| Rename in the tracker | The next pull renames it back | monday.com is renamed first, so the pull finds the same name |
+| Move an initiative to a pillar that has no monday folder | monday.com cannot follow | Refused; the picker only offers linked pillars for a linked initiative |
+| A retire runs straight after a create, before monday.com shows the new item | The new project is listed under "To remove" | The approval list is shown first and the scheduled pull never retires. Pull again before retiring |
+| Two people create the same name at the same moment | Two monday.com items | The second create sees the first in monday.com and links to it. A true tie (same second) can still make two; retire the extra one |
+
+**Permissions in monday.com.** The sync account must be able to create folders and boards in the workspace and items on the register boards (a workspace member, not a viewer). A token that can only read makes every create or rename fail with "monday.com refused the change"; the tracker then saves nothing.
+
+**Template for new registers.** A new initiative copies an existing project register: `MONDAY_REGISTER_TEMPLATE_BOARD_ID` if set, else the board of any linked project, else the first register found in the workspace. Set the variable to pin the copy to one clean template board.
 
 ### Configure monday.com (once)
 
@@ -574,7 +625,7 @@ Use a service account. A personal token stops working when its owner changes job
 
 1. Ask IT for a Microsoft account for the sync, for example `svc-monday-tracker@savantwealth.com`. monday.com signs in through Entra, so the account needs that identity.
 2. Add it to monday.com as a **Member**. An admin seat is not needed.
-3. Add it to the workspace **Savant Strategic Initiatives** (id `17893919`). Add it to the workspace, not to single boards. The sync reads the folder tree and every project board in it (about 35 boards).
+3. Add it to the workspace **Savant Strategic Initiatives** (id `17893919`). Add it to the workspace, not to single boards. The sync reads the folder tree and every project board in it (about 35 boards). Give it edit rights, not view only: the tracker's write-back creates and renames folders, copies register boards and creates items as this account.
 4. Sign in once as that account so it is active.
 5. As that account: profile picture, **Developers**, **My access tokens** (or **API token**), copy the token. Regenerating it breaks the old one.
 6. Test it from a laptop:
@@ -650,10 +701,13 @@ An admin opens **Open sync**, picks **Automatic pulls** (5 minutes to once a day
 | `MONDAY_IGNORE_TITLES` | `Rename,test` | Row names to skip, comma separated. |
 | `MONDAY_PILLAR_MAP` | none | JSON map from a monday pillar folder name to a tracker pillar id. |
 | `MONDAY_API_VERSION` | `2026-04` | monday.com API version. |
+| `MONDAY_REGISTER_TEMPLATE_BOARD_ID` | none | Project register a new initiative's board is copied from. Optional; see [Write-back](#write-back-from-wisetrack-create-and-edit). |
 
 Admin-only routes: `GET /api/admin/sync/status`, `POST …/test`, `…/monday` (live pull), `…/upload` (replay a capture), `…/schedule` (`{ "intervalMinutes": 0 }` or 5 to 1440), `…/capture`, `GET …/backups`, `POST …/restore`. All are a dry run unless `apply` is `true`.
 
-Code: `server/monday/` (the sync, plain JavaScript shared with the browser; `service.js` is the one object the API, timer and command line use), `src/data/mondaySync.ts` (browser side), `src/modules/admin/MondaySync.tsx` (the Admin card and dialog).
+Structure routes: `POST /api/structure/pillars` `{ title, owner }`, `POST …/initiatives` `{ pillarId, title, scope, businessOwner, executionOwner, startQuarter, endQuarter }`, `POST …/projects` `{ initiativeId, title, businessOwner, executionOwner }` (Admin); `PATCH …/pillars/:id`, `PATCH …/initiatives/:id` with any of those fields (Admin or Editor). Errors: 400 bad input, 404 unknown record, 409 duplicate or not in monday.com, 501 monday.com not live, 502 monday.com refused.
+
+Code: `server/monday/` (the sync, plain JavaScript shared with the browser; `service.js` is the one object the API, timer and command line use; `writeback.js` is the structure write-back), `src/data/mondaySync.ts` and `src/data/structureApi.ts` (browser side), `src/modules/admin/MondaySync.tsx` (the Admin card and dialog).
 
 ### When something breaks
 
@@ -668,8 +722,13 @@ Code: `server/monday/` (the sync, plain JavaScript shared with the browser; `ser
 | `The tracker changed while syncing` | Someone saved at the same moment | Run it again. |
 | 403 on the sync | You are not an Admin | Ask for the Tracker.Admin role. |
 | A field stops updating | The monday column was renamed | Rename it back. |
-| Projects show green RAG | The monday RAG is unset | Set it in monday.com. A blank is not copied. |
+| Projects show green RAG | The monday RAG is unset | Set it in monday.com. A blank RAG is not copied. |
+| A value disappeared after a pull | Someone cleared that cell in monday.com | Expected. The change log shows the old value as a "monday sync" line. Put it back in monday.com if it was cleared by mistake. |
 | Edit refused: "comes from monday.com" | The field lock | Edit it in monday.com. |
+| "monday.com refused the change" on add, rename or move | The sync account cannot create or edit folders, boards or items | Make the account a workspace member with edit rights. Nothing was saved. |
+| "already exists" when adding | The tracker already has that name under the same parent | Open the existing record instead. |
+| "There is no project register in monday.com to copy yet" | No register board to copy for a new initiative | Create one initiative board in monday.com, or set `MONDAY_REGISTER_TEMPLATE_BOARD_ID`. |
+| "is not in monday.com yet" when adding under a pillar or initiative | That parent was made in the tracker before monday.com was connected | Create the parent in monday.com (or from the tracker), pull, then add. |
 
 ---
 
@@ -852,7 +911,7 @@ The production build is a Progressive Web App (Edge or Chrome **Install app**; i
 
 | Piece | Where | Notes |
 | --- | --- | --- |
-| Manifest and icons | `public/manifest.webmanifest`, `public/icons/` | Linked with `crossorigin="use-credentials"` so Easy Auth doesn't redirect the manifest request |
+| Manifest and icons | `public/manifest.webmanifest`, `public/icons/` | Linked with `crossorigin="use-credentials"` so Easy Auth doesn't redirect the manifest request. Icons are the WiseTrack owl-and-shield mark, mint `#8FCFC7` on navy `#183A5A`: `icon.svg` (favicon, rounded tile), `maskable.svg`, and PNGs rendered from them (`icon-192.png`, `icon-512.png`, `maskable-512.png` with the mark inside the 80% safe zone, `apple-touch-icon.png` at 180 px). The in-app mark is `Icon.Logo` in `src/ui/icons.tsx`, the same paths in `currentColor`; the reference artwork is `redesign/logo.svg`. |
 | Service worker | `pwa/service-worker.js` → `dist/sw.js` | Emitted by the `serviceWorker` plugin in `vite.config.ts` with the precache list (including every module chunk) and a content hash |
 | Registration and updates | `src/hooks/usePwa.ts` | Production builds only, over HTTPS or localhost |
 
@@ -877,7 +936,8 @@ npx vitest run src/modules/board      # one module
 | `src/modules/*/…test.tsx` | Module-owned tests through `@sdk/testing` (Board is the reference) |
 | `src/lib`, `src/reports`, `src/data`, `src/storage`, `src/hooks` | Domain logic, reports and access policy, app-file import, storage adapters, PWA |
 | `src/modules/help/help.test.tsx` | The Help page renders for every role, and its content is complete |
-| `server/server.test.js`, `server/sync-routes.test.js`, `server/monday/*.test.js` | API authentication and authorization, the sync routes, the sync service and scheduler |
+| `server/server.test.js`, `server/sync-routes.test.js`, `server/monday/*.test.js` | API authentication and authorization, the sync and structure routes, the sync service and scheduler, clearing on blank cells |
+| `server/monday/writeback.test.js` | Write-back against a fake monday.com: create, link-instead-of-duplicate, half-made initiative, a pull racing a create, rename, move, nothing saved when monday.com refuses, and a pull after each write changes nothing |
 
 Run `npm test`, `npm run typecheck` and `npm run build` before every release. `infra/deploy.ps1` runs them for you.
 
@@ -916,14 +976,14 @@ The production build was also exercised in headless Edge: every rail module rend
 │   ├── reports/               # report catalogue and builders
 │   ├── auth/                  # roles, session, access policy
 │   ├── hooks/                 # useTracker, useIdentity, useTheme, useMe, usePwa
-│   ├── data/                  # repository, app file, bundled snapshot
+│   ├── data/                  # repository, app file, bundled snapshot, monday sync and structure clients, User Guide loader
 │   ├── storage/               # adapter contract, IndexedDB, memory, REST, proxy
 │   ├── types.ts, constants.ts, styles.css
 ├── tools/
 │   ├── new-module.mjs         # scaffolder
 │   ├── module-template/       # what it copies
 │   └── build-snapshot.py      # legacy: artifact export -> snapshot; refuses to overwrite monday data without --force
-├── server/                    # Express API, auth, Cosmos and file stores
+├── server/                    # Express API, auth, Cosmos and file stores; monday/ holds the sync and the structure write-back
 ├── infra/                     # provision, entra-app, monday-setup, lockdown, deploy (.ps1 and .sh), app roles, seed
 ├── docs/                      # DEPLOYMENT-RUNBOOK.md (step by step) and PMO-ACTION-PLAN.md
 ├── pwa/service-worker.js
@@ -945,6 +1005,9 @@ The production build was also exercised in headless Edge: every rail module rend
 - **One platform context, not a global store.** Shared state is small and owned by the provider; module state stays local. This avoids the central-store coupling Thrive flags as its main hotspot.
 - **Access features declared by modules.** Plugging a module in brings its access controls with it; nothing else is edited.
 - **Strict registry in development, forgiving in production.** Mistakes are loud at the desk and contained in the field.
+- **monday.com first, tracker second, for structure write-back.** The tracker never holds a linked pillar, initiative or project that monday.com does not, so a pull can always match by link. Creates use the same ids the sync would, and match an existing name before creating. Fields monday.com has no property for stay in the tracker database rather than being forced into an unrelated monday.com column.
+- **A cleared monday.com cell clears the tracker (Nov 2026).** monday.com owns the synced fields and they are locked in the tracker, so "a blank never erases" only left stale decisions and risks behind. RAG, trend and progress keep their last value because the tracker cannot show them empty.
+- **New initiative boards are copied, not built.** `duplicate_board` with structure only gives the exact column titles, status labels and Projects group of the PMO template, so the sync recognises the board at once.
 
 ### Hotspots
 

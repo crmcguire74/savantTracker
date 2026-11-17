@@ -13,6 +13,8 @@ export interface ViewFilters {
   query: string
   rag: RagStatus[]
   stale: boolean
+  /** Days without an update that count as stale for the filter. 0 uses the stale threshold in Settings. */
+  staleDays: number
   decisions: boolean
   /** Person key from the people directory; only projects they manage. Empty for any. */
   pm: string
@@ -20,7 +22,24 @@ export interface ViewFilters {
   pillar: string
 }
 
-export const noFilters = (): ViewFilters => ({ query: '', rag: [], stale: false, decisions: false, pm: '', pillar: '' })
+export const noFilters = (): ViewFilters => ({ query: '', rag: [], stale: false, staleDays: 0, decisions: false, pm: '', pillar: '' })
+
+/** Ready-made stale ages the filter chip offers beside a custom number of days. */
+export const STALE_FILTER_PRESETS: readonly number[] = [7, 14, 30, 60, 90]
+/** Longest custom stale age the filter accepts, in days. */
+export const MAX_STALE_DAYS = 730
+
+/** The age the stale filter uses: the chosen days, else the threshold from Settings. */
+export const staleFilterDays = (filters: Pick<ViewFilters, 'staleDays'>, thresholdDays: number): number =>
+  filters.staleDays > 0 ? filters.staleDays : thresholdDays
+
+/** Whole days from 1 to MAX_STALE_DAYS, or null for anything else. */
+export function parseStaleDays(value: unknown): number | null {
+  const parsed = typeof value === 'number' ? value : Number(String(value ?? '').trim())
+  if (!Number.isFinite(parsed)) return null
+  const days = Math.round(parsed)
+  return days >= 1 && days <= MAX_STALE_DAYS ? days : null
+}
 
 export const hasFilters = (filters: ViewFilters): boolean =>
   filters.query.trim() !== '' ||
@@ -53,7 +72,7 @@ export function makeProjectFilter(state: TrackerState, filters: ViewFilters, sta
     (!filters.pillar || initiatives.get(project.initiativeId)?.pillarId === filters.pillar) &&
     (!managed || managed.has(project.id)) &&
     (filters.rag.length === 0 || filters.rag.includes(project.rag)) &&
-    (!filters.stale || isStale(project, staleDays, now)) &&
+    (!filters.stale || isStale(project, staleFilterDays(filters, staleDays), now)) &&
     (!filters.decisions || needsDecision(project)) &&
     projectMatchesQuery(project, filters.query, initiatives.get(project.initiativeId))
 }

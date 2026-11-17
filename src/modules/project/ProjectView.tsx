@@ -5,7 +5,7 @@
 // which is what lets the tracker detect a concurrent edit.
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { EditableDate, EditableText, EditableTextArea, ProgressControl, ageLabel, Drawer, EmptyState, formatLogValue, RAG_KEYS, Tag, usePlatform, Icon, formatDay, FIELD_LABELS, PHASE, PHASE_SEQUENCE, RAG, SEVERITY, TREND, VALIDATION, dateOnly, daysSince, pillarLabel, slipDays, isStale, needsDecision, type Phase, type Project, type ProjectFieldKey, type ProjectFieldValue, type RagStatus, type Severity, type Trend, type Validation } from '@sdk'
+import { EditableDate, EditableText, EditableTextArea, ProgressControl, ageLabel, Drawer, EmptyState, formatLogValue, RAG_KEYS, Tag, usePlatform, Icon, formatDay, FIELD_LABELS, PHASE, PHASE_SEQUENCE, RAG, SEVERITY, TREND, VALIDATION, dateOnly, daysSince, pillarLabel, slipDays, isStale, needsDecision, ownedByMonday, type Phase, type Project, type ProjectFieldKey, type ProjectFieldValue, type RagStatus, type Severity, type Trend, type Validation } from '@sdk'
 
 const PHASES = Object.keys(PHASE) as Exclude<Phase, ''>[]
 const VALIDATIONS = Object.keys(VALIDATION) as Exclude<Validation, ''>[]
@@ -162,8 +162,16 @@ function useFieldUpdater(project: Project) {
   }
 }
 
+/** True for a field monday owns on this project while the sync is live. The tracker refuses those edits. */
+function useOwnedByMonday(project: Project) {
+  const { mondayLive } = usePlatform()
+  return (field: ProjectFieldKey) => ownedByMonday(project, field, mondayLive)
+}
+
 function PhaseStepper({ project }: { project: Project }) {
-  const { canWrite } = usePlatform()
+  const { canWrite: allowed } = usePlatform()
+  const owned = useOwnedByMonday(project)('phase')
+  const canWrite = allowed && !owned
   const update = useFieldUpdater(project)
   const multi = project.phase === 'multi_phase'
   const current = PHASE_SEQUENCE.findIndex((phase) => phase === project.phase)
@@ -219,7 +227,8 @@ function PhaseStepper({ project }: { project: Project }) {
 }
 
 function DecisionCard({ project }: { project: Project }) {
-  const { canWrite, tracker } = usePlatform()
+  const { canWrite, tracker, mondayLive } = usePlatform()
+  const askLocked = mondayLive && Boolean(project.mondayId)
   const { actions } = tracker
   const [mode, setMode] = useState<'idle' | 'record' | 'raise'>('idle')
   const [draft, setDraft] = useState('')
@@ -291,10 +300,13 @@ function DecisionCard({ project }: { project: Project }) {
               Record the decision
             </button>
           )}
-          {(!asked || decided) && (
+          {(!asked || decided) && !askLocked && (
             <button type="button" className="btn btn-ghost sm" onClick={() => setMode('raise')}>
               {asked ? 'Request a new decision' : 'Request a decision'}
             </button>
+          )}
+          {(!asked || decided) && askLocked && (
+            <span className="muted small">Decision requests come from monday.com. Add the ask there. You can still record the outcome here.</span>
           )}
           {decided && asked && (
             <span className="muted small">Requesting a new decision keeps this one in the change log.</span>
@@ -471,6 +483,8 @@ function RecentChanges({ project }: { project: Project }) {
 
 function UpdateDrawer({ project, onClose }: { project: Project; onClose: () => void }) {
   const update = useFieldUpdater(project)
+  const isLocked = useOwnedByMonday(project)
+  const anyLocked = isLocked('rag')
 
   return (
     <Drawer
@@ -487,6 +501,11 @@ function UpdateDrawer({ project, onClose }: { project: Project; onClose: () => v
     >
       <h2 className="drawer-title">Update project</h2>
       <p className="muted">{project.title}</p>
+      {anyLocked && (
+        <p className="muted small" role="note">
+          Greyed-out fields come from monday.com. Change them there and the next sync brings them in. Issues, the decision outcome and the plan link save here.
+        </p>
+      )}
 
       <fieldset className="form-section">
         <legend>Status</legend>
@@ -498,7 +517,7 @@ function UpdateDrawer({ project, onClose }: { project: Project; onClose: () => v
               role="radio"
               aria-checked={project.rag === key}
               className={`rag-option rag-${key}${project.rag === key ? ' active' : ''}`}
-              onClick={() => project.rag !== key && update('rag', key)}
+              disabled={isLocked('rag')} onClick={() => project.rag !== key && update('rag', key)}
             >
               <span className={`dot dot-${key}`} /> {RAG[key].label}
             </button>
@@ -507,7 +526,7 @@ function UpdateDrawer({ project, onClose }: { project: Project; onClose: () => v
         <div className="form-grid three">
           <label className="field">
             <span>{FIELD_LABELS.trending}</span>
-            <select className="select" value={project.trending} onChange={(event) => update('trending', event.target.value as Trend)}>
+            <select className="select" value={project.trending} disabled={isLocked('trending')} onChange={(event) => update('trending', event.target.value as Trend)}>
               {(Object.keys(TREND) as Trend[]).map((key) => (
                 <option key={key} value={key}>
                   {TREND[key].symbol} {TREND[key].label}
@@ -517,7 +536,7 @@ function UpdateDrawer({ project, onClose }: { project: Project; onClose: () => v
           </label>
           <label className="field">
             <span>{FIELD_LABELS.phase}</span>
-            <select className="select" value={project.phase} onChange={(event) => update('phase', event.target.value as Phase)}>
+            <select className="select" value={project.phase} disabled={isLocked('phase')} onChange={(event) => update('phase', event.target.value as Phase)}>
               <option value="">No phase</option>
               {PHASES.map((key) => (
                 <option key={key} value={key}>
@@ -528,7 +547,7 @@ function UpdateDrawer({ project, onClose }: { project: Project; onClose: () => v
           </label>
           <label className="field">
             <span>{FIELD_LABELS.validation}</span>
-            <select className="select" value={project.validation} onChange={(event) => update('validation', event.target.value as Validation)}>
+            <select className="select" value={project.validation} disabled={isLocked('validation')} onChange={(event) => update('validation', event.target.value as Validation)}>
               <option value="">Not set</option>
               {VALIDATIONS.map((key) => (
                 <option key={key} value={key}>
@@ -538,7 +557,7 @@ function UpdateDrawer({ project, onClose }: { project: Project; onClose: () => v
             </select>
           </label>
         </div>
-        <ProgressControl value={project.progress} onCommit={(value) => update('progress', value)} />
+        <ProgressControl value={project.progress} disabled={isLocked('progress')} onCommit={(value) => update('progress', value)} />
       </fieldset>
 
       <fieldset className="form-section">
@@ -546,11 +565,11 @@ function UpdateDrawer({ project, onClose }: { project: Project; onClose: () => v
         <div className="form-grid wide-first">
           <label className="field">
             <span>{FIELD_LABELS.nextMilestone}</span>
-            <EditableText value={project.nextMilestone} onCommit={(value) => update('nextMilestone', value)} />
+            <EditableText value={project.nextMilestone} disabled={isLocked('nextMilestone')} onCommit={(value) => update('nextMilestone', value)} />
           </label>
           <label className="field">
             <span>Date</span>
-            <EditableDate value={project.nextMilestoneDate} onCommit={(value) => update('nextMilestoneDate', value)} />
+            <EditableDate value={project.nextMilestoneDate} disabled={isLocked('nextMilestoneDate')} onCommit={(value) => update('nextMilestoneDate', value)} />
           </label>
         </div>
       </fieldset>
@@ -562,16 +581,16 @@ function UpdateDrawer({ project, onClose }: { project: Project; onClose: () => v
           <EditableTextArea
             value={project.dependencies}
             placeholder="Teams, vendors or other projects this one is waiting on"
-            onCommit={(value) => update('dependencies', value)}
+            disabled={isLocked('dependencies')} onCommit={(value) => update('dependencies', value)}
           />
         </label>
         <label className="field">
           <span>{FIELD_LABELS.keyRisk}</span>
-          <EditableTextArea value={project.keyRisk} placeholder="Why the status is what it is" onCommit={(value) => update('keyRisk', value)} />
+          <EditableTextArea value={project.keyRisk} placeholder="Why the status is what it is" disabled={isLocked('keyRisk')} onCommit={(value) => update('keyRisk', value)} />
         </label>
         <label className="field">
           <span>Decision needed from leadership</span>
-          <EditableTextArea value={project.decisionNeeded} placeholder="The specific ask, if any" onCommit={(value) => update('decisionNeeded', value)} />
+          <EditableTextArea value={project.decisionNeeded} placeholder="The specific ask, if any" disabled={isLocked('decisionNeeded')} onCommit={(value) => update('decisionNeeded', value)} />
         </label>
         <label className="field">
           <span>{FIELD_LABELS.decisionOutcome}</span>
@@ -588,15 +607,15 @@ function UpdateDrawer({ project, onClose }: { project: Project; onClose: () => v
         <div className="form-grid three">
           <label className="field">
             <span>{FIELD_LABELS.businessOwner}</span>
-            <EditableText value={project.businessOwner} onCommit={(value) => update('businessOwner', value)} />
+            <EditableText value={project.businessOwner} disabled={isLocked('businessOwner')} onCommit={(value) => update('businessOwner', value)} />
           </label>
           <label className="field">
             <span>{FIELD_LABELS.executionOwner}</span>
-            <EditableText value={project.executionOwner} onCommit={(value) => update('executionOwner', value)} />
+            <EditableText value={project.executionOwner} disabled={isLocked('executionOwner')} onCommit={(value) => update('executionOwner', value)} />
           </label>
           <label className="field">
             <span>{FIELD_LABELS.projectManager}</span>
-            <EditableText value={project.projectManager} onCommit={(value) => update('projectManager', value)} />
+            <EditableText value={project.projectManager} disabled={isLocked('projectManager')} onCommit={(value) => update('projectManager', value)} />
           </label>
         </div>
       </fieldset>
@@ -606,15 +625,15 @@ function UpdateDrawer({ project, onClose }: { project: Project; onClose: () => v
         <div className="form-grid three">
           <label className="field">
             <span>{FIELD_LABELS.startDate}</span>
-            <EditableDate value={project.startDate} onCommit={(value) => update('startDate', value)} />
+            <EditableDate value={project.startDate} disabled={isLocked('startDate')} onCommit={(value) => update('startDate', value)} />
           </label>
           <label className="field">
             <span>{FIELD_LABELS.originalEndDate}</span>
-            <EditableDate value={project.originalEndDate} onCommit={(value) => update('originalEndDate', value)} />
+            <EditableDate value={project.originalEndDate} disabled={isLocked('originalEndDate')} onCommit={(value) => update('originalEndDate', value)} />
           </label>
           <label className="field">
             <span>{FIELD_LABELS.forecastEndDate}</span>
-            <EditableDate value={project.forecastEndDate} onCommit={(value) => update('forecastEndDate', value)} />
+            <EditableDate value={project.forecastEndDate} disabled={isLocked('forecastEndDate')} onCommit={(value) => update('forecastEndDate', value)} />
           </label>
         </div>
       </fieldset>
@@ -630,7 +649,7 @@ function UpdateDrawer({ project, onClose }: { project: Project; onClose: () => v
             maxLength={250}
             rows={3}
             placeholder="One to two sentences describing what this project covers"
-            onCommit={(value) => update('scope', value)}
+            disabled={isLocked('scope')} onCommit={(value) => update('scope', value)}
           />
         </label>
         <label className="field">

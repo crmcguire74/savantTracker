@@ -2,7 +2,7 @@
 
 How to use the Savant Strategic Initiatives Tracker (WiseTrack). Written for the people who use it every week, not for developers. Developers and administrators: see the [README](README.md).
 
-You can also read most of this inside the tracker. Open **Help** in the left menu for workflows by role, frequently asked questions and a glossary.
+You can also read this inside the tracker. Open **Help** in the left menu for workflows by role, frequently asked questions and a glossary. The **User Guide** tab in Help shows this whole guide, with buttons to download it (as a web page or Markdown) or print it and save as PDF.
 
 ---
 
@@ -20,7 +20,7 @@ Work is organized in three layers:
 
 Each project shows its status, trend, phase, progress, owners, dates, next milestone, key risk, decision and issues.
 
-**Where the data comes from.** The firm's project boards in monday.com feed the tracker. Project managers keep updating monday.com, and the tracker follows. The tracker adds the things monday.com does not hold: issues, decision outcomes and plan links. See [section 8](#8-the-tracker-and-mondaycom).
+**Where the data comes from.** The firm's project boards in monday.com feed the tracker. Project managers keep updating monday.com, and the tracker follows. The tracker adds the things monday.com does not hold: issues, decision outcomes, plan links, and each initiative's scope statement, owners and quarters. Admins can also create pillars, initiatives and projects in the tracker, and the tracker creates them in monday.com too. See [section 8](#8-the-tracker-and-mondaycom).
 
 ## 2. Signing in and finding your way
 
@@ -38,6 +38,7 @@ If you see a **no role** page, you have not been added to a tracker group yet. A
   - **Theme button** (light or dark) and your **account menu** (My work, change log, export, theme, sign out).
 - **Badges.** **View only** means your role cannot edit. **LOCAL** means you are on a test copy, not the real tracker.
 - **Filter chips.** On track, At risk, Off track, Stale and Decisions. They work on Portfolio, Board and Timeline and stay applied as you move between them. Click **Clear** to reset.
+  - **Stale** is a picker. Choose 7, 14, 30, 60 or 90 days, the tracker's own threshold (marked **default**), or **Custom days…** and type any number from 1 to 730, then **Apply**. You see projects nobody has updated for at least that long. Choose **Stale** at the top of the list to turn the filter off. Your choice changes only your view; the threshold in Settings stays as it is for everyone.
 
 Every page has its own link. Bookmark a pillar, a board layout or a project and send it to a colleague.
 
@@ -49,8 +50,8 @@ Your role decides what you see and what you can change. Roles come from Microsof
 | --- | --- | --- |
 | **Viewer** | Anyone who needs to stay informed | Read Portfolio, Board and Timeline. Open projects. Search, filter and export the reports the role is allowed. |
 | **Executive** | Leadership | Everything a Viewer does, plus the Leadership brief, Pillar pace and Workload. Cannot edit. |
-| **Editor** | Project managers and the PMO | Everything an Executive does, plus My work and Admin. Updates projects, decisions and issues. |
-| **Admin** | Tracker administrators | Everything an Editor does, plus Access, the monday.com sync, backups and pillar order. |
+| **Editor** | Project managers and the PMO | Everything an Executive does, plus My work and Admin. Updates projects, decisions and issues. Edits pillar and initiative details: names, scope statement, owners, quarters and which pillar an initiative sits in. |
+| **Admin** | Tracker administrators | Everything an Editor does, plus creating pillars, initiatives and projects, Access, the monday.com sync, backups and pillar order. |
 
 These are the defaults. An Admin can open or close individual views for a role on the Access page.
 
@@ -62,7 +63,7 @@ To change your role, ask the owner of the tracker security groups (for example `
 
 Portfolio is the home page. Pick a layout at the top right:
 
-- **Ledger.** Pillars on the left, the selected pillar's initiatives on the right. Expand an initiative to see its projects, then click a project to open it.
+- **Ledger.** Pillars on the left, the selected pillar's initiatives on the right. Each initiative line shows its owners and quarters. Expand an initiative to see its scope statement and its projects, then click a project to open it.
 - **Heatmap.** One tile per initiative, colored by its worst project. Click a tile to open that initiative.
 - **Leadership brief** (Executive and above). Headline numbers, one card per pillar, and a **Needs leadership attention** list of off-track projects and projects waiting on a decision. The headline tiles double as filters. **Open one-pager** makes a printable page for a pillar.
 - **Pillar pace** (Executive and above). Compares how far along each pillar is with how much of its planned time has passed.
@@ -149,6 +150,7 @@ Press `/` and type part of a project, an initiative or a person. Choose a result
 1. Open **Admin**. **Stale projects** lists the longest quiet ones first.
 2. Use **Stale for** (30, 60 or 90+ days) and the PM picker to focus.
 3. Open each project and update it, or contact its owner.
+4. On Portfolio, Board or Timeline, use the **Stale** chip to pick an age (7 to 90 days, or your own number) and see only those projects.
 
 **Undo a mistake**
 1. Open the project's **Change log**.
@@ -156,7 +158,14 @@ Press `/` and type part of a project, an initiative or a person. Choose a result
 
 If someone else changed the same field while you were editing, you are asked to keep yours or theirs. The other value stays in the change log.
 
-**Add or change structure.** Pillars, initiatives and projects that come from monday.com are managed there (see [section 8](#8-the-tracker-and-mondaycom)). For anything created in the tracker, use **+** in the Pillars card, **+ Initiative**, and **+ Add project**. Deleting a pillar also deletes its initiatives and projects, and the change log cannot undo that.
+**Edit a pillar or an initiative**
+1. In Portfolio (Ledger), select the pillar. Click the pencil beside its name to change the **Pillar** name or **Owner**.
+2. To edit an initiative, expand it and click **Edit initiative**. You can change the **Initiative** name, **Pillar**, **Scope statement**, **Business owner**, **Delivery owner**, **Start quarter** and **End quarter**.
+3. Click **Save**. The form shows **Saving…** and closes when the change is saved. If it stays open, the message at the bottom of the screen says why.
+
+A record marked **Linked to monday.com** also changes in monday.com when you change its name, or move an initiative to another pillar. The owners, quarters and scope statement are kept in the tracker only, because monday.com has no place for them. Everyone sees them.
+
+**Deleting.** You can delete only pillars, initiatives and projects that were made in the tracker and are not linked to monday.com. Deleting a pillar also deletes its initiatives and projects, and the change log cannot undo that. Linked records are deleted in monday.com, then removed by an Admin (see Admin, **Remove records monday.com no longer has**).
 
 ### Admin
 
@@ -178,6 +187,18 @@ A pull adds new items and updates changed ones. It never deletes. A deleted item
 4. Read the **To remove** list and tick the box under it to confirm that exact list.
 5. Click **Apply**. A backup is saved first. To undo, restore it from **Backups** in the same dialog or **Import file** in Settings.
 
+**Add a pillar, initiative or project**
+1. In Portfolio (Ledger), use **+** in the Pillars card for a pillar, **+ Initiative** beside the pillar name for an initiative, or expand an initiative and click **+ Add project**.
+2. Fill in the form. Only the name is required. Click **Add**.
+3. While the tracker is connected to monday.com, the tracker creates it there first:
+   - a pillar becomes a top-level folder,
+   - an initiative becomes a folder inside the pillar's folder, with a project board copied from the standard template,
+   - a project becomes an item in the initiative's board, in the **Projects** group, with the business and delivery owners filled in.
+4. A message confirms it. If monday.com already had something with the same name in the same place, the tracker links to it instead of making a copy, and says so. If the tracker already has that name in the same place, it refuses and tells you.
+5. Fill in the project's status, dates and the rest in monday.com as usual. The next pull brings them in.
+
+Without a monday.com connection (a test copy), the record is saved in the tracker only.
+
 **Choose who sees what**
 1. Open **Access**. Each row is a view or report and each column is a role.
 2. Tick or untick a cell and click **Save access**. Admin always keeps everything.
@@ -198,7 +219,7 @@ A pull adds new items and updates changed ones. It never deletes. A deleted item
 
 ## 7. Settings and installing the app
 
-- **Stale threshold.** A project is stale when nobody has updated it for longer than this: weekly, biweekly, monthly, quarterly or your own number of days. Settings shows how many projects each choice would flag.
+- **Stale threshold.** A project is stale when nobody has updated it for longer than this: weekly, biweekly, monthly, every two months, quarterly or your own number of days. Settings shows how many projects each choice would flag. The **Stale** filter chip can use a different age for your own view.
 - **Theme.** Light, Dark or Match system. The sun and moon button in the top bar toggles it.
 - **Install as an app.** In Edge or Chrome click the install icon at the right of the address bar, or use **Settings, App**. On iPhone or iPad use Share, then **Add to Home Screen**. It is the same tracker with the same sign-in.
 - **Updates.** Opening the tracker always loads the latest version. If it is open when a new version is published, a message says **A new version is available · Reload**. Reload when it suits you. Anything you saved is kept.
@@ -206,19 +227,27 @@ A pull adds new items and updates changed ones. It never deletes. A deleted item
 
 ## 8. The tracker and monday.com
 
-monday.com owns most project information. The tracker pulls it in, and nothing flows back to monday.com.
+monday.com owns most project information. The tracker pulls it in. Only structure flows back: new pillars, initiatives and projects an Admin creates in the tracker, pillar and initiative names, and moving an initiative to another pillar.
 
 - **What monday.com supplies:** business owner, delivery owner, project manager, scope, RAG status, trend, phase, validation, progress, start date, original end date, forecast end date, key risk, dependencies, decision needed, next milestone and next milestone date. It also supplies the pillars, initiatives and projects themselves.
-- **What the tracker keeps:** issues, decision outcomes and plan links.
-- **Editing.** Those monday.com fields are read-only in the tracker. A refused edit says "comes from monday.com". Change it in monday.com and the next pull brings it in. Buttons to add, rename or delete linked pillars, initiatives and projects are hidden and say **Managed in monday.com**.
+- **What the tracker keeps:** issues, decision outcomes and plan links on projects; the owner of each pillar; and the scope statement, business owner, delivery owner, start quarter and end quarter of each initiative. These live in the tracker's own database and everyone sees them.
+- **Editing project fields.** The monday.com project fields are read-only in the tracker. In **Update project** they are greyed out, and the phase stepper and **Request a decision** are off. Change them in monday.com and the next pull brings them in. **Record the decision**, issues and the plan link stay editable.
+- **Editing pillars and initiatives.** Editors and Admins can change them in the tracker (section 5, Editor). A new name, or a new pillar for an initiative, is sent to monday.com first, so the two stay the same.
+- **Clearing a value.** When someone empties a field in monday.com (for example **Decision Needed** once the decision is made), the next pull empties it in the tracker too. The old value stays in the change log. RAG status, trend and progress are the exception: if they are blank in monday.com, the tracker keeps the last value.
 - **How fresh is it?** The top bar shows **monday data as of** the last good pull. Pulls run automatically on the interval an admin chose, and an Admin can pull right away.
 - **A project shows twice.** It was deleted or re-created in monday.com. Ask an Admin to remove the old record (section 5, Admin).
-- **Something looks wrong.** If a project is missing or a value is stale, check monday.com first. A blank value in monday.com never erases a value in the tracker. If the data is old, ask an Admin to pull.
+- **Something looks wrong.** If a project is missing or a value is stale, check monday.com first. A value that vanished was most likely cleared in monday.com; the change log shows a "monday sync" line with the old value. If the data is old, ask an Admin to pull.
 - **Test copies.** On a test copy (a **LOCAL** badge) nothing is locked and the data may come from a saved file.
 
 ## 9. Questions and problems
 
 **I cannot edit anything.** Your role is Viewer or Executive, or the field comes from monday.com. The top bar shows **View only** when your role cannot edit. To get Editor, ask the group owner to add you to the Editors group.
+
+**I cannot add a pillar, initiative or project.** Only Admins can. Editors can edit the details of existing pillars and initiatives.
+
+**My save says "monday.com refused the change".** The tracker could not make the change in monday.com, so it saved nothing. Try again later, or ask an Admin to check the monday.com connection.
+
+**A decision (or risk) disappeared.** Someone cleared it in monday.com. Open the project's change log to see the old value.
 
 **I see "no role".** You are not in any tracker group. Ask for access, then sign out and in.
 
@@ -253,10 +282,12 @@ The full glossary is in **Help, Glossary** inside the tracker. The short version
 | RAG status | Red, amber, green health. On track, At risk, Off track |
 | Trend | Improving, Flat or Declining |
 | Phase | Discovery, Planning, Execution, Review, Launch, Stabilize, Closed. Multi-Phase is for release-based work |
-| Stale | Not updated within the stale threshold |
+| Stale | Not updated within the stale threshold. The Stale chip can filter by another age |
+| Scope statement | What an initiative sets out to deliver. Kept in the tracker |
 | Decision needed | A question leadership has not answered yet |
 | Issue | A current problem, with a severity of Low, Medium or High |
 | Slip | How many days the forecast end is later than the original end |
 | Change log | The record of every edit, with restore |
 | Role | Admin, Editor, Executive or Viewer |
-| Managed in monday.com | A field or record that comes from monday.com. Change it there |
+| Managed in monday.com | A project field that comes from monday.com. Change it there |
+| Linked to monday.com | A pillar, initiative or project that also exists in monday.com. Renames and moves made in the tracker are sent there |

@@ -9,8 +9,8 @@ describe('bundled migration snapshot', () => {
     const file = bundledSnapshot()
     expect(file.state.pillars).toHaveLength(6)
     expect(file.state.initiatives).toHaveLength(35)
-    expect(file.state.projects).toHaveLength(30)
-    expect(file.log).toHaveLength(243)
+    expect(file.state.projects).toHaveLength(29)
+    expect(file.log).toHaveLength(300)
   })
 
   it('has no orphaned initiatives or projects', () => {
@@ -26,12 +26,12 @@ describe('bundled migration snapshot', () => {
     const file = bundledSnapshot()
     expect(file.state.projects.every((p) => typeof p.decisionOutcome === 'string')).toBe(true)
     expect(file.state.projects.every((p) => Array.isArray(p.issues))).toBe(true)
-    expect(file.state.projects.filter((p) => p.updatedByName !== '')).toHaveLength(30)
+    expect(file.state.projects.filter((p) => p.updatedByName !== '')).toHaveLength(29)
   })
 
   it('matches the RAG counts of the monday data', () => {
     const counts = countByRag(bundledSnapshot().state.projects)
-    expect(counts).toEqual({ green: 12, amber: 14, red: 4 })
+    expect(counts).toEqual({ green: 13, amber: 10, red: 6 })
   })
 })
 
@@ -107,7 +107,7 @@ describe('derived numbers', () => {
   it('filters by RAG', () => {
     const state = bundledSnapshot().state
     const red = searchProjects(state, { query: '', rag: 'red', staleOnly: false, decisionsOnly: false }, 30)
-    expect(red).toHaveLength(4)
+    expect(red).toHaveLength(6)
     expect(red.every((hit) => hit.project.rag === 'red')).toBe(true)
   })
 

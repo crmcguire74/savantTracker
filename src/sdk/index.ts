@@ -29,7 +29,7 @@ export { canUseFeature, defaultPolicy, featureRoles, normalizePolicy } from '../
 export type { AccessPolicy, FeatureCatalog, FeatureInfo, FeatureKey } from '../auth/access'
 export * from '../reports/catalog'
 export * from '../reports/onepager'
-export type { NewInitiativeInput, NewProjectInput, TrackerActions, TrackerApi } from '../hooks/useTracker'
+export type { InitiativePatch, NewInitiativeInput, NewProjectInput, PillarPatch, TrackerActions, TrackerApi } from '../hooks/useTracker'
 export type {
   BackupInfo,
   ConnectionCheck,
@@ -42,6 +42,8 @@ export type {
 export { SyncRequestError } from '../data/mondaySync'
 export type { MondayCapture } from '../../server/monday/capture'
 export { applyUpdate, checkForUpdate, promptInstall, usePwa } from '../hooks/usePwa'
+export { isMondayField, ownedByMonday } from '../data/ownership'
+export { loadUserGuide, USER_GUIDE_FILE_NAME } from '../data/userGuide'
 
 // ── shared UI kit ─────────────────────────────────────────────────────────
 export * from '../ui/common'

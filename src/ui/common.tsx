@@ -2,10 +2,10 @@
 // stacked bars, stat tiles, the drawer, and the project list every filtered
 // view falls back to. Colors come from CSS tokens so both themes just work.
 
-import { useEffect, useRef, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { RAG, TREND, VALIDATION } from '../constants'
 import { daysSince } from '../lib/id'
-import { noFilters, phaseLabel, type ViewFilters } from '../lib/insights'
+import { MAX_STALE_DAYS, STALE_FILTER_PRESETS, noFilters, parseStaleDays, phaseLabel, staleFilterDays, type ViewFilters } from '../lib/insights'
 import { isStale, type RagCounts } from '../lib/rollups'
 import type { Project, RagStatus, Trend, Validation } from '../types'
 import { usePlatform } from '../platform/context'
@@ -111,16 +111,7 @@ export function FilterChips(props: { count?: number; noun?: string }) {
           {RAG[key].label}
         </button>
       ))}
-      <button
-        type="button"
-        className={`chip${filters.stale ? ' active' : ''}`}
-        aria-pressed={filters.stale}
-        onClick={() => setFilters({ stale: !filters.stale })}
-        title={`No update in more than ${tracker.settings.staleThresholdDays} days`}
-      >
-        <Dot status="amber" />
-        Stale ({tracker.settings.staleThresholdDays}d+)
-      </button>
+      <StaleChip />
       <button
         type="button"
         className={`chip${filters.decisions ? ' active' : ''}`}
@@ -166,6 +157,91 @@ export function FilterChips(props: { count?: number; noun?: string }) {
         </>
       )}
     </div>
+  )
+}
+
+/**
+ * The stale filter: off, a preset age (7, 14, 30, 60 or 90 days), the Settings threshold, or any
+ * number of days typed in. The age only narrows the views; the shared threshold in Settings still
+ * decides what the "stale" counts and tags elsewhere mean.
+ */
+function StaleChip() {
+  const { filters, setFilters, tracker } = usePlatform()
+  const threshold = tracker.settings.staleThresholdDays
+  const days = staleFilterDays(filters, threshold)
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(String(days))
+  const input = useRef<HTMLInputElement | null>(null)
+
+  useEffect(() => {
+    if (editing) input.current?.focus()
+  }, [editing])
+
+  const ages = [...new Set([...STALE_FILTER_PRESETS, threshold, ...(filters.stale ? [days] : [])])].sort((a, b) => a - b)
+  const pick = (value: string) => {
+    if (value === '') {
+      setEditing(false)
+      setFilters({ stale: false, staleDays: 0 })
+    } else if (value === 'custom') {
+      setDraft(String(days))
+      setEditing(true)
+    } else {
+      setEditing(false)
+      const chosen = Number(value)
+      setFilters({ stale: true, staleDays: chosen === threshold ? 0 : chosen })
+    }
+  }
+  const apply = () => {
+    const parsed = parseStaleDays(draft)
+    if (parsed !== null) setFilters({ stale: true, staleDays: parsed === threshold ? 0 : parsed })
+    setEditing(false)
+  }
+
+  return (
+    <>
+      <label
+        className={`chip chip-select${filters.stale ? ' active' : ''}`}
+        title={filters.stale ? `Projects with no update in ${days} or more days` : 'Show only projects nobody has updated for a while'}
+      >
+        <Dot status="amber" />
+        <span className="sr-only">Stale for at least</span>
+        <select value={editing ? 'custom' : filters.stale ? String(days) : ''} onChange={(event) => pick(event.target.value)}>
+          <option value="">Stale</option>
+          {ages.map((age) => (
+            <option key={age} value={String(age)}>
+              Stale {age}d+{age === threshold ? ' (default)' : ''}
+            </option>
+          ))}
+          <option value="custom">Custom days…</option>
+        </select>
+      </label>
+      {editing && (
+        <form
+          className="chip active chip-input"
+          onSubmit={(event) => {
+            event.preventDefault()
+            apply()
+          }}
+        >
+          <input
+            ref={input}
+            type="number"
+            min={1}
+            max={MAX_STALE_DAYS}
+            step={1}
+            inputMode="numeric"
+            value={draft}
+            aria-label="Stale for at least this many days"
+            onChange={(event) => setDraft(event.target.value)}
+            onKeyDown={(event) => event.key === 'Escape' && setEditing(false)}
+          />
+          <span>days</span>
+          <button type="submit" className="chip-input-apply" disabled={parseStaleDays(draft) === null}>
+            Apply
+          </button>
+        </form>
+      )}
+    </>
   )
 }
 

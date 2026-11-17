@@ -159,3 +159,25 @@ describe('admin sync routes', () => {
     expect((await set(ADMIN, 0)).status).toBe(200)
   })
 })
+
+describe('structure routes', () => {
+  it('lets only admins create, and says 501 when monday is not live', async () => {
+    expect((await call('/api/structure/pillars', { body: { title: 'X' } })).status).toBe(401)
+    expect((await call('/api/structure/pillars', { headers: EDITOR, body: { title: 'X' } })).status).toBe(403)
+    expect((await call('/api/structure/initiatives', { headers: EDITOR, body: { title: 'X' } })).status).toBe(403)
+    expect((await call('/api/structure/projects', { headers: EDITOR, body: { title: 'X' } })).status).toBe(403)
+    const offline = await call('/api/structure/pillars', { headers: ADMIN, body: { title: 'X' } })
+    expect(offline.status).toBe(501)
+    expect((await offline.json()).error).toMatch(/not connected/)
+  })
+
+  it('lets editors change tracker-only fields, and turns away viewers', async () => {
+    const pillar = (await store.readDocument('tracker.state')).doc.value.pillars[0]
+    const viewer = as('Tracker.Viewer')
+    expect((await call(`/api/structure/pillars/${pillar.id}`, { method: 'PATCH', headers: viewer, body: { owner: 'V' } })).status).toBe(403)
+    const ok = await call(`/api/structure/pillars/${pillar.id}`, { method: 'PATCH', headers: EDITOR, body: { owner: 'Pat Owner' } })
+    expect(ok.status).toBe(200)
+    expect((await store.readDocument('tracker.state')).doc.value.pillars[0].owner).toBe('Pat Owner')
+    expect((await call('/api/structure/pillars/nope', { method: 'PATCH', headers: EDITOR, body: { owner: 'x' } })).status).toBe(404)
+  })
+})

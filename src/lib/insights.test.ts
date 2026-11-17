@@ -3,6 +3,8 @@ import { bundledSnapshot } from '../data/repository'
 import { makeProject } from '../test-fixtures'
 import type { TrackerState } from '../types'
 import {
+  parseStaleDays,
+  staleFilterDays,
   groupByInitiative,
   makeProjectFilter,
   needsAttention,
@@ -157,5 +159,34 @@ describe('work items and schedule', () => {
   it('measures schedule slip', () => {
     expect(slipDays(project({ originalEndDate: '2026-09-30', forecastEndDate: '2026-10-10' }))).toBe(10)
     expect(slipDays(project({ originalEndDate: '2026-09-30' }))).toBeNull()
+  })
+})
+
+describe('stale filter age', () => {
+  const daysAgo = (days: number) => new Date(Date.now() - days * 86_400_000).toISOString()
+  const state: TrackerState = {
+    quarter: 'Q',
+    pillars: [{ id: 'p', title: 'P', owner: '' }],
+    initiatives: [{ id: 'i', pillarId: 'p', title: 'I', businessOwner: '', executionOwner: '', startQuarter: '', endQuarter: '' }],
+    projects: [makeProject({ id: 'ten', initiativeId: 'i', updatedAt: daysAgo(10) }), makeProject({ id: 'forty', initiativeId: 'i', updatedAt: daysAgo(40) })],
+  }
+  const run = (staleDays: number) =>
+    state.projects.filter(makeProjectFilter(state, { ...noFilters(), stale: true, staleDays }, 30)).map((p) => p.id)
+
+  it('uses the chosen age, or the Settings threshold when none is chosen', () => {
+    expect(run(7)).toEqual(['ten', 'forty'])
+    expect(run(14)).toEqual(['forty'])
+    expect(run(60)).toEqual([])
+    expect(run(0)).toEqual(['forty'])
+    expect(staleFilterDays({ staleDays: 0 }, 30)).toBe(30)
+    expect(staleFilterDays({ staleDays: 45 }, 30)).toBe(45)
+  })
+
+  it('accepts whole days from 1 to 730', () => {
+    expect(parseStaleDays('21')).toBe(21)
+    expect(parseStaleDays(' 7 ')).toBe(7)
+    expect(parseStaleDays('0')).toBeNull()
+    expect(parseStaleDays('abc')).toBeNull()
+    expect(parseStaleDays(1000)).toBeNull()
   })
 })

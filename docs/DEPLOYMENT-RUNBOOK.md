@@ -415,6 +415,8 @@ If either answer is no, fix it before Step 9, or everyone is locked out.
 
 1. Invite `svc-monday-tracker@savantwealth.com` as a **Member**. It does not need an admin seat.
 2. Open the workspace **Savant Strategic Initiatives**. Add the account to the workspace itself, not to single boards.
+3. Give it edit rights in the workspace, not view only. Since Nov 2026 the tracker writes back as this account: when an Admin adds a pillar, initiative or project in the tracker, or someone renames a pillar or initiative, the tracker creates or renames the folder, copies a project board, or creates the item in monday.com. With view-only rights those changes fail with "monday.com refused the change" and nothing is saved.
+4. Optional: in the web app's Environment variables, set `MONDAY_REGISTER_TEMPLATE_BOARD_ID` to the id of a clean project register board. New initiatives copy that board. Without it, the tracker copies the board of an existing initiative.
 
 ### 6.2 Sign in once as the service account
 

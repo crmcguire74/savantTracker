@@ -398,11 +398,11 @@ describe('placeholder rows', () => {
 })
 
 describe('phase "N/A"', () => {
-  it('reads as not set: no value, no warning, and validation "N/A" still counts', () => {
+  it('reads as not set: clears the phase, no warning, and validation "N/A" still counts', () => {
     const columns = resolveColumns(REGISTER_COLUMNS)
     const row = { id: 1, name: 'DAP Platinum', updated_at: '', column_values: cells({ phase: 'N/A', validation: 'N/A' }) }
     const mapped = mapItem(row, columns)
-    expect('phase' in mapped.fields).toBe(false)
+    expect(mapped.fields.phase).toBe('')
     expect(mapped.fields.validation).toBe('na')
     expect(mapped.warnings).toEqual([])
   })

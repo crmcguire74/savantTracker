@@ -10,6 +10,7 @@ import { captureWorkspace, discoverFromCapture, fetchBoardStamps, DEFAULT_IGNORE
 import { validateCapture, describeCapture } from './capture.js'
 import { MondayError } from './client.js'
 import { applyDiscovered, listBackups, restoreBackup } from './sync.js'
+import { createWriteback } from './writeback.js'
 
 export const SYNC_STATUS_KEY = 'tracker.sync'
 /** Admin-set schedule. Stored in the app so an admin can change it without touching Azure settings. */
@@ -52,6 +53,7 @@ export function readConfig(env) {
     projectGroupTitle: env.MONDAY_PROJECT_GROUP || undefined,
     ignoreTitles: env.MONDAY_IGNORE_TITLES === undefined ? [...DEFAULT_IGNORED_TITLES] : list(env.MONDAY_IGNORE_TITLES),
     intervalMinutes: Number.isFinite(intervalMinutes) && intervalMinutes >= 5 ? intervalMinutes : 0,
+    templateBoardId: env.MONDAY_REGISTER_TEMPLATE_BOARD_ID || '',
   }
 }
 
@@ -163,10 +165,23 @@ export function createSyncService({ store, env = process.env, makeClient, clock 
     }
   }
 
+  // Pillars, initiatives and projects created or renamed in the app go to monday first (writeback.js).
+  const structure = createWriteback({
+    store,
+    client,
+    workspaceId: config.workspaceId,
+    live,
+    projectGroupTitle: config.projectGroupTitle,
+    ignoreTitles: config.ignoreTitles,
+    templateBoardId: config.templateBoardId,
+    clock,
+  })
+
   return {
     config,
     live,
     run,
+    structure,
     currentInterval,
     lastRun: readLast,
 

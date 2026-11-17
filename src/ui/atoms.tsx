@@ -41,9 +41,9 @@ export function IconButton(props: {
   )
 }
 
-export function PrimaryButton(props: { onClick: () => void; children: ReactNode; danger?: boolean }) {
+export function PrimaryButton(props: { onClick: () => void; children: ReactNode; danger?: boolean; disabled?: boolean }) {
   return (
-    <button type="button" className={`btn ${props.danger ? 'btn-danger' : 'btn-primary'}`} onClick={props.onClick}>
+    <button type="button" className={`btn ${props.danger ? 'btn-danger' : 'btn-primary'}`} onClick={props.onClick} disabled={props.disabled}>
       {props.children}
     </button>
   )
@@ -54,9 +54,10 @@ export function GhostButton(props: {
   children: ReactNode
   title?: string
   style?: React.CSSProperties
+  disabled?: boolean
 }) {
   return (
-    <button type="button" className="btn btn-ghost" onClick={props.onClick} title={props.title} style={props.style}>
+    <button type="button" className="btn btn-ghost" onClick={props.onClick} title={props.title} style={props.style} disabled={props.disabled}>
       {props.children}
     </button>
   )

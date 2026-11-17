@@ -5,7 +5,8 @@
 //     by title and get their `mondayId`. Nothing existing is duplicated.
 //   - monday owns the fields in SYNCED_FIELDS. The tracker keeps `issues`,
 //     `decisionOutcome` and `planLink`: monday has no column for them.
-//   - A blank on monday never erases a value in the tracker.
+//   - A cleared cell on monday clears the tracker value (see CLEARABLE_FIELDS in mapping.js).
+//     RAG status, trend and progress keep their last value when monday is blank.
 //   - Nothing is ever deleted. A project that vanished from monday is reported.
 //   - `updatedAt` takes monday's own timestamp, so a sync does not make a
 //     stale project look freshly updated.

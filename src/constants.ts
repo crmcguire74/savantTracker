@@ -84,6 +84,7 @@ export const STALE_PRESETS = [
   { label: 'Weekly (7 days)', value: 7 },
   { label: 'Biweekly (14 days)', value: 14 },
   { label: 'Monthly (30 days)', value: 30 },
+  { label: 'Every two months (60 days)', value: 60 },
   { label: 'Quarterly (90 days)', value: 90 },
 ] as const
 

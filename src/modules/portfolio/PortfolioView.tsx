@@ -56,9 +56,11 @@ export function PortfolioView(props: { layout: PortfolioLayout; pillar?: string;
 // ── ledger ────────────────────────────────────────────────────────────────
 
 function Ledger(props: { pillarId?: string; initiativeId?: string }) {
-  const { tracker, canWrite, mondayLive, isAdmin, navigate, filters, setFilters, matches, ask } = usePlatform()
+  const { tracker, mondayLive, isAdmin, navigate, filters, setFilters, matches, ask } = usePlatform()
   const { state, actions } = tracker
-  const canAddStructure = canWrite && !mondayLive
+  // Admins create pillars, initiatives and projects. While monday is live the server creates them in
+  // monday first, so the next pull finds them already linked.
+  const canAddStructure = isAdmin
   const customOrder = tracker.pillarOrder
   const [reordering, setReordering] = useState(false)
   const [dragId, setDragId] = useState<string | null>(null)
@@ -133,9 +135,11 @@ function Ledger(props: { pillarId?: string; initiativeId?: string }) {
         </div>
         {addingPillar && (
           <NewPillarForm
-            onSave={(title, owner) => {
-              void actions.addPillar(title, owner).then((id) => id && navigate({ module: 'portfolio', params: { pillar: id } }, { replace: true }))
-              setAddingPillar(false)
+            live={mondayLive}
+            onSave={async (title, owner) => {
+              const id = await actions.addPillar(title, owner)
+              if (id) navigate({ module: 'portfolio', params: { pillar: id } }, { replace: true })
+              return id
             }}
             onCancel={() => setAddingPillar(false)}
           />
@@ -213,15 +217,13 @@ function Ledger(props: { pillarId?: string; initiativeId?: string }) {
       <section className="pillar-detail" aria-label={selected ? pillarTitle(selected.title) : 'Pillar'}>
         {!selected ? (
           <EmptyState title="No pillars yet">
-            {canAddStructure ? 'Create a pillar to start organizing initiatives and projects.' : mondayLive ? 'Pillars come from monday.com. Run a sync from Admin.' : 'An editor has not set up the portfolio yet.'}
+            {canAddStructure ? 'Create a pillar to start organizing initiatives and projects.' : mondayLive ? 'Pillars come from monday.com. Run a sync from Admin.' : 'An admin has not set up the portfolio yet.'}
           </EmptyState>
         ) : editingPillar ? (
           <EditPillarForm
             pillar={selected}
-            onSave={(patch) => {
-              void actions.updatePillar(selected.id, patch)
-              setEditingPillar(false)
-            }}
+            linked={mondayLive && Boolean(selected.mondayId)}
+            onSave={(patch) => actions.updatePillar(selected.id, patch)}
             onCancel={() => setEditingPillar(false)}
           />
         ) : (
@@ -239,7 +241,7 @@ function Ledger(props: { pillarId?: string; initiativeId?: string }) {
 }
 
 function PillarDetail(props: { pillar: Pillar; index: number; focusInitiative?: string; onEdit: () => void; onDelete: () => void }) {
-  const { tracker, canWrite, mondayLive } = usePlatform()
+  const { tracker, canWrite, mondayLive, isAdmin } = usePlatform()
   const { state, actions } = tracker
   const pillarManaged = mondayLive && Boolean(props.pillar.mondayId)
   const initiatives = state.initiatives.filter((initiative) => initiative.pillarId === props.pillar.id)
@@ -271,22 +273,19 @@ function PillarDetail(props: { pillar: Pillar; index: number; focusInitiative?: 
         </div>
         {canWrite && (
           <div className="row-actions">
-            {!mondayLive && (
+            {isAdmin && (
               <button type="button" className="btn btn-ghost sm" onClick={() => setAdding((v) => !v)}>
                 <Icon.Plus size={15} /> Initiative
               </button>
             )}
-            {pillarManaged ? (
-              <span className="muted small">Managed in monday.com</span>
-            ) : (
-              <>
-                <button type="button" className="icon-btn sm" aria-label="Edit pillar" title="Edit pillar" onClick={props.onEdit}>
-                  <Icon.Edit size={16} />
-                </button>
-                <button type="button" className="icon-btn sm danger" aria-label="Delete pillar" title="Delete pillar" onClick={props.onDelete}>
-                  <Icon.Trash size={16} />
-                </button>
-              </>
+            {pillarManaged && <span className="muted small">Linked to monday.com</span>}
+            <button type="button" className="icon-btn sm" aria-label="Edit pillar" title={pillarManaged ? 'Edit pillar (a new name also renames it in monday.com)' : 'Edit pillar'} onClick={props.onEdit}>
+              <Icon.Edit size={16} />
+            </button>
+            {!pillarManaged && (
+              <button type="button" className="icon-btn sm danger" aria-label="Delete pillar" title="Delete pillar" onClick={props.onDelete}>
+                <Icon.Trash size={16} />
+              </button>
             )}
           </div>
         )}
@@ -295,11 +294,12 @@ function PillarDetail(props: { pillar: Pillar; index: number; focusInitiative?: 
       {adding && (
         <InitiativeForm
           submitLabel="Add initiative"
-          onSave={(input) => {
-            void actions.addInitiative(props.pillar.id, input).then((id) => {
-              if (id) setExpanded((current) => ({ ...current, [id]: true }))
-            })
-            setAdding(false)
+          pillarId={props.pillar.id}
+          linked={mondayLive}
+          onSave={async (input) => {
+            const id = await actions.addInitiative(props.pillar.id, input)
+            if (id) setExpanded((current) => ({ ...current, [id]: true }))
+            return id
           }}
           onCancel={() => setAdding(false)}
         />
@@ -308,7 +308,7 @@ function PillarDetail(props: { pillar: Pillar; index: number; focusInitiative?: 
       <div className="stack">
         {initiatives.length === 0 && (
           <EmptyState title="No initiatives in this pillar yet">
-            {canWrite ? 'Use “+ Initiative” to add the first one.' : null}
+            {isAdmin ? 'Use “+ Initiative” to add the first one.' : null}
           </EmptyState>
         )}
         {initiatives.map((initiative) => (
@@ -325,7 +325,7 @@ function PillarDetail(props: { pillar: Pillar; index: number; focusInitiative?: 
 }
 
 function InitiativeRow(props: { initiative: Initiative; expanded: boolean; onToggle: () => void }) {
-  const { tracker, canWrite, mondayLive, ask } = usePlatform()
+  const { tracker, canWrite, mondayLive, isAdmin, ask } = usePlatform()
   const { state, actions } = tracker
   const { initiative } = props
   const initiativeManaged = mondayLive && Boolean(initiative.mondayId)
@@ -355,11 +355,11 @@ function InitiativeRow(props: { initiative: Initiative; expanded: boolean; onTog
     return (
       <InitiativeForm
         initial={initiative}
+        pillars={state.pillars}
+        pillarId={initiative.pillarId}
         submitLabel="Save"
-        onSave={(input) => {
-          void actions.updateInitiative(initiative.id, input)
-          setEditing(false)
-        }}
+        linked={initiativeManaged}
+        onSave={(input) => actions.updateInitiative(initiative.id, input)}
         onCancel={() => setEditing(false)}
       />
     )
@@ -386,37 +386,38 @@ function InitiativeRow(props: { initiative: Initiative; expanded: boolean; onTog
 
       {props.expanded && (
         <div className="initiative-body">
+          {initiative.scope?.trim() && (
+            <div className="initiative-scope">
+              <div className="label-caps">Scope statement</div>
+              <p className="prose">{initiative.scope}</p>
+            </div>
+          )}
           <ProjectList projects={projects} showPath={false} empty="No projects under this initiative yet." />
           {addingProject && (
             <div className="inset">
               <NewProjectForm
-                onSave={(input) => {
-                  void actions.addProject(initiative.id, input)
-                  setAddingProject(false)
-                }}
+                live={mondayLive}
+                onSave={(input) => actions.addProject(initiative.id, input)}
                 onCancel={() => setAddingProject(false)}
               />
             </div>
           )}
           {canWrite && !addingProject && (
             <div className="initiative-foot">
-              {!mondayLive && (
+              {isAdmin && (
                 <button type="button" className="btn btn-ghost sm" onClick={() => setAddingProject(true)}>
                   <Icon.Plus size={15} /> Add project
                 </button>
               )}
               <span className="spacer" />
-              {initiativeManaged ? (
-                <span className="muted small">Managed in monday.com. Add projects there.</span>
-              ) : (
-                <>
-                  <button type="button" className="btn btn-quiet sm" onClick={() => setEditing(true)}>
-                    <Icon.Edit size={15} /> Edit initiative
-                  </button>
-                  <button type="button" className="btn btn-quiet sm danger" onClick={remove}>
-                    <Icon.Trash size={15} /> Delete
-                  </button>
-                </>
+              {initiativeManaged && <span className="muted small">Linked to monday.com</span>}
+              <button type="button" className="btn btn-quiet sm" onClick={() => setEditing(true)}>
+                <Icon.Edit size={15} /> Edit initiative
+              </button>
+              {!initiativeManaged && (
+                <button type="button" className="btn btn-quiet sm danger" onClick={remove}>
+                  <Icon.Trash size={15} /> Delete
+                </button>
               )}
             </div>
           )}
@@ -539,7 +540,7 @@ function Brief() {
           value={stats.stale}
           sub={`no update in ${settings.staleThresholdDays}+ days`}
           active={filters.stale}
-          onClick={() => setFilters({ stale: !filters.stale })}
+          onClick={() => setFilters({ stale: !filters.stale, staleDays: 0 })}
         />
       </div>
 

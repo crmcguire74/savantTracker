@@ -8,7 +8,7 @@ import { FIELD_LABELS as TS_LABELS, LOG_LIMIT as TS_LOG_LIMIT } from '../../src/
 import { createMondayClient, MondayError } from './client.js'
 import { discoverProjects } from './discover.js'
 import { LOG_LIMIT, mergeMonday, SYNC_ID } from './merge.js'
-import { FIELD_COLUMNS, FIELD_LABELS, isProjectRegister, mapItem, PARSERS, resolveColumns, SYNCED_FIELDS } from './mapping.js'
+import { CLEARABLE_FIELDS, FIELD_COLUMNS, FIELD_LABELS, isProjectRegister, mapItem, PARSERS, resolveColumns, SYNCED_FIELDS } from './mapping.js'
 import { createMemoryStore } from '../memory-store.js'
 import { runMondaySync, LOG_KEY, STATE_KEY } from './sync.js'
 
@@ -238,13 +238,29 @@ describe('column and value mapping', () => {
     expect(PARSERS.startDate('Oct 20')).toBeUndefined()
   })
 
-  it('leaves blank cells out and warns on unreadable ones', () => {
+  it('maps a blank text cell to a clear, keeps blank RAG and progress out, and warns on unreadable ones', () => {
     const item = mapItem(
       { id: 1, name: 'X', column_values: cells({ rag: 'Purple', scope: '   ', progress: '' }) },
       resolveColumns(REGISTER_COLUMNS),
     )
-    expect(item.fields).toEqual({})
+    expect(item.fields).toEqual({ scope: '' })
     expect(item.warnings).toHaveLength(1)
+  })
+
+  it('never clears a field whose cell monday did not return', () => {
+    const item = mapItem({ id: 1, name: 'X', column_values: cells({ rag: 'On track' }) }, resolveColumns(REGISTER_COLUMNS))
+    expect(item.fields).toEqual({ rag: 'green' })
+  })
+
+  it('reads the "N/A" phase as a cleared phase, and blank trend as no change', () => {
+    const item = mapItem({ id: 1, name: 'X', column_values: cells({ phase: 'N/A', trending: '' }) }, resolveColumns(REGISTER_COLUMNS))
+    expect(item.fields).toEqual({ phase: '' })
+  })
+
+  it('lists every synced field except RAG, trend and progress as clearable', () => {
+    expect(CLEARABLE_FIELDS).toHaveLength(SYNCED_FIELDS.length - 3)
+    expect(CLEARABLE_FIELDS.includes('decisionNeeded')).toBe(true)
+    expect(CLEARABLE_FIELDS.includes('rag')).toBe(false)
   })
 
   it('keeps the tracker constants and the sync constants in step', () => {
@@ -551,11 +567,29 @@ describe('merge into tracker state', () => {
     expect(project.planLink).toBe('https://plan.example/owl')
   })
 
-  it('never lets a blank on monday erase a tracker value', () => {
-    const state = { ...existingState(), projects: [trackerProject({ keyRisk: 'Typed in tracker' })] }
-    const blankRisk = mapped({ ...OWL, column_values: cells({ rag: 'On track', businessOwner: 'Daran Becker', keyRisk: '' }) })
-    const project = mergeMonday(state, { boards: [board([blankRisk])] }, { now: NOW }).state.projects[0]
-    expect(project.keyRisk).toBe('Typed in tracker')
+  it('clears a tracker value when the monday cell is cleared (a resolved decision)', () => {
+    const state = { ...existingState(), projects: [trackerProject({ keyRisk: 'Old risk', decisionNeeded: 'Approve Addepar plan' })] }
+    const cleared = mapped({ ...OWL, column_values: cells({ rag: 'On track', businessOwner: 'Daran Becker', keyRisk: '', decisionNeeded: '' }) })
+    const result = mergeMonday(state, { boards: [board([cleared])] }, { now: NOW })
+    const project = result.state.projects[0]
+    expect(project.keyRisk).toBe('')
+    expect(project.decisionNeeded).toBe('')
+    const lines = result.logEntries.filter((entry) => entry.fieldKey === 'decisionNeeded')
+    expect(lines).toHaveLength(1)
+    expect(lines[0]).toMatchObject({ oldValue: 'Approve Addepar plan', newValue: '' })
+    const again = mergeMonday(result.state, { boards: [board([cleared])] }, { now: NOW })
+    expect(again.summary.fieldsChanged).toBe(0)
+  })
+
+  it('keeps RAG status, trend and progress when monday is blank', () => {
+    const state = { ...existingState(), projects: [trackerProject({ rag: 'amber', trending: 'declining', progress: 40 })] }
+    const blanks = mapped({ ...OWL, column_values: cells({ rag: '', trending: '', progress: '', businessOwner: 'Daran Becker' }) })
+    const result = mergeMonday(state, { boards: [board([blanks])] }, { now: NOW })
+    const project = result.state.projects[0]
+    expect(project.rag).toBe('amber')
+    expect(project.trending).toBe('declining')
+    expect(project.progress).toBe(40)
+    expect(result.warnings.some((line) => /no RAG status/.test(line))).toBe(true)
   })
 
   it('does not touch the input state', () => {
